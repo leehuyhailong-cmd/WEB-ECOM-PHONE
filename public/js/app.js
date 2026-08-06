@@ -99,6 +99,7 @@ class AppStore {
 
 document.addEventListener('DOMContentLoaded', async () => {
   const app = new AppStore();
+  window.appStore = app;
 
   // Initialise components
   await CatalogComponent.init(app);
