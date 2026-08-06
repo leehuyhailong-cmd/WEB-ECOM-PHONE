@@ -1,0 +1,4 @@
+'use strict';
+// Repositories layer — Phase 2+
+// One file per domain entity: user.repository.js, product.repository.js, etc.
+// Repository methods ONLY contain Mongoose queries — no business logic.

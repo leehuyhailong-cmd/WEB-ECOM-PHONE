@@ -1,0 +1,445 @@
+{
+  "info": {
+    "_postman_id": "phonestore-api-v1-collection",
+    "name": "Phonestore E-Commerce API (Full V1)",
+    "description": "Complete Postman/Bruno API Test Collection for Phonestore E-Commerce Backend. Covers all 8 phases: Auth, Products, Cart, Orders, Reviews, Recommendations, AI Chatbot, and Admin Dashboard APIs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "refreshToken", "value": "", "type": "string" },
+    { "key": "adminToken", "value": "", "type": "string" },
+    { "key": "productId", "value": "", "type": "string" },
+    { "key": "orderId", "value": "", "type": "string" },
+    { "key": "reviewId", "value": "", "type": "string" },
+    { "key": "sessionId", "value": "test-session-postman-01", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "1. Auth Module",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Test User\",\n  \"email\": \"postman_user@test.com\",\n  \"password\": \"TestPass123!\",\n  \"passwordConfirm\": \"TestPass123!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var data = pm.response.json();",
+                  "if (data && data.data && data.data.accessToken) {",
+                  "  pm.collectionVariables.set('accessToken', data.data.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"postman_user@test.com\",\n  \"password\": \"TestPass123!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var data = pm.response.json();",
+                  "if (data && data.data && data.data.accessToken) {",
+                  "  pm.collectionVariables.set('adminToken', data.data.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin_p5_test@test.com\",\n  \"password\": \"TestPass123!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Current User (Me)",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{accessToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth", "me"] }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Authorization", "value": "Bearer {{accessToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth", "logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Products & Catalog",
+      "item": [
+        {
+          "name": "List Products (Public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var data = pm.response.json();",
+                  "if (data && data.data && data.data.length > 0) {",
+                  "  pm.collectionVariables.set('productId', data.data[0]._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/products?page=1&limit=12&sort=newest", "host": ["{{baseUrl}}"], "path": ["products"], "query": [ { "key": "page", "value": "1" }, { "key": "limit", "value": "12" }, { "key": "sort", "value": "newest" } ] }
+          }
+        },
+        {
+          "name": "Search Products",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/products/search?q=samsung&limit=10", "host": ["{{baseUrl}}"], "path": ["products", "search"], "query": [ { "key": "q", "value": "samsung" }, { "key": "limit", "value": "10" } ] }
+          }
+        },
+        {
+          "name": "Get Product Detail by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/products/{{productId}}", "host": ["{{baseUrl}}"], "path": ["products", "{{productId}}"] }
+          }
+        },
+        {
+          "name": "Create Product (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Authorization", "value": "Bearer {{adminToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/products", "host": ["{{baseUrl}}"], "path": ["products"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "Postman Test Phone S25", "type": "text" },
+                { "key": "brand", "value": "Samsung", "type": "text" },
+                { "key": "category", "value": "smartphone", "type": "text" },
+                { "key": "price", "value": "25990000", "type": "text" },
+                { "key": "stock", "value": "50", "type": "text" },
+                { "key": "description", "value": "High performance flagship phone created via Postman test suite.", "type": "text" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Cart Module",
+      "item": [
+        {
+          "name": "Get User Cart",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{accessToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/cart", "host": ["{{baseUrl}}"], "path": ["cart"] }
+          }
+        },
+        {
+          "name": "Add Item to Cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/cart/items", "host": ["{{baseUrl}}"], "path": ["cart", "items"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 2\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Item Quantity",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/cart/items/{{productId}}", "host": ["{{baseUrl}}"], "path": ["cart", "items", "{{productId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 1\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Orders & Payment",
+      "item": [
+        {
+          "name": "Create Order (COD)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var data = pm.response.json();",
+                  "if (data && data.data && (data.data.order ? data.data.order._id : data.data._id)) {",
+                  "  var id = data.data.order ? data.data.order._id : data.data._id;",
+                  "  pm.collectionVariables.set('orderId', id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shippingAddress\": {\n    \"fullName\": \"Postman User\",\n    \"phone\": \"0901234567\",\n    \"street\": \"123 Nguyen Hue\",\n    \"ward\": \"Ben Nghe\",\n    \"district\": \"District 1\",\n    \"province\": \"TP. HCM\"\n  },\n  \"paymentMethod\": \"cod\",\n  \"note\": \"Deliver during office hours\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get User Order History",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{accessToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/orders/my-orders?page=1&limit=10", "host": ["{{baseUrl}}"], "path": ["orders", "my-orders"], "query": [ { "key": "page", "value": "1" }, { "key": "limit", "value": "10" } ] }
+          }
+        },
+        {
+          "name": "Get Order Detail",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{accessToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/orders/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["orders", "{{orderId}}"] }
+          }
+        },
+        {
+          "name": "Update Order Status (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/orders/{{orderId}}/status", "host": ["{{baseUrl}}"], "path": ["orders", "{{orderId}}", "status"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Reviews & Recommendations",
+      "item": [
+        {
+          "name": "Create Review",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var data = pm.response.json();",
+                  "if (data && data.data && data.data._id) {",
+                  "  pm.collectionVariables.set('reviewId', data.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/reviews", "host": ["{{baseUrl}}"], "path": ["reviews"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"rating\": 5,\n  \"comment\": \"Excellent phone, fast shipping and authentic product! Highly recommend.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Product Reviews",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/reviews/product/{{productId}}?page=1&limit=10", "host": ["{{baseUrl}}"], "path": ["reviews", "product", "{{productId}}"], "query": [ { "key": "page", "value": "1" }, { "key": "limit", "value": "10" } ] }
+          }
+        },
+        {
+          "name": "Get Trending Recommendations",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/recommendations/trending?limit=5", "host": ["{{baseUrl}}"], "path": ["recommendations", "trending"], "query": [ { "key": "limit", "value": "5" } ] }
+          }
+        },
+        {
+          "name": "Get Related Products",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/recommendations/product/{{productId}}?limit=4", "host": ["{{baseUrl}}"], "path": ["recommendations", "product", "{{productId}}"], "query": [ { "key": "limit", "value": "4" } ] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. AI Chatbot API",
+      "item": [
+        {
+          "name": "Send Chat Message (JSON Response)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/chatbot/message", "host": ["{{baseUrl}}"], "path": ["chatbot", "message"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Tìm điện thoại Samsung dưới 20 triệu pin trâu\",\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Send Chat Message (SSE Stream)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/chatbot/message/stream", "host": ["{{baseUrl}}"], "path": ["chatbot", "message", "stream"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"So sánh iPhone 15 với Samsung S24\",\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Chat Session Messages",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/chatbot/session?sessionId={{sessionId}}&limit=20", "host": ["{{baseUrl}}"], "path": ["chatbot", "session"], "query": [ { "key": "sessionId", "value": "{{sessionId}}" }, { "key": "limit", "value": "20" } ] }
+          }
+        },
+        {
+          "name": "Delete Chat Session",
+          "request": {
+            "method": "DELETE",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/chatbot/session", "host": ["{{baseUrl}}"], "path": ["chatbot", "session"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Admin Dashboard APIs",
+      "item": [
+        {
+          "name": "GET KPI Overview Stats",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{adminToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/admin/stats/overview", "host": ["{{baseUrl}}"], "path": ["admin", "stats", "overview"] }
+          }
+        },
+        {
+          "name": "GET Revenue Chart (30 Days)",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{adminToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/admin/stats/revenue?days=30", "host": ["{{baseUrl}}"], "path": ["admin", "stats", "revenue"], "query": [ { "key": "days", "value": "30" } ] }
+          }
+        },
+        {
+          "name": "GET Top Products by Revenue",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{adminToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/admin/stats/top-products?limit=5", "host": ["{{baseUrl}}"], "path": ["admin", "stats", "top-products"], "query": [ { "key": "limit", "value": "5" } ] }
+          }
+        },
+        {
+          "name": "GET Orders by Status Pie Chart",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{adminToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/admin/stats/orders-by-status", "host": ["{{baseUrl}}"], "path": ["admin", "stats", "orders-by-status"] }
+          }
+        },
+        {
+          "name": "GET Category Breakdown Donut Chart",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{adminToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/admin/stats/category-breakdown", "host": ["{{baseUrl}}"], "path": ["admin", "stats", "category-breakdown"] }
+          }
+        },
+        {
+          "name": "GET Low Stock Products",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{adminToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/admin/stats/low-stock?threshold=10", "host": ["{{baseUrl}}"], "path": ["admin", "stats", "low-stock"], "query": [ { "key": "threshold", "value": "10" } ] }
+          }
+        },
+        {
+          "name": "GET Recent Orders Activity Feed",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{adminToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/admin/stats/recent-orders", "host": ["{{baseUrl}}"], "path": ["admin", "stats", "recent-orders"] }
+          }
+        },
+        {
+          "name": "List Users (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{adminToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/admin/users?page=1&limit=20", "host": ["{{baseUrl}}"], "path": ["admin", "users"], "query": [ { "key": "page", "value": "1" }, { "key": "limit", "value": "20" } ] }
+          }
+        }
+      ]
+    }
+  ]
+}

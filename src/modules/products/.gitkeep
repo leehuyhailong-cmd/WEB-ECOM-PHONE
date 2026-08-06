@@ -1,0 +1,3 @@
+'use strict';
+// Phase 3 — Products Module
+// Files to create: product.router.js, product.controller.js, product.service.js, product.validator.js

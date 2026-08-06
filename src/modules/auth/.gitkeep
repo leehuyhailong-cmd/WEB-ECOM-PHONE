@@ -1,0 +1,4 @@
+'use strict';
+// Phase 2 — Auth Module
+// Files to create: auth.router.js, auth.controller.js, auth.service.js, auth.validator.js
+// Integrations: JWT (email/password) + Passport Google OAuth2 + VNPay (payment callback)

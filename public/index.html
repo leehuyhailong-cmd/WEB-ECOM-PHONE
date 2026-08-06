@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Phonestore - Hệ thống bán lẻ điện thoại, máy tính bảng và phụ kiện công nghệ chính hãng hàng đầu." />
+  <title>Phonestore — Thế Giới Smartphone & Công Nghệ Đột Phá</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ── Top Header Navigation ──────────────────────────────────────────── -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="/" class="logo">
+        <div class="logo-icon">📱</div>
+        <div class="logo-text">Phone<span>store</span></div>
+      </a>
+
+      <div class="nav-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" class="search-input" placeholder="Tìm kiếm iPhone 16, Galaxy S24, Xiaomi..." />
+      </div>
+
+      <div class="nav-actions">
+        <button id="adminBtn" class="btn-icon" title="Quản trị hệ thống">⚡</button>
+        <button id="userAccountBtn" class="btn-icon" title="Tài khoản cá nhân">👤</button>
+        <button id="cartBtn" class="btn-icon" title="Giỏ hàng">
+          🛒
+          <span id="cartBadge" class="counter-badge">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Category Navigation Bar ────────────────────────────────────────── -->
+  <nav class="category-bar">
+    <div class="container">
+      <ul class="cat-list">
+        <li class="cat-item"><button class="active" data-cat="all">Tất cả sản phẩm</button></li>
+        <li class="cat-item"><button data-cat="smartphone">Smartphone</button></li>
+        <li class="cat-item"><button data-cat="tablet">Tablet</button></li>
+        <li class="cat-item"><button data-cat="smartwatch">Smartwatch</button></li>
+        <li class="cat-item"><button data-cat="accessory">Phụ kiện</button></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ── Hero Featured Banner ──────────────────────────────────────────── -->
+  <section class="hero-section">
+    <div class="container">
+      <div class="hero-card">
+        <div class="hero-content">
+          <span class="badge badge-accent">SIÊU PHẨM HOT 2026</span>
+          <h1>iPhone 16 Pro Max<br />Titanium Đột Phá</h1>
+          <p>Trải nghiệm sức mạnh vô song từ con chip A18 Pro, nút bấm Camera Control mới và hệ thống camera 48MP đẳng cấp chuyên nghiệp.</p>
+          <div style="display: flex; gap: 1rem;">
+            <button class="btn btn-primary" onclick="window.appStore?.openProductModal('iphone-16-pro-max-256gb')">
+              Khám phá ngay
+            </button>
+            <button class="btn btn-secondary" onclick="document.getElementById('searchInput').focus()">
+              Tìm siêu phẩm khác
+            </button>
+          </div>
+        </div>
+        <div class="hero-image-wrap">
+          <img src="https://res.cloudinary.com/demo/image/upload/v1689000000/iphone16pro.png" class="hero-image" alt="iPhone 16 Pro Max" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Main Catalog Content ──────────────────────────────────────────── -->
+  <main class="catalog-section">
+    <div class="container">
+      <div class="catalog-grid-wrapper">
+        
+        <!-- Sidebar Filters -->
+        <aside class="filter-sidebar glass-panel">
+          <div class="filter-box">
+            <h3 class="filter-title">Bộ lọc sản phẩm <span>⚙️</span></h3>
+
+            <div class="filter-group">
+              <span class="filter-label">Thương hiệu</span>
+              <label class="checkbox-item">
+                <input type="checkbox" class="brand-checkbox" value="Apple" /> Apple (iPhone)
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" class="brand-checkbox" value="Samsung" /> Samsung Galaxy
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" class="brand-checkbox" value="Xiaomi" /> Xiaomi
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" class="brand-checkbox" value="OPPO" /> OPPO
+              </label>
+            </div>
+
+            <div class="filter-group">
+              <span class="filter-label">Khoảng giá (VNĐ)</span>
+              <div class="price-inputs">
+                <input type="number" id="minPriceInput" class="price-input" placeholder="Từ" />
+                <span style="color: var(--text-subtle);">-</span>
+                <input type="number" id="maxPriceInput" class="price-input" placeholder="Đến" />
+              </div>
+              <button id="applyPriceBtn" class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem; padding: 0.4rem;">
+                Áp dụng giá
+              </button>
+            </div>
+
+          </div>
+        </aside>
+
+        <!-- Main Product Grid Area -->
+        <section>
+          <div class="catalog-header">
+            <span id="resultCount" class="result-count">Đang tải sản phẩm...</span>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="font-size: 0.85rem; color: var(--text-muted);">Sắp xếp:</span>
+              <select id="sortSelect" class="sort-select">
+                <option value="price_desc">Giá cao đến thấp</option>
+                <option value="price_asc">Giá thấp đến cao</option>
+                <option value="popular">Bán chạy nhất</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Product Cards -->
+          <div id="productsGrid" class="products-grid">
+            <!-- Dynamic Product Cards injected here by catalog.js -->
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ── Footer ────────────────────────────────────────────────────────── -->
+  <footer style="background: var(--bg-card-solid); border-top: 1px solid var(--border-subtle); padding: 3rem 0 1.5rem; margin-top: auto;">
+    <div class="container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+      <div>
+        <div class="logo" style="margin-bottom: 1rem;">
+          <div class="logo-icon">📱</div>
+          <div class="logo-text">Phone<span>store</span></div>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Hệ thống bán lẻ điện thoại di động, máy tính bảng và phụ kiện công nghệ chính hãng hàng đầu Việt Nam.</p>
+      </div>
+
+      <div>
+        <h4 style="font-family: var(--font-heading); margin-bottom: 1rem;">Chính sách & Dịch vụ</h4>
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
+          <li><a href="#">Bảo hành 1 đổi 1 trong 30 ngày</a></li>
+          <li><a href="#">Giao hàng hỏa tốc 2 giờ</a></li>
+          <li><a href="#">Trả góp 0% qua thẻ tín dụng</a></li>
+          <li><a href="#">Chính sách bảo mật thông tin</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 style="font-family: var(--font-heading); margin-bottom: 1rem;">Hotline hỗ trợ</h4>
+        <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary);">1900 888 999</div>
+        <p style="color: var(--text-subtle); font-size: 0.85rem; margin-top: 0.25rem;">(Tư vấn miễn phí 8:00 - 21:30 hàng ngày)</p>
+      </div>
+    </div>
+    
+    <div style="border-top: 1px solid var(--border-subtle); text-align: center; padding-top: 1.5rem; color: var(--text-subtle); font-size: 0.85rem;">
+      © 2026 Phonestore. Tất cả quyền được bảo lưu. Đồ án tốt nghiệp hệ thống E-Commerce Node.js Express.
+    </div>
+  </footer>
+
+  <!-- ── Floating AI Chatbot Button & Drawer ────────────────────────────── -->
+  <button id="chatbotFab" class="chatbot-fab" title="Trợ lý AI tư vấn mua sắm">🤖</button>
+
+  <div id="chatDrawer" class="drawer">
+    <div class="drawer-header">
+      <div class="drawer-title">🤖 Trợ Lý AI Phonestore</div>
+      <button id="closeChatBtn" class="btn-icon">✕</button>
+    </div>
+    <div id="chatMessages" class="drawer-body" style="display: flex; flex-direction: column;">
+      <div class="chat-bubble bot">
+        Xin chào! Tôi là Trợ lý AI Phonestore. Bạn cần tìm điện thoại theo tầm giá hay thương hiệu nào?
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <form id="chatForm" style="display: flex; gap: 0.5rem;">
+        <input type="text" name="chatMessageInput" class="search-input" style="border-radius: var(--radius-sm);" placeholder="Hỏi AI về iPhone, Galaxy..." required />
+        <button type="submit" class="btn btn-primary">Gửi</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Slide-over Cart Drawer ────────────────────────────────────────── -->
+  <div id="drawerOverlay" class="overlay"></div>
+  
+  <div id="cartDrawer" class="drawer">
+    <div class="drawer-header">
+      <div class="drawer-title">🛒 Giỏ Hàng Của Bạn</div>
+      <button id="closeCartBtn" class="btn-icon">✕</button>
+    </div>
+    <div id="cartBody" class="drawer-body">
+      <!-- Dynamic Cart Items -->
+    </div>
+    <div class="drawer-footer">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <span style="font-weight: 600; color: var(--text-muted);">Tổng thanh toán:</span>
+        <span id="cartTotalAmount" style="font-size: 1.35rem; font-weight: 800; color: var(--primary);">0 đ</span>
+      </div>
+      <button id="checkoutBtn" class="btn btn-primary" style="width: 100%; padding: 0.85rem;">
+        Tiến hành đặt hàng
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Global Modals & Overlays ─────────────────────────────────────── -->
+  <div id="modalOverlay" class="overlay"></div>
+
+  <!-- Product Detail Modal -->
+  <div id="productDetailModal" class="modal">
+    <div class="modal-header">
+      <h3 style="font-family: var(--font-heading);">Chi tiết sản phẩm</h3>
+      <button onclick="document.getElementById('productDetailModal').classList.remove('active'); document.getElementById('modalOverlay').classList.remove('active');" class="btn-icon">✕</button>
+    </div>
+    <div id="modalBody" class="modal-body">
+      <!-- Injected dynamically by product-detail.js -->
+    </div>
+  </div>
+
+  <!-- Checkout Modal -->
+  <div id="checkoutModal" class="modal" style="max-width: 540px;">
+    <div class="modal-header">
+      <h3 style="font-family: var(--font-heading);">Xác Nhận Đặt Hàng</h3>
+      <button id="closeCheckoutModalBtn" class="btn-icon">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="checkoutForm">
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem;">Họ và tên người nhận *</label>
+          <input type="text" name="customerName" class="search-input" style="border-radius: var(--radius-sm);" placeholder="Nguyễn Văn A" required />
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem;">Số điện thoại liên hệ *</label>
+          <input type="tel" name="customerPhone" class="search-input" style="border-radius: var(--radius-sm);" placeholder="0901234567" required />
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem;">Địa chỉ giao hàng *</label>
+          <textarea name="shippingAddress" class="search-input" style="border-radius: var(--radius-sm); height: 70px; resize: none;" placeholder="Số nhà, Tên đường, Phường/Xã, Quận/Huyện" required></textarea>
+        </div>
+        <div style="margin-bottom: 1.5rem;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem;">Phương thức thanh toán</label>
+          <div style="display: flex; gap: 1rem;">
+            <label class="checkbox-item" style="background: var(--bg-dark); padding: 0.6rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); flex: 1;">
+              <input type="radio" name="paymentMethod" value="cod" checked /> Thanh toán khi nhận hàng (COD)
+            </label>
+            <label class="checkbox-item" style="background: var(--bg-dark); padding: 0.6rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); flex: 1;">
+              <input type="radio" name="paymentMethod" value="vnpay" /> VNPay QR Code
+            </label>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+          <span>Tổng đơn hàng:</span>
+          <strong id="checkoutTotalAmount" style="font-size: 1.4rem; color: var(--primary);">0 đ</strong>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem;">Xác nhận đặt hàng</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Auth Modal (Login / Register) -->
+  <div id="authModal" class="modal" style="max-width: 440px;">
+    <div class="modal-header">
+      <div style="display: flex; gap: 1rem;">
+        <button id="tabLoginBtn" class="btn-icon active" style="width: auto; padding: 0 1rem; height: 36px;">Đăng Nhập</button>
+        <button id="tabRegisterBtn" class="btn-icon" style="width: auto; padding: 0 1rem; height: 36px;">Đăng Ký</button>
+      </div>
+      <button id="closeAuthModalBtn" class="btn-icon">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="loginForm">
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem;">Email</label>
+          <input type="email" name="loginEmail" class="search-input" style="border-radius: var(--radius-sm);" placeholder="email@domain.com" required />
+        </div>
+        <div style="margin-bottom: 1.5rem;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem;">Mật khẩu</label>
+          <input type="password" name="loginPassword" class="search-input" style="border-radius: var(--radius-sm);" placeholder="••••••••" required />
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem;">Đăng Nhập</button>
+      </form>
+
+      <form id="registerForm" style="display: none;">
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem;">Họ và tên</label>
+          <input type="text" name="regName" class="search-input" style="border-radius: var(--radius-sm);" placeholder="Nguyễn Văn A" required />
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem;">Email</label>
+          <input type="email" name="regEmail" class="search-input" style="border-radius: var(--radius-sm);" placeholder="email@domain.com" required />
+        </div>
+        <div style="margin-bottom: 1.5rem;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem;">Mật khẩu</label>
+          <input type="password" name="regPassword" class="search-input" style="border-radius: var(--radius-sm);" placeholder="Mật khẩu tối thiểu 6 ký tự" required />
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem;">Tạo Tài Khoản</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- User Profile Modal -->
+  <div id="userProfileModal" class="modal" style="max-width: 440px;">
+    <div class="modal-header">
+      <h3 style="font-family: var(--font-heading);">Tài Khoản Của Tôi</h3>
+      <button id="closeProfileModalBtn" class="btn-icon">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <div style="width: 70px; height: 70px; border-radius: var(--radius-full); background: var(--primary); color: #fff; font-size: 2rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem;">👤</div>
+        <h3 id="profileUserName">Tên Người Dùng</h3>
+        <p id="profileUserEmail" style="color: var(--text-muted); font-size: 0.9rem;"></p>
+        <span id="profileUserRole" class="badge badge-accent" style="margin-top: 0.5rem;">Khách hàng</span>
+      </div>
+      <button id="logoutBtn" class="btn btn-secondary" style="width: 100%; color: var(--danger); border-color: rgba(244,63,94,0.3);">
+        Đăng xuất tài khoản
+      </button>
+    </div>
+  </div>
+
+  <!-- Admin Modal -->
+  <div id="adminModal" class="modal" style="max-width: 900px;">
+    <div class="modal-header">
+      <h3 style="font-family: var(--font-heading);">⚡ Quản Trị Hệ Thống Phonestore</h3>
+      <button id="closeAdminModalBtn" class="btn-icon">✕</button>
+    </div>
+    <div id="adminModalBody" class="modal-body">
+      <!-- Admin analytics injected here -->
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- App Bootstrap JS -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

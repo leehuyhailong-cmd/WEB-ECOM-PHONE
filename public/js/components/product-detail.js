@@ -1,0 +1,102 @@
+/**
+ * Product Detail Modal Component
+ */
+
+import { API } from '../api.js';
+
+export const ProductDetailComponent = {
+  async open(slugOrId, appStore) {
+    this.appStore = appStore;
+    const modalEl = document.getElementById('productDetailModal');
+    const overlayEl = document.getElementById('modalOverlay');
+    const bodyEl = document.getElementById('modalBody');
+
+    if (!modalEl || !overlayEl || !bodyEl) return;
+
+    bodyEl.innerHTML = `<div style="text-align: center; padding: 3rem;">Đang tải thông tin sản phẩm...</div>`;
+    modalEl.classList.add('active');
+    overlayEl.classList.add('active');
+
+    const product = await API.getProductBySlugOrId(slugOrId);
+    if (!product) {
+      bodyEl.innerHTML = `<div style="text-align: center; padding: 3rem; color: var(--danger);">Không tìm thấy thông tin sản phẩm.</div>`;
+      return;
+    }
+
+    this.currentProduct = product;
+    this.render(product, bodyEl);
+  },
+
+  close() {
+    document.getElementById('productDetailModal')?.classList.remove('active');
+    document.getElementById('modalOverlay')?.classList.remove('active');
+  },
+
+  render(p, container) {
+    const primaryImg = p.images?.[0]?.url || 'https://via.placeholder.com/400';
+    const formatVND = (num) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
+
+    const specsHtml = p.specs ? Object.entries(p.specs).map(([key, val]) => `
+      <tr>
+        <td style="font-weight: 600; color: var(--text-muted); padding: 0.5rem 0; width: 35%; text-transform: uppercase; font-size: 0.8rem;">${key}</td>
+        <td style="padding: 0.5rem 0; color: var(--text-main); font-weight: 500;">${val}</td>
+      </tr>
+    `).join('') : '<tr><td>Chưa có thông số kỹ thuật</td></tr>';
+
+    container.innerHTML = `
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start;">
+        <div>
+          <div style="background: rgba(15,23,42,0.6); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); text-align: center;">
+            <img src="${primaryImg}" id="mainDetailImg" style="max-height: 320px; margin: 0 auto; object-fit: contain;" alt="${p.name}" />
+          </div>
+        </div>
+
+        <div>
+          <span class="badge badge-primary">${p.brand}</span>
+          <h2 style="font-family: var(--font-heading); font-size: 1.75rem; margin: 0.5rem 0 1rem;">${p.name}</h2>
+          
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; color: var(--warning);">
+            ★ <strong style="color: var(--text-main);">${p.avgRating || 5.0}</strong>
+            <span style="color: var(--text-subtle);">(${p.reviewCount || 12} đánh giá)</span>
+            <span style="margin: 0 0.5rem; color: var(--border-subtle);">|</span>
+            <span style="color: var(--success); font-size: 0.9rem; font-weight: 600;">✓ Còn hàng (${p.stock} sản phẩm)</span>
+          </div>
+
+          <div style="font-size: 1.85rem; font-weight: 800; color: var(--primary); margin-bottom: 1.25rem;">
+            ${formatVND(p.price)}
+            ${p.comparePrice > p.price ? `<span style="font-size: 1.1rem; color: var(--text-subtle); text-decoration: line-through; margin-left: 0.5rem;">${formatVND(p.comparePrice)}</span>` : ''}
+          </div>
+
+          <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">${p.description || 'Sản phẩm chính hãng đầy đủ tem bảo hành 12 tháng.'}</p>
+
+          <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+            <button class="btn btn-primary" id="modalAddToCartBtn" style="flex: 1; padding: 0.85rem;">
+              🛒 Thêm vào giỏ hàng
+            </button>
+            <button class="btn btn-secondary" id="modalBuyNowBtn" style="padding: 0.85rem;">
+              ⚡ Mua ngay
+            </button>
+          </div>
+
+          <div style="border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
+            <h4 style="font-family: var(--font-heading); font-size: 1.1rem; margin-bottom: 0.75rem;">Thông số kỹ thuật</h4>
+            <table style="width: 100%; font-size: 0.9rem; border-collapse: collapse;">
+              ${specsHtml}
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('modalAddToCartBtn')?.addEventListener('click', () => {
+      this.appStore.addToCart(p);
+      this.close();
+    });
+
+    document.getElementById('modalBuyNowBtn')?.addEventListener('click', () => {
+      this.appStore.addToCart(p);
+      this.close();
+      this.appStore.openCartDrawer();
+    });
+  }
+};

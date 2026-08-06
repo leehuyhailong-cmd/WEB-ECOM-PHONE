@@ -1,0 +1,4 @@
+'use strict';
+// Models layer — Phase 1
+// Mongoose schemas and index definitions.
+// 7 models: User, Product, Order, Cart, Review, ChatSession, UserEvent

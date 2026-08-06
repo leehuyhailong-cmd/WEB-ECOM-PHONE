@@ -1,0 +1,4 @@
+'use strict';
+// Phase 4 — Orders Module
+// Files to create: order.router.js, order.controller.js, order.service.js, order.validator.js
+// Integrations: VNPay Sandbox, MoMo Sandbox payment gateways
