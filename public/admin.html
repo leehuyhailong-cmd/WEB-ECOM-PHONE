@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Trang quản trị hệ thống Phonestore — Dashboard quản lý sản phẩm, đơn hàng, người dùng." />
+  <title>Admin Dashboard — Phonestore</title>
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+
+  <!-- ── Sidebar ─────────────────────────────────────────────────────────── -->
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">📱</div>
+      <div>
+        <div class="sidebar-logo-text">Phone<span>store</span></div>
+        <div style="font-size:0.7rem;color:var(--text-subtle);font-weight:600;">Admin Dashboard</div>
+      </div>
+      <span class="sidebar-badge">Admin</span>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Tổng quan</div>
+      <div class="sidebar-nav-item active" data-section="dashboard" onclick="AdminApp.switchSection('dashboard')">
+        <span class="nav-icon">📊</span> Dashboard
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Quản lý</div>
+      <div class="sidebar-nav-item" data-section="products" onclick="AdminApp.switchSection('products')">
+        <span class="nav-icon">📦</span> Sản phẩm
+        <span class="nav-badge" id="productCountBadge">16</span>
+      </div>
+      <div class="sidebar-nav-item" data-section="orders" onclick="AdminApp.switchSection('orders')">
+        <span class="nav-icon">🛍️</span> Đơn hàng
+        <span class="nav-badge">342</span>
+      </div>
+      <div class="sidebar-nav-item" data-section="users" onclick="AdminApp.switchSection('users')">
+        <span class="nav-icon">👥</span> Người dùng
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Hệ thống</div>
+      <div class="sidebar-nav-item" onclick="window.open('/','_self')">
+        <span class="nav-icon">🏪</span> Xem cửa hàng
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar">👤</div>
+        <div style="flex:1;overflow:hidden;">
+          <div class="sidebar-user-name" id="adminUserName">Quản trị viên</div>
+          <div class="sidebar-user-role">Admin</div>
+        </div>
+        <button class="btn-logout" title="Đăng xuất" onclick="AdminApp.logout()">🚪</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main Content ─────────────────────────────────────────────────────── -->
+  <main class="admin-main">
+
+    <!-- Topbar -->
+    <div class="admin-topbar">
+      <div style="flex:1;">
+        <div class="topbar-title" id="topbarTitle">Dashboard Tổng Quan</div>
+        <div class="topbar-subtitle" id="topbarSubtitle">Chào mừng trở lại, hệ thống đang hoạt động ổn định</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn-topbar btn-topbar-secondary" onclick="AdminApp.refreshData()">🔄 Làm mới</button>
+        <button class="btn-topbar btn-topbar-primary" id="topbarActionBtn" onclick="AdminApp.openAddProduct()">+ Thêm sản phẩm</button>
+      </div>
+    </div>
+
+    <div class="admin-content">
+
+      <!-- ── Section: Dashboard ─────────────────────────────────────────── -->
+      <section class="admin-section active" id="section-dashboard">
+        <!-- Stats -->
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card"><div class="stat-label">Doanh thu</div><div class="stat-value skeleton" style="height:2rem;width:60%;"></div><span class="stat-icon">💰</span></div>
+          <div class="stat-card"><div class="stat-label">Đơn hàng</div><div class="stat-value skeleton" style="height:2rem;width:40%;"></div><span class="stat-icon">📦</span></div>
+          <div class="stat-card"><div class="stat-label">Sản phẩm</div><div class="stat-value skeleton" style="height:2rem;width:40%;"></div><span class="stat-icon">🏷️</span></div>
+          <div class="stat-card"><div class="stat-label">Người dùng</div><div class="stat-value skeleton" style="height:2rem;width:50%;"></div><span class="stat-icon">👥</span></div>
+        </div>
+
+        <!-- Recent Orders -->
+        <div class="panel-card">
+          <div class="panel-card-header">
+            <div class="panel-card-title">📋 Đơn hàng gần đây</div>
+            <button class="btn-topbar btn-topbar-secondary" onclick="AdminApp.switchSection('orders')">Xem tất cả →</button>
+          </div>
+          <div class="panel-card-body no-pad">
+            <table class="admin-table" id="recentOrdersTable">
+              <thead>
+                <tr>
+                  <th>Mã đơn</th>
+                  <th>Khách hàng</th>
+                  <th>Tổng tiền</th>
+                  <th>Trạng thái</th>
+                  <th>Thời gian</th>
+                </tr>
+              </thead>
+              <tbody id="recentOrdersBody">
+                <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">Đang tải...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section: Products ──────────────────────────────────────────── -->
+      <section class="admin-section" id="section-products">
+        <div class="panel-card">
+          <div class="panel-card-header">
+            <div class="panel-card-title">📦 Danh sách sản phẩm</div>
+            <div style="display:flex;gap:0.75rem;align-items:center;">
+              <div class="search-bar" style="width:240px;">
+                <span>🔍</span>
+                <input type="text" id="productSearch" placeholder="Tìm sản phẩm..." oninput="AdminApp.filterProducts(this.value)" />
+              </div>
+              <select class="admin-select" id="productCatFilter" onchange="AdminApp.filterProducts()">
+                <option value="">Tất cả danh mục</option>
+                <option value="smartphone">Smartphone</option>
+                <option value="tablet">Tablet</option>
+                <option value="smartwatch">Smartwatch</option>
+                <option value="accessory">Phụ kiện</option>
+              </select>
+              <button class="btn-topbar btn-topbar-primary" onclick="AdminApp.openAddProduct()">+ Thêm mới</button>
+            </div>
+          </div>
+          <div class="panel-card-body no-pad">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Ảnh</th>
+                  <th>Tên sản phẩm</th>
+                  <th>Danh mục</th>
+                  <th>Giá bán</th>
+                  <th>Tồn kho</th>
+                  <th>Đã bán</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="productsTableBody">
+                <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">Đang tải sản phẩm...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section: Orders ────────────────────────────────────────────── -->
+      <section class="admin-section" id="section-orders">
+        <div class="panel-card">
+          <div class="panel-card-header">
+            <div class="panel-card-title">🛍️ Quản lý đơn hàng</div>
+            <select class="admin-select" id="orderStatusFilter" onchange="AdminApp.filterOrders()">
+              <option value="">Tất cả trạng thái</option>
+              <option value="Pending">Chờ xử lý</option>
+              <option value="Processing">Đang xử lý</option>
+              <option value="Shipping">Đang giao</option>
+              <option value="Completed">Hoàn thành</option>
+            </select>
+          </div>
+          <div class="panel-card-body no-pad">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Mã đơn</th>
+                  <th>Khách hàng</th>
+                  <th>Tổng tiền</th>
+                  <th>Trạng thái</th>
+                  <th>Thời gian</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="ordersTableBody">
+                <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">Đang tải đơn hàng...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section: Users ─────────────────────────────────────────────── -->
+      <section class="admin-section" id="section-users">
+        <div class="panel-card">
+          <div class="panel-card-header">
+            <div class="panel-card-title">👥 Quản lý người dùng</div>
+          </div>
+          <div class="panel-card-body no-pad">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Tên</th>
+                  <th>Email</th>
+                  <th>Vai trò</th>
+                  <th>Đơn hàng</th>
+                  <th>Ngày tham gia</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">Đang tải người dùng...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /admin-content -->
+  </main>
+
+  <!-- ── Modal: Add/Edit Product ─────────────────────────────────────────── -->
+  <div class="modal-overlay" id="productModalOverlay" onclick="AdminApp.closeProductModal()"></div>
+  <div class="modal-box" id="productModal">
+    <div class="modal-header">
+      <div class="modal-title" id="productModalTitle">Thêm sản phẩm mới</div>
+      <button class="modal-close" onclick="AdminApp.closeProductModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="productForm">
+        <input type="hidden" id="editProductId" />
+        <div class="form-row">
+          <label class="form-label">Tên sản phẩm *</label>
+          <input type="text" class="admin-input" id="pName" placeholder="VD: iPhone 16 Pro Max 256GB" required />
+        </div>
+        <div class="form-row-2">
+          <div class="form-row">
+            <label class="form-label">Thương hiệu *</label>
+            <select class="admin-input admin-select" id="pBrand" style="width:100%;">
+              <option value="Apple">Apple</option>
+              <option value="Samsung">Samsung</option>
+              <option value="Xiaomi">Xiaomi</option>
+              <option value="OPPO">OPPO</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label class="form-label">Danh mục *</label>
+            <select class="admin-input admin-select" id="pCategory" style="width:100%;">
+              <option value="smartphone">Smartphone</option>
+              <option value="tablet">Tablet</option>
+              <option value="smartwatch">Smartwatch</option>
+              <option value="accessory">Phụ kiện</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-row">
+            <label class="form-label">Giá bán (VNĐ) *</label>
+            <input type="number" class="admin-input" id="pPrice" placeholder="VD: 34990000" min="0" required />
+          </div>
+          <div class="form-row">
+            <label class="form-label">Giá gốc (VNĐ)</label>
+            <input type="number" class="admin-input" id="pComparePrice" placeholder="VD: 36990000" min="0" />
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">URL ảnh sản phẩm</label>
+          <input type="text" class="admin-input" id="pImage" placeholder="https://... hoặc /images/ten-anh.png" />
+        </div>
+        <div class="form-row-2">
+          <div class="form-row">
+            <label class="form-label">Tồn kho</label>
+            <input type="number" class="admin-input" id="pStock" placeholder="0" min="0" />
+          </div>
+          <div class="form-row">
+            <label class="form-label">Đã bán</label>
+            <input type="number" class="admin-input" id="pSold" placeholder="0" min="0" />
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Mô tả sản phẩm</label>
+          <textarea class="admin-input" id="pDesc" rows="3" placeholder="Mô tả ngắn về sản phẩm..." style="resize:vertical;"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="AdminApp.closeProductModal()">Hủy</button>
+      <button class="btn-submit" onclick="AdminApp.saveProduct()">💾 Lưu sản phẩm</button>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script type="module" src="js/admin-app.js"></script>
+</body>
+</html>

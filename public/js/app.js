@@ -1,13 +1,12 @@
 /**
  * Main Application Entry Point & State Store
+ * Auth/Admin now use dedicated pages: /auth.html and /admin.html
  */
 
 import { CatalogComponent } from './components/catalog.js';
 import { ProductDetailComponent } from './components/product-detail.js';
 import { CartCheckoutComponent } from './components/cart-checkout.js';
-import { AuthUserComponent } from './components/auth-user.js';
 import { ChatbotComponent } from './components/chatbot.js';
-import { AdminDashboardComponent } from './components/admin-dashboard.js';
 
 class AppStore {
   constructor() {
@@ -62,7 +61,9 @@ class AppStore {
       localStorage.setItem('phonestore_user', JSON.stringify(user));
     } else {
       localStorage.removeItem('phonestore_user');
+      localStorage.removeItem('phonestore_token');
     }
+    this.updateNavbarUserState();
   }
 
   openProductModal(slugOrId) {
@@ -73,16 +74,47 @@ class AppStore {
     CartCheckoutComponent.openCart();
   }
 
+  // ── Navbar: show user info or login button ─────────────────────────────
+  updateNavbarUserState() {
+    const user = this.state.currentUser;
+    const greeting = document.getElementById('userGreeting');
+    const userBtn = document.getElementById('userAccountBtn');
+    const adminBtn = document.getElementById('adminBtn');
+
+    if (user) {
+      // Show greeting + name
+      if (greeting) {
+        greeting.style.display = 'flex';
+        greeting.innerHTML = `
+          <span style="font-size:1rem;">👤</span>
+          <span style="color:var(--text-main);font-weight:600;">${user.name || user.email}</span>
+          <button onclick="window.appStore.logout()" style="background:rgba(244,63,94,0.15);border:1px solid rgba(244,63,94,0.3);color:var(--danger);border-radius:6px;padding:0.2rem 0.65rem;font-size:0.75rem;font-weight:600;cursor:pointer;">Đăng xuất</button>
+        `;
+      }
+      if (userBtn) userBtn.title = `Tài khoản: ${user.email}`;
+      // Show admin button only for admins
+      if (adminBtn) adminBtn.style.display = user.role === 'admin' ? 'inline-flex' : 'none';
+    } else {
+      if (greeting) greeting.style.display = 'none';
+      if (adminBtn) adminBtn.style.display = 'none';
+    }
+  }
+
+  logout() {
+    this.setCurrentUser(null);
+    this.showToast('Đã đăng xuất thành công', 'info');
+  }
+
   showToast(message, type = 'info') {
     const container = document.getElementById('toastContainer');
     if (!container) return;
 
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    
+
     let icon = 'ℹ️';
     if (type === 'success') icon = '✅';
-    if (type === 'error') icon = '❌';
+    if (type === 'error')   icon = '❌';
     if (type === 'warning') icon = '⚠️';
 
     toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
@@ -104,19 +136,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialise components
   await CatalogComponent.init(app);
   CartCheckoutComponent.init(app);
-  AuthUserComponent.init(app);
   ChatbotComponent.init(app);
-  AdminDashboardComponent.init(app);
+
+  // ── Nav button handlers ──────────────────────────────────────────────────
+  // 👤 User button → go to auth page (or could open profile dropdown)
+  document.getElementById('userAccountBtn')?.addEventListener('click', () => {
+    if (app.state.currentUser) {
+      // If logged in: show a quick info or redirect to profile
+      app.showToast(`Đang đăng nhập với: ${app.state.currentUser.email}`, 'info');
+    } else {
+      window.location.href = '/auth.html';
+    }
+  });
+
+  // ⚡ Admin button → go to admin page
+  document.getElementById('adminBtn')?.addEventListener('click', () => {
+    window.location.href = '/admin.html';
+  });
 
   // Close modals when clicking overlay
   document.getElementById('modalOverlay')?.addEventListener('click', () => {
     ProductDetailComponent.close();
     CartCheckoutComponent.closeCheckoutModal();
-    AuthUserComponent.closeAuthModal();
-    AuthUserComponent.closeProfileModal();
-    AdminDashboardComponent.close();
   });
 
-  // Render initial cart state badge
+  // Render initial state
   CartCheckoutComponent.renderCart();
+  app.updateNavbarUserState();
 });

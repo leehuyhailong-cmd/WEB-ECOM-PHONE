@@ -30,7 +30,8 @@
       </div>
 
       <div class="nav-actions">
-        <button id="adminBtn" class="btn-icon" title="Quản trị hệ thống">⚡</button>
+        <div id="userGreeting" style="display:none; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--text-muted);"></div>
+        <button id="adminBtn" class="btn-icon" title="Quản trị hệ thống" style="display:none;">⚡</button>
         <button id="userAccountBtn" class="btn-icon" title="Tài khoản cá nhân">👤</button>
         <button id="cartBtn" class="btn-icon" title="Giỏ hàng">
           🛒
@@ -272,75 +273,9 @@
     </div>
   </div>
 
-  <!-- Auth Modal (Login / Register) -->
-  <div id="authModal" class="modal" style="max-width: 440px;">
-    <div class="modal-header">
-      <div style="display: flex; gap: 1rem;">
-        <button id="tabLoginBtn" class="btn-icon active" style="width: auto; padding: 0 1rem; height: 36px;">Đăng Nhập</button>
-        <button id="tabRegisterBtn" class="btn-icon" style="width: auto; padding: 0 1rem; height: 36px;">Đăng Ký</button>
-      </div>
-      <button id="closeAuthModalBtn" class="btn-icon">✕</button>
-    </div>
-    <div class="modal-body">
-      <form id="loginForm">
-        <div style="margin-bottom: 1rem;">
-          <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem;">Email</label>
-          <input type="email" name="loginEmail" class="search-input" style="border-radius: var(--radius-sm);" placeholder="email@domain.com" required />
-        </div>
-        <div style="margin-bottom: 1.5rem;">
-          <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem;">Mật khẩu</label>
-          <input type="password" name="loginPassword" class="search-input" style="border-radius: var(--radius-sm);" placeholder="••••••••" required />
-        </div>
-        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem;">Đăng Nhập</button>
-      </form>
+  <!-- Auth & Profile modals replaced by dedicated pages: /auth.html & /admin.html -->
 
-      <form id="registerForm" style="display: none;">
-        <div style="margin-bottom: 1rem;">
-          <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem;">Họ và tên</label>
-          <input type="text" name="regName" class="search-input" style="border-radius: var(--radius-sm);" placeholder="Nguyễn Văn A" required />
-        </div>
-        <div style="margin-bottom: 1rem;">
-          <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem;">Email</label>
-          <input type="email" name="regEmail" class="search-input" style="border-radius: var(--radius-sm);" placeholder="email@domain.com" required />
-        </div>
-        <div style="margin-bottom: 1.5rem;">
-          <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem;">Mật khẩu</label>
-          <input type="password" name="regPassword" class="search-input" style="border-radius: var(--radius-sm);" placeholder="Mật khẩu tối thiểu 6 ký tự" required />
-        </div>
-        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem;">Tạo Tài Khoản</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- User Profile Modal -->
-  <div id="userProfileModal" class="modal" style="max-width: 440px;">
-    <div class="modal-header">
-      <h3 style="font-family: var(--font-heading);">Tài Khoản Của Tôi</h3>
-      <button id="closeProfileModalBtn" class="btn-icon">✕</button>
-    </div>
-    <div class="modal-body">
-      <div style="text-align: center; margin-bottom: 1.5rem;">
-        <div style="width: 70px; height: 70px; border-radius: var(--radius-full); background: var(--primary); color: #fff; font-size: 2rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem;">👤</div>
-        <h3 id="profileUserName">Tên Người Dùng</h3>
-        <p id="profileUserEmail" style="color: var(--text-muted); font-size: 0.9rem;"></p>
-        <span id="profileUserRole" class="badge badge-accent" style="margin-top: 0.5rem;">Khách hàng</span>
-      </div>
-      <button id="logoutBtn" class="btn btn-secondary" style="width: 100%; color: var(--danger); border-color: rgba(244,63,94,0.3);">
-        Đăng xuất tài khoản
-      </button>
-    </div>
-  </div>
-
-  <!-- Admin Modal -->
-  <div id="adminModal" class="modal" style="max-width: 900px;">
-    <div class="modal-header">
-      <h3 style="font-family: var(--font-heading);">⚡ Quản Trị Hệ Thống Phonestore</h3>
-      <button id="closeAdminModalBtn" class="btn-icon">✕</button>
-    </div>
-    <div id="adminModalBody" class="modal-body">
-      <!-- Admin analytics injected here -->
-    </div>
-  </div>
+  <!-- Admin page is at /admin.html -->
 
   <!-- Toast Notification Container -->
   <div id="toastContainer" class="toast-container"></div>

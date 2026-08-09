@@ -5,8 +5,9 @@
 
 const API_BASE = '/api';
 
-// Realistic mock data fallback for immediate UI rendering
+// ── Realistic Mock Product Data ──────────────────────────────────────────────
 const MOCK_PRODUCTS = [
+  // ── SMARTPHONES ──────────────────────────────────────────────────────────
   {
     _id: 'p1',
     name: 'iPhone 16 Pro Max 256GB',
@@ -20,12 +21,29 @@ const MOCK_PRODUCTS = [
     avgRating: 4.9,
     reviewCount: 38,
     isFeatured: true,
-    images: [{ url: 'https://res.cloudinary.com/demo/image/upload/v1689000000/iphone16pro.png', isPrimary: true }],
+    images: [{ url: 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-16-pro-max-titan-sa-mac_4.png', isPrimary: true }],
     specs: { ram: '8GB', storage: '256GB', display: '6.9 inch Super Retina XDR OLED 120Hz', battery: '4685 mAh', os: 'iOS 18', processor: 'Apple A18 Pro', camera: '48MP Main + 48MP Ultrawide + 12MP Telephoto 5x', color: 'Titan Sa Mạc' },
     description: 'iPhone 16 Pro Max sở hữu khung viền Titan chuẩn hàng không vũ trụ, chip A18 Pro đột phá cùng nút bấm Camera Control thế hệ mới.'
   },
   {
     _id: 'p2',
+    name: 'iPhone 15 Pro 128GB',
+    slug: 'iphone-15-pro-128gb',
+    brand: 'Apple',
+    category: 'smartphone',
+    price: 27990000,
+    comparePrice: 29990000,
+    stock: 20,
+    soldCount: 210,
+    avgRating: 4.8,
+    reviewCount: 56,
+    isFeatured: false,
+    images: [{ url: 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-15-pro-128gb-titan-den_2.png', isPrimary: true }],
+    specs: { ram: '8GB', storage: '128GB', display: '6.1 inch Super Retina XDR OLED 120Hz ProMotion', battery: '3274 mAh', os: 'iOS 17', processor: 'Apple A17 Pro', camera: '48MP Main + 12MP Ultrawide + 12MP Telephoto 3x', color: 'Titan Đen' },
+    description: 'iPhone 15 Pro với thiết kế Titan nhẹ hơn, nút Action Button đa năng và chip A17 Pro mạnh mẽ nhất từ trước đến nay.'
+  },
+  {
+    _id: 'p3',
     name: 'Samsung Galaxy S24 Ultra 512GB',
     slug: 'samsung-galaxy-s24-ultra-512gb',
     brand: 'Samsung',
@@ -37,12 +55,29 @@ const MOCK_PRODUCTS = [
     avgRating: 4.8,
     reviewCount: 29,
     isFeatured: true,
-    images: [{ url: 'https://res.cloudinary.com/demo/image/upload/v1689000000/s24ultra.png', isPrimary: true }],
+    images: [{ url: 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/a/samsung-galaxy-s24-ultra-512gb-titan-den_3.png', isPrimary: true }],
     specs: { ram: '12GB', storage: '512GB', display: '6.8 inch Dynamic AMOLED 2X 120Hz', battery: '5000 mAh', os: 'Android 14 (One UI 6.1)', processor: 'Snapdragon 8 Gen 3 for Galaxy', camera: '200MP + 50MP + 12MP + 10MP', color: 'Xám Titan' },
     description: 'Trải nghiệm đỉnh cao công nghệ AI di động với Galaxy AI, camera 200MP Zoom mắt thần đêm và bút S-Pen tích hợp tiện lợi.'
   },
   {
-    _id: 'p3',
+    _id: 'p4',
+    name: 'Samsung Galaxy S24+ 256GB',
+    slug: 'samsung-galaxy-s24-plus-256gb',
+    brand: 'Samsung',
+    category: 'smartphone',
+    price: 22990000,
+    comparePrice: 24990000,
+    stock: 15,
+    soldCount: 73,
+    avgRating: 4.7,
+    reviewCount: 21,
+    isFeatured: false,
+    images: [{ url: 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/a/samsung-galaxy-s24-256gb-den_2.png', isPrimary: true }],
+    specs: { ram: '12GB', storage: '256GB', display: '6.7 inch Dynamic AMOLED 2X 120Hz', battery: '4900 mAh', os: 'Android 14', processor: 'Snapdragon 8 Gen 3', camera: '50MP + 12MP + 10MP', color: 'Đen Onyx' },
+    description: 'Màn hình tràn viền đẹp mắt, pin lớn 4900mAh với sạc nhanh 45W và Galaxy AI thông minh.'
+  },
+  {
+    _id: 'p5',
     name: 'Xiaomi 14 Ultra 16GB/512GB Leica',
     slug: 'xiaomi-14-ultra-16gb-512gb',
     brand: 'Xiaomi',
@@ -54,12 +89,47 @@ const MOCK_PRODUCTS = [
     avgRating: 4.7,
     reviewCount: 19,
     isFeatured: true,
-    images: [{ url: 'https://res.cloudinary.com/demo/image/upload/v1689000000/xiaomi14u.png', isPrimary: true }],
+    images: [{ url: 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/x/i/xiaomi-14-ultra-den.png', isPrimary: true }],
     specs: { ram: '16GB', storage: '512GB', display: '6.73 inch LTPO AMOLED 120Hz 3000nits', battery: '5000 mAh (Sạc 90W)', os: 'Xiaomi HyperOS', processor: 'Snapdragon 8 Gen 3', camera: '4 Camera Leica 50MP Cảm biến 1-inch', color: 'Đen Da' },
     description: 'Kiệt tác nhiếp ảnh di động đồng chế tác cùng Leica, trang bị bộ 4 ống kính quang học cao cấp nhất.'
   },
   {
-    _id: 'p4',
+    _id: 'p6',
+    name: 'OPPO Reno 11 Pro 5G 12GB/256GB',
+    slug: 'oppo-reno-11-pro-5g',
+    brand: 'OPPO',
+    category: 'smartphone',
+    price: 10990000,
+    comparePrice: 12490000,
+    stock: 22,
+    soldCount: 87,
+    avgRating: 4.6,
+    reviewCount: 31,
+    isFeatured: false,
+    images: [{ url: 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/o/p/oppo-reno11-pro-xanh-duong-dem.png', isPrimary: true }],
+    specs: { ram: '12GB', storage: '256GB', display: '6.7 inch AMOLED 120Hz 2412x1080', battery: '4600 mAh (Sạc 80W)', os: 'Android 14 (ColorOS 14)', processor: 'MediaTek Dimensity 8200', camera: '50MP Sony LYT-600 + 32MP Telephoto 2x + 8MP', color: 'Xanh Dương Đêm' },
+    description: 'Thiết kế sang trọng đặc trưng OPPO, camera chân dung hàng đầu phân khúc và sạc siêu tốc 80W.'
+  },
+  {
+    _id: 'p7',
+    name: 'Xiaomi Redmi Note 13 Pro+ 5G 12GB/256GB',
+    slug: 'xiaomi-redmi-note-13-pro-plus-5g',
+    brand: 'Xiaomi',
+    category: 'smartphone',
+    price: 8990000,
+    comparePrice: 9990000,
+    stock: 35,
+    soldCount: 165,
+    avgRating: 4.6,
+    reviewCount: 48,
+    isFeatured: false,
+    images: [{ url: 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/r/e/redmi-note-13-pro-plus-trang.png', isPrimary: true }],
+    specs: { ram: '12GB', storage: '256GB', display: '6.67 inch AMOLED 120Hz 1800nits IP68', battery: '5000 mAh (Sạc 120W)', os: 'MIUI 14', processor: 'Dimensity 7200 Ultra', camera: '200MP + 8MP Ultrawide + 2MP', color: 'Trắng Ngọc Trai' },
+    description: 'Camera 200MP đỉnh cao phân khúc tầm trung, sạc siêu tốc 120W và chống nước IP68 chuẩn flagship.'
+  },
+  // ── TABLETS ───────────────────────────────────────────────────────────────
+  {
+    _id: 'p8',
     name: 'Apple iPad Pro M4 11 inch Wi-Fi 256GB',
     slug: 'apple-ipad-pro-m4-11-inch',
     brand: 'Apple',
@@ -70,13 +140,31 @@ const MOCK_PRODUCTS = [
     soldCount: 33,
     avgRating: 4.9,
     reviewCount: 15,
-    isFeatured: false,
-    images: [{ url: 'https://res.cloudinary.com/demo/image/upload/v1689000000/ipadpro.png', isPrimary: true }],
+    isFeatured: true,
+    images: [{ url: 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/ipad-pro-m4-11-inch-wifi-256gb.png', isPrimary: true }],
     specs: { ram: '8GB', storage: '256GB', display: '11 inch Ultra Retina XDR OLED', battery: '8160 mAh', os: 'iPadOS 18', processor: 'Apple M4', camera: '12MP Wide + LiDAR Scanner', color: 'Đen Không Gian' },
     description: 'Thiết kế mỏng chưa từng có, màn hình OLED Tandem đột phá cùng sức mạnh vô song từ con chip Apple M4.'
   },
   {
-    _id: 'p5',
+    _id: 'p9',
+    name: 'Samsung Galaxy Tab S9 FE 6GB/128GB',
+    slug: 'samsung-galaxy-tab-s9-fe',
+    brand: 'Samsung',
+    category: 'tablet',
+    price: 9990000,
+    comparePrice: 11490000,
+    stock: 16,
+    soldCount: 44,
+    avgRating: 4.5,
+    reviewCount: 17,
+    isFeatured: false,
+    images: [{ url: 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/a/samsung-galaxy-tab-s9-fe-xam.png', isPrimary: true }],
+    specs: { ram: '6GB', storage: '128GB', display: '10.9 inch TFT LCD 90Hz IP68', battery: '8000 mAh', os: 'Android 13 (One UI 5.1)', processor: 'Exynos 1380', camera: '8MP + 10MP Front', color: 'Xám Xanh' },
+    description: 'Tablet phổ thông chống nước IP68, màn hình lớn 10.9 inch và bút S-Pen đi kèm trong hộp.'
+  },
+  // ── SMARTWATCHES ──────────────────────────────────────────────────────────
+  {
+    _id: 'p10',
     name: 'Apple Watch Series 10 GPS 46mm',
     slug: 'apple-watch-series-10-gps-46mm',
     brand: 'Apple',
@@ -87,13 +175,31 @@ const MOCK_PRODUCTS = [
     soldCount: 76,
     avgRating: 4.8,
     reviewCount: 22,
-    isFeatured: false,
-    images: [{ url: 'https://res.cloudinary.com/demo/image/upload/v1689000000/aw10.png', isPrimary: true }],
-    specs: { ram: 'N/A', storage: '64GB', display: 'OLED góc nhìn rộng sáng hơn 40%', battery: 'Up to 36 hours (Low Power)', os: 'watchOS 11', processor: 'Apple S10 SiP', camera: 'Không', color: 'Nhôm Nhám Jet Black' },
+    isFeatured: true,
+    images: [{ url: 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/a/p/apple-watch-s10-46mm-den.png', isPrimary: true }],
+    specs: { ram: 'N/A', storage: '64GB', display: 'OLED góc nhìn rộng sáng hơn 40%', battery: 'Up to 36 hours', os: 'watchOS 11', processor: 'Apple S10 SiP', camera: 'Không có', color: 'Nhôm Jet Black' },
     description: 'Màn hình lớn nhất và mỏng nhất từng có trên Apple Watch, tính năng phát hiện ngưng thở khi ngủ chuẩn y khoa.'
   },
   {
-    _id: 'p6',
+    _id: 'p11',
+    name: 'Samsung Galaxy Watch 7 44mm',
+    slug: 'samsung-galaxy-watch-7-44mm',
+    brand: 'Samsung',
+    category: 'smartwatch',
+    price: 6990000,
+    comparePrice: 7990000,
+    stock: 20,
+    soldCount: 52,
+    avgRating: 4.6,
+    reviewCount: 18,
+    isFeatured: false,
+    images: [{ url: 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/a/samsung-galaxy-watch7-44mm-xanh.png', isPrimary: true }],
+    specs: { ram: '2GB', storage: '16GB', display: '1.5 inch Super AMOLED 480x480', battery: '425 mAh (40h)', os: 'Wear OS 5', processor: 'Exynos W1000 5nm', camera: 'Không có', color: 'Xanh Lá Tươi' },
+    description: 'Theo dõi sức khỏe toàn diện với BioActive Sensor thế hệ mới, phân tích năng lượng và giấc ngủ chuyên sâu.'
+  },
+  // ── ACCESSORIES ───────────────────────────────────────────────────────────
+  {
+    _id: 'p12',
     name: 'Tai nghe AirPods Pro 2 USB-C',
     slug: 'airpods-pro-2-usbc',
     brand: 'Apple',
@@ -105,9 +211,77 @@ const MOCK_PRODUCTS = [
     avgRating: 4.9,
     reviewCount: 88,
     isFeatured: true,
-    images: [{ url: 'https://res.cloudinary.com/demo/image/upload/v1689000000/airpodspro2.png', isPrimary: true }],
-    specs: { ram: 'N/A', storage: 'N/A', display: 'N/A', battery: '6 giờ nghe liên tục (30h với hộp)', os: 'N/A', processor: 'Apple H2', camera: 'N/A', color: 'Trắng' },
+    images: [{ url: '/images/airpods-pro-2.png', isPrimary: true }],
+    specs: { ram: 'N/A', storage: 'N/A', display: 'N/A', battery: '6h nghe (30h với hộp)', os: 'N/A', processor: 'Apple H2', camera: 'N/A', color: 'Trắng' },
     description: 'Chống ồn chủ động gấp 2 lần, chế độ Xuyên Âm Thích Ứng và âm thanh vòm Spatial Audio theo dõi chuyển động đầu.'
+  },
+  {
+    _id: 'p13',
+    name: 'Củ sạc nhanh Apple 20W USB-C',
+    slug: 'cu-sac-nhanh-apple-20w-usbc',
+    brand: 'Apple',
+    category: 'accessory',
+    price: 490000,
+    comparePrice: 590000,
+    stock: 100,
+    soldCount: 345,
+    avgRating: 4.7,
+    reviewCount: 124,
+    isFeatured: false,
+    images: [{ url: '/images/cu-sac-20w.jpg', isPrimary: true }],
+    specs: { ram: 'N/A', storage: 'N/A', display: 'N/A', battery: 'N/A', os: 'N/A', processor: 'N/A', camera: 'N/A', color: 'Trắng' },
+    description: 'Củ sạc chính hãng Apple 20W USB-C, tương thích iPhone 12 trở lên và iPad. Sạc nhanh đầy 50% chỉ trong 30 phút.'
+  },
+  {
+    _id: 'p14',
+    name: 'Samsung Galaxy Buds3 Pro',
+    slug: 'samsung-galaxy-buds3-pro',
+    brand: 'Samsung',
+    category: 'accessory',
+    price: 4490000,
+    comparePrice: 4990000,
+    stock: 28,
+    soldCount: 67,
+    avgRating: 4.7,
+    reviewCount: 23,
+    isFeatured: false,
+    images: [{ url: 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/a/samsung-galaxy-buds3-pro-trang.png', isPrimary: true }],
+    specs: { ram: 'N/A', storage: 'N/A', display: 'N/A', battery: '6h (30h với hộp)', os: 'N/A', processor: 'N/A', camera: 'N/A', color: 'Trắng Ngân' },
+    description: 'Tai nghe không dây chống ồn chủ động ANC thông minh, âm thanh Hi-Fi 24bit và chống nước IPX7.'
+  },
+  {
+    _id: 'p15',
+    name: 'Ốp lưng MagSafe iPhone 16 Pro Max',
+    slug: 'op-lung-magsafe-iphone-16-pro-max',
+    brand: 'Apple',
+    category: 'accessory',
+    price: 1190000,
+    comparePrice: 1390000,
+    stock: 60,
+    soldCount: 189,
+    avgRating: 4.5,
+    reviewCount: 42,
+    isFeatured: false,
+    images: [{ url: 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/o/p/op-lung-magsafe-iphone-16-pro-max-xanh.png', isPrimary: true }],
+    specs: { ram: 'N/A', storage: 'N/A', display: 'N/A', battery: 'N/A', os: 'N/A', processor: 'N/A', camera: 'N/A', color: 'Xanh Dương' },
+    description: 'Ốp lưng chính hãng Apple MagSafe với vòng nam châm tích hợp, bảo vệ toàn diện và giữ nguyên vẻ đẹp của iPhone.'
+  },
+  {
+    _id: 'p16',
+    name: 'Cáp sạc USB-C to Lightning 1m (Apple)',
+    slug: 'cap-sac-usbc-lightning-1m',
+    brand: 'Apple',
+    category: 'accessory',
+    price: 390000,
+    comparePrice: 490000,
+    stock: 80,
+    soldCount: 298,
+    avgRating: 4.6,
+    reviewCount: 95,
+    isFeatured: false,
+    images: [{ url: 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/c/a/cap-usb-c-to-lightning-apple-1m-trang.png', isPrimary: true }],
+    specs: { ram: 'N/A', storage: 'N/A', display: 'N/A', battery: 'N/A', os: 'N/A', processor: 'N/A', camera: 'N/A', color: 'Trắng' },
+    description: 'Cáp sạc chính hãng Apple MFi certified, hỗ trợ sạc nhanh và truyền dữ liệu tốc độ cao.'
   }
 ];
 
@@ -119,6 +293,10 @@ export const API = {
         headers: { 'Content-Type': 'application/json', ...options.headers },
         ...options
       };
+      // Attach JWT token if available
+      const token = localStorage.getItem('phonestore_token');
+      if (token) config.headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch(`${API_BASE}${endpoint}`, config);
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
@@ -126,8 +304,8 @@ export const API = {
       }
       return await res.json();
     } catch (err) {
-      console.warn(`[API Call Fallback] ${endpoint}:`, err.message);
-      return null; // Return null so service callers can use fallback mock data
+      console.warn(`[API Fallback] ${endpoint}:`, err.message);
+      return null;
     }
   },
 
@@ -156,13 +334,9 @@ export const API = {
     if (params.sort === 'price_asc') filtered.sort((a, b) => a.price - b.price);
     else if (params.sort === 'price_desc') filtered.sort((a, b) => b.price - a.price);
     else if (params.sort === 'popular') filtered.sort((a, b) => b.soldCount - a.soldCount);
-    else filtered.sort((a, b) => b.price - a.price); // default
+    else filtered.sort((a, b) => b.price - a.price);
 
-    return {
-      status: 'success',
-      total: filtered.length,
-      data: filtered
-    };
+    return { status: 'success', total: filtered.length, data: filtered };
   },
 
   async getProductBySlugOrId(idOrSlug) {
@@ -178,10 +352,11 @@ export const API = {
       body: JSON.stringify({ email, password })
     });
     if (res && res.data) return res.data;
-    // Fallback demo user
+    // Demo fallback
+    const isAdmin = email.toLowerCase().includes('admin');
     return {
-      user: { _id: 'u1', name: 'Nguyễn Văn A', email, role: 'customer' },
-      token: 'demo-jwt-token'
+      user: { _id: isAdmin ? 'admin1' : 'u1', name: isAdmin ? 'Quản trị viên' : 'Nguyễn Văn A', email, role: isAdmin ? 'admin' : 'customer' },
+      token: 'demo-jwt-token-' + Date.now()
     };
   },
 
@@ -192,8 +367,8 @@ export const API = {
     });
     if (res && res.data) return res.data;
     return {
-      user: { _id: 'u2', name, email, role: 'customer' },
-      token: 'demo-jwt-token-reg'
+      user: { _id: 'u_' + Date.now(), name, email, role: 'customer' },
+      token: 'demo-jwt-token-reg-' + Date.now()
     };
   },
 
@@ -204,13 +379,12 @@ export const API = {
       body: JSON.stringify(orderData)
     });
     if (res && res.data) return res.data;
-    // Fallback mock order result
     return {
       _id: 'ord_' + Math.random().toString(36).substring(2, 9),
       orderCode: 'PS-' + Math.floor(100000 + Math.random() * 900000),
       totalAmount: orderData.totalAmount,
       paymentMethod: orderData.paymentMethod,
-      paymentUrl: orderData.paymentMethod === 'vnpay' ? 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_Amount=3499000000' : null,
+      paymentUrl: orderData.paymentMethod === 'vnpay' ? 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html' : null,
       status: 'pending'
     };
   },
@@ -223,22 +397,19 @@ export const API = {
     });
     if (res && res.reply) return res;
 
-    // Fallback AI Smart Response
     let reply = `Chào bạn! Tôi là Trợ lý AI Phonestore. Rất vui được hỗ trợ bạn tìm kiếm mẫu điện thoại phù hợp nhất.`;
     const q = message.toLowerCase();
     if (q.includes('iphone') || q.includes('apple')) {
-      reply = `iPhone 16 Pro Max hiện là mẫu flagship cao cấp nhất của Apple với viền Titan và chip A18 Pro cực mạnh. Giá ưu đãi chỉ từ 34.990.000đ!`;
+      reply = `iPhone 16 Pro Max là mẫu flagship cao cấp nhất của Apple hiện tại với viền Titan và chip A18 Pro. Giá từ 34.990.000đ!`;
     } else if (q.includes('samsung') || q.includes('s24')) {
-      reply = `Samsung Galaxy S24 Ultra với bộ công cụ Galaxy AI thông minh và camera 200MP đang có chương trình giảm 2.000.000đ trực tiếp!`;
+      reply = `Samsung Galaxy S24 Ultra với bộ công cụ Galaxy AI và camera 200MP đang có chương trình giảm 2.000.000đ trực tiếp!`;
     } else if (q.includes('rẻ') || q.includes('giá')) {
-      reply = `Phonestore hỗ trợ trả góp 0% lãi suất và cam kết giá tốt nhất thị trường cùng chính sách bảo hành 1 đổi 1 trong 30 ngày!`;
+      reply = `Phonestore có nhiều mẫu tầm trung từ 8-12 triệu như OPPO Reno 11 Pro, Xiaomi Redmi Note 13 Pro+. Trả góp 0% lãi suất!`;
+    } else if (q.includes('tai nghe') || q.includes('airpods')) {
+      reply = `AirPods Pro 2 USB-C với chống ồn ANC mạnh nhất và Spatial Audio đang có giá 5.690.000đ tại Phonestore!`;
     }
 
-    return {
-      reply,
-      sessionId: sessionId || 'sess_demo_123',
-      recommendations: [MOCK_PRODUCTS[0], MOCK_PRODUCTS[1]]
-    };
+    return { reply, sessionId: sessionId || 'sess_demo', recommendations: [MOCK_PRODUCTS[0], MOCK_PRODUCTS[2]] };
   },
 
   // ── Admin Stats API ───────────────────────────────────────────────────────
@@ -253,8 +424,16 @@ export const API = {
       recentOrders: [
         { id: 'ORD-9821', customer: 'Trần Văn Nam', total: 34990000, status: 'Completed', date: 'Vừa xong' },
         { id: 'ORD-9820', customer: 'Lê Thị Mai', total: 31990000, status: 'Processing', date: '5 phút trước' },
-        { id: 'ORD-9819', customer: 'Phạm Hoàng Long', total: 5690000, status: 'Shipping', date: '20 phút trước' }
+        { id: 'ORD-9819', customer: 'Phạm Hoàng Long', total: 5690000, status: 'Shipping', date: '20 phút trước' },
+        { id: 'ORD-9818', customer: 'Nguyễn Minh Tuấn', total: 10990000, status: 'Completed', date: '1 giờ trước' },
+        { id: 'ORD-9817', customer: 'Hoàng Thị Thu', total: 27990000, status: 'Pending', date: '2 giờ trước' }
       ]
     };
+  },
+
+  async getAdminProducts() {
+    const res = await this.request('/admin/products');
+    if (res && res.data) return res.data;
+    return MOCK_PRODUCTS;
   }
 };
