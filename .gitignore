@@ -1,7 +1,12 @@
 node_modules/
 .env
-dist/
+.env.*
+!.env.example
+/dist/
 *.log
 .DS_Store
 Thumbs.db
 coverage/
+.vs/
+.vscode/
+.idea/
