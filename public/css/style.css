@@ -623,10 +623,12 @@ a {
   opacity: 0;
   visibility: hidden;
   transition: all var(--transition-normal);
+  pointer-events: none;
 }
 .overlay.active {
   opacity: 1;
   visibility: visible;
+  pointer-events: auto;
 }
 
 .drawer {
@@ -637,7 +639,7 @@ a {
   width: 100%;
   max-width: 440px;
   background: var(--bg-card-solid);
-  z-index: 201;
+  z-index: 300;
   transform: translateX(100%);
   transition: transform var(--transition-normal);
   display: flex;
@@ -653,6 +655,8 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: relative;
+  z-index: 1;
 }
 .drawer-title {
   font-family: var(--font-heading);
@@ -685,7 +689,7 @@ a {
   background: var(--bg-card-solid);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  z-index: 201;
+  z-index: 301;
   opacity: 0;
   visibility: hidden;
   transition: all var(--transition-normal);
