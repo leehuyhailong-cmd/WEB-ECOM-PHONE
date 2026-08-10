@@ -82,8 +82,8 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     } else {
       showAlert('Email hoặc mật khẩu không đúng. Vui lòng thử lại.');
     }
-  } catch {
-    showAlert('Có lỗi xảy ra. Vui lòng thử lại sau.');
+  } catch (err) {
+    showAlert(err.message || 'Có lỗi xảy ra. Vui lòng thử lại sau.');
   } finally {
     setLoading('loginBtn', false);
   }
@@ -124,8 +124,8 @@ document.getElementById('registerForm')?.addEventListener('submit', async (e) =>
     } else {
       showAlert('Không thể tạo tài khoản. Vui lòng thử lại.');
     }
-  } catch {
-    showAlert('Có lỗi xảy ra. Vui lòng thử lại sau.');
+  } catch (err) {
+    showAlert(err.message || 'Có lỗi xảy ra. Vui lòng thử lại sau.');
   } finally {
     setLoading('registerBtn', false);
   }

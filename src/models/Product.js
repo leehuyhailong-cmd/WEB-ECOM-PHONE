@@ -62,13 +62,9 @@ const ProductSchema = new mongoose.Schema(
       // e.g. 'Apple', 'Samsung', 'Xiaomi', 'OPPO', 'Vivo', 'Realme'
     },
     category: {
-      type:     String,
+      type:     mongoose.Schema.Types.ObjectId,
+      ref:      'Category',
       required: [true, 'Danh mục là bắt buộc'],
-      enum: {
-        values:  ['smartphone', 'tablet', 'accessory', 'smartwatch'],
-        message: 'Danh mục không hợp lệ',
-      },
-      default: 'smartphone',
     },
     tags: {
       type:    [String],

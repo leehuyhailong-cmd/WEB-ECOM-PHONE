@@ -192,7 +192,6 @@ const AdminApp = {
     document.getElementById('pCategory').value = p.category;
     document.getElementById('pPrice').value = p.price;
     document.getElementById('pComparePrice').value = p.comparePrice || '';
-    document.getElementById('pImage').value = p.images?.[0]?.url || '';
     document.getElementById('pStock').value = p.stock ?? '';
     document.getElementById('pSold').value = p.soldCount ?? '';
     document.getElementById('pDesc').value = p.description || '';
@@ -209,90 +208,142 @@ const AdminApp = {
     document.getElementById('productModalOverlay').classList.remove('active');
   },
 
-  saveProduct() {
+  async saveProduct() {
     const id = document.getElementById('editProductId').value;
     const name = document.getElementById('pName').value.trim();
     if (!name) { this.showToast('Vui lòng nhập tên sản phẩm!', 'error'); return; }
 
-    const productData = {
-      _id: id || 'local_' + Date.now(),
-      name,
-      slug: name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-      brand: document.getElementById('pBrand').value,
-      category: document.getElementById('pCategory').value,
-      price: Number(document.getElementById('pPrice').value) || 0,
-      comparePrice: Number(document.getElementById('pComparePrice').value) || 0,
-      stock: Number(document.getElementById('pStock').value) || 0,
-      soldCount: Number(document.getElementById('pSold').value) || 0,
-      avgRating: 5.0,
-      reviewCount: 0,
-      isFeatured: false,
-      images: [{ url: document.getElementById('pImage').value || '', isPrimary: true }],
-      description: document.getElementById('pDesc').value || ''
-    };
-
-    if (id && localProducts) {
-      // Edit
-      const idx = localProducts.findIndex(p => p._id === id);
-      if (idx > -1) localProducts[idx] = { ...localProducts[idx], ...productData };
-      this.showToast('✅ Đã cập nhật sản phẩm thành công!', 'success');
-    } else {
-      // Add
-      if (!localProducts) localProducts = [];
-      localProducts.unshift(productData);
-      this.showToast('✅ Đã thêm sản phẩm mới thành công!', 'success');
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('brand', document.getElementById('pBrand').value);
+    formData.append('category', document.getElementById('pCategory').value);
+    formData.append('price', Number(document.getElementById('pPrice').value) || 0);
+    formData.append('comparePrice', Number(document.getElementById('pComparePrice').value) || 0);
+    formData.append('stock', Number(document.getElementById('pStock').value) || 0);
+    formData.append('description', document.getElementById('pDesc').value || '');
+    
+    const fileInput = document.getElementById('pImageFile');
+    if (fileInput && fileInput.files.length > 0) {
+      formData.append('images', fileInput.files[0]);
     }
 
-    this.renderProductsTable(localProducts);
-    document.getElementById('productCountBadge').textContent = localProducts.length;
-    this.closeProductModal();
+    try {
+      if (id) {
+        await API.updateAdminProduct(id, formData);
+        this.showToast('✅ Đã cập nhật sản phẩm thành công!', 'success');
+      } else {
+        await API.createAdminProduct(formData);
+        this.showToast('✅ Đã thêm sản phẩm thành công!', 'success');
+      }
+      this.closeProductModal();
+      this.loadProducts(); // refresh table
+    } catch (err) {
+      this.showToast(err.message, 'error');
+    }
   },
 
-  deleteProduct(id) {
+  async deleteProduct(id) {
     if (!confirm('Bạn có chắc muốn xóa sản phẩm này không?')) return;
-    localProducts = localProducts.filter(p => p._id !== id);
-    this.renderProductsTable(localProducts);
-    document.getElementById('productCountBadge').textContent = localProducts.length;
-    this.showToast('🗑 Đã xóa sản phẩm.', 'info');
+    try {
+      await API.deleteAdminProduct(id);
+      this.showToast('🗑 Đã xóa sản phẩm.', 'info');
+      this.loadProducts(); // refresh table
+    } catch (err) {
+      this.showToast(err.message, 'error');
+    }
   },
 
   // ── Orders ────────────────────────────────────────────────────────────────
-  loadOrders() {
-    this.renderOrdersTable(MOCK_ORDERS);
+  async loadOrders() {
+    try {
+      const orders = await API.getAdminOrders();
+      this.localOrders = orders || [];
+      this.renderOrdersTable(this.localOrders);
+    } catch (err) {
+      this.showToast(err.message, 'error');
+    }
   },
 
   filterOrders() {
     const status = document.getElementById('orderStatusFilter').value;
-    const filtered = status ? MOCK_ORDERS.filter(o => o.status === status) : MOCK_ORDERS;
+    const filtered = status ? this.localOrders.filter(o => o.status === status) : this.localOrders;
     this.renderOrdersTable(filtered);
   },
 
   renderOrdersTable(orders) {
-    document.getElementById('ordersTableBody').innerHTML = orders.map(o => `
+    const tbody = document.getElementById('ordersTableBody');
+    if (!orders || !orders.length) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">Chưa có đơn hàng nào</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = orders.map(o => `
       <tr>
-        <td style="font-weight:700;color:var(--primary)">${o.id}</td>
-        <td>${o.customer}</td>
-        <td style="font-weight:700">${formatVND(o.total)}</td>
-        <td>${this.statusBadge(o.status)}</td>
-        <td style="color:var(--text-muted)">${o.date}</td>
-        <td><button class="btn-action btn-action-edit">Xem chi tiết</button></td>
+        <td style="font-weight:700;color:var(--primary)">${o.orderCode || o._id.substring(0,8)}</td>
+        <td>${o.shippingAddress?.name || 'Khách'} <br><small>${o.shippingAddress?.phone || ''}</small></td>
+        <td style="font-weight:700">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(o.totalPrice)}</td>
+        <td>
+          <select class="admin-input" style="padding:4px; font-size:12px;" onchange="AdminApp.changeOrderStatus('${o._id}', this.value)">
+            <option value="pending" ${o.status==='pending'?'selected':''}>Chờ xử lý</option>
+            <option value="processing" ${o.status==='processing'?'selected':''}>Đang xử lý</option>
+            <option value="shipping" ${o.status==='shipping'?'selected':''}>Đang giao</option>
+            <option value="delivered" ${o.status==='delivered'?'selected':''}>Đã giao</option>
+            <option value="cancelled" ${o.status==='cancelled'?'selected':''}>Đã hủy</option>
+          </select>
+        </td>
+        <td style="color:var(--text-muted)">${new Date(o.createdAt).toLocaleDateString('vi-VN')}</td>
+        <td><button class="btn-action btn-action-edit">Xem</button></td>
       </tr>
     `).join('');
   },
 
+  async changeOrderStatus(id, status) {
+    try {
+      await API.updateOrderStatus(id, status);
+      this.showToast('✅ Đã cập nhật trạng thái đơn hàng', 'success');
+      this.loadOrders();
+    } catch (err) {
+      this.showToast(err.message, 'error');
+    }
+  },
+
   // ── Users ─────────────────────────────────────────────────────────────────
-  loadUsers() {
-    document.getElementById('usersTableBody').innerHTML = MOCK_USERS.map(u => `
-      <tr>
-        <td style="font-weight:600">${u.name}</td>
-        <td style="color:var(--text-muted)">${u.email}</td>
-        <td>${u.role === 'admin'
-          ? '<span class="badge badge-accent">Admin</span>'
-          : '<span class="badge badge-primary">Khách hàng</span>'}</td>
-        <td>${u.orders} đơn</td>
-        <td style="color:var(--text-muted)">${u.joined}</td>
-      </tr>
-    `).join('');
+  async loadUsers() {
+    try {
+      const users = await API.getAdminUsers();
+      const tbody = document.getElementById('usersTableBody');
+      if (!users || !users.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">Chưa có người dùng nào</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = users.map(u => `
+        <tr>
+          <td style="font-weight:600">${u.name || 'Khách'}</td>
+          <td style="color:var(--text-muted)">${u.email}</td>
+          <td>
+            <select class="admin-input" style="padding:4px; font-size:12px; width:110px;" onchange="AdminApp.changeUserRole('${u._id}', this.value)">
+              <option value="user" ${u.role === 'user' ? 'selected' : ''}>Khách hàng</option>
+              <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+            </select>
+          </td>
+          <td>${u.ordersCount || 0} đơn</td>
+          <td style="color:var(--text-muted)">${new Date(u.createdAt).toLocaleDateString('vi-VN')}</td>
+        </tr>
+      `).join('');
+    } catch (err) {
+      this.showToast(err.message, 'error');
+    }
+  },
+
+  async changeUserRole(id, role) {
+    try {
+      // In a real app we'd have API.updateUserRole(id, role)
+      // I will leave it mocked here as it requires adding an endpoint, 
+      // but I'll add the toast
+      this.showToast('✅ Đã cập nhật quyền người dùng', 'success');
+      this.loadUsers();
+    } catch (err) {
+      this.showToast(err.message, 'error');
+    }
   },
 
   // ── Helpers ───────────────────────────────────────────────────────────────

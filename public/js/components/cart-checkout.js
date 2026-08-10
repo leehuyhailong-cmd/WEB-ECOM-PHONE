@@ -143,20 +143,26 @@ export const CartCheckoutComponent = {
     submitBtn.disabled = true;
     submitBtn.textContent = 'Đang tạo đơn hàng...';
 
-    const result = await API.checkoutOrder(orderPayload);
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Xác nhận đặt hàng';
+    try {
+      const result = await API.checkoutOrder(orderPayload);
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Xác nhận đặt hàng';
 
-    if (result) {
-      this.closeCheckoutModal();
-      this.appStore.clearCart();
+      if (result) {
+        this.closeCheckoutModal();
+        this.appStore.clearCart();
 
-      if (paymentMethod === 'vnpay' && result.paymentUrl) {
-        this.appStore.showToast('Đang chuyển hướng sang cổng thanh toán VNPay...', 'info');
-        setTimeout(() => window.location.href = result.paymentUrl, 1500);
-      } else {
-        this.appStore.showToast(`🎉 Đặt hàng thành công! Mã đơn hàng: ${result.orderCode}`, 'success');
+        if (paymentMethod === 'vnpay' && result.paymentUrl) {
+          this.appStore.showToast('Đang chuyển hướng sang cổng thanh toán VNPay...', 'info');
+          setTimeout(() => window.location.href = result.paymentUrl, 1500);
+        } else {
+          this.appStore.showToast(`🎉 Đặt hàng thành công! Mã đơn hàng: ${result.order?.orderCode || ''}`, 'success');
+        }
       }
+    } catch (err) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Xác nhận đặt hàng';
+      this.appStore.showToast(err.message, 'error');
     }
   }
 };

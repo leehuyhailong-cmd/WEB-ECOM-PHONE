@@ -347,46 +347,40 @@ export const API = {
 
   // ── Auth API ──────────────────────────────────────────────────────────────
   async login(email, password) {
-    const res = await this.request('/auth/login', {
+    const res = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
-    if (res && res.data) return res.data;
-    // Demo fallback
-    const isAdmin = email.toLowerCase().includes('admin');
-    return {
-      user: { _id: isAdmin ? 'admin1' : 'u1', name: isAdmin ? 'Quản trị viên' : 'Nguyễn Văn A', email, role: isAdmin ? 'admin' : 'customer' },
-      token: 'demo-jwt-token-' + Date.now()
-    };
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Lỗi đăng nhập');
+    return data.data; // { user, token }
   },
 
   async register(name, email, password) {
-    const res = await this.request('/auth/register', {
+    const res = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password })
     });
-    if (res && res.data) return res.data;
-    return {
-      user: { _id: 'u_' + Date.now(), name, email, role: 'customer' },
-      token: 'demo-jwt-token-reg-' + Date.now()
-    };
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Lỗi đăng ký');
+    return data.data; // { user, token }
   },
 
   // ── Cart & Order API ──────────────────────────────────────────────────────
   async checkoutOrder(orderData) {
-    const res = await this.request('/orders', {
+    const res = await fetch(`${API_BASE}/orders`, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('phonestore_token')}`
+      },
       body: JSON.stringify(orderData)
     });
-    if (res && res.data) return res.data;
-    return {
-      _id: 'ord_' + Math.random().toString(36).substring(2, 9),
-      orderCode: 'PS-' + Math.floor(100000 + Math.random() * 900000),
-      totalAmount: orderData.totalAmount,
-      paymentMethod: orderData.paymentMethod,
-      paymentUrl: orderData.paymentMethod === 'vnpay' ? 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html' : null,
-      status: 'pending'
-    };
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Lỗi đặt hàng');
+    return data.data; // { order, paymentUrl }
   },
 
   // ── AI Chatbot API ────────────────────────────────────────────────────────
@@ -412,28 +406,97 @@ export const API = {
     return { reply, sessionId: sessionId || 'sess_demo', recommendations: [MOCK_PRODUCTS[0], MOCK_PRODUCTS[2]] };
   },
 
-  // ── Admin Stats API ───────────────────────────────────────────────────────
   async getAdminStats() {
-    const res = await this.request('/admin/stats');
-    if (res && res.data) return res.data;
-    return {
-      revenue: 1458900000,
-      totalOrders: 342,
-      totalProducts: MOCK_PRODUCTS.length,
-      activeUsers: 1250,
-      recentOrders: [
-        { id: 'ORD-9821', customer: 'Trần Văn Nam', total: 34990000, status: 'Completed', date: 'Vừa xong' },
-        { id: 'ORD-9820', customer: 'Lê Thị Mai', total: 31990000, status: 'Processing', date: '5 phút trước' },
-        { id: 'ORD-9819', customer: 'Phạm Hoàng Long', total: 5690000, status: 'Shipping', date: '20 phút trước' },
-        { id: 'ORD-9818', customer: 'Nguyễn Minh Tuấn', total: 10990000, status: 'Completed', date: '1 giờ trước' },
-        { id: 'ORD-9817', customer: 'Hoàng Thị Thu', total: 27990000, status: 'Pending', date: '2 giờ trước' }
-      ]
-    };
+    const res = await fetch(`${API_BASE}/admin/stats/overview`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('phonestore_token')}`
+      }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Lỗi lấy thống kê admin');
+    return data.data;
   },
 
   async getAdminProducts() {
-    const res = await this.request('/admin/products');
-    if (res && res.data) return res.data;
-    return MOCK_PRODUCTS;
+    const res = await fetch(`${API_BASE}/products/admin`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('phonestore_token')}`
+      }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Lỗi lấy danh sách sản phẩm admin');
+    return data.data.products || [];
+  },
+
+  async createAdminProduct(formData) {
+    const res = await fetch(`${API_BASE}/products`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('phonestore_token')}`
+      },
+      body: formData // multipart/form-data
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Lỗi thêm sản phẩm');
+    return data.data;
+  },
+
+  async updateAdminProduct(id, formData) {
+    const res = await fetch(`${API_BASE}/products/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('phonestore_token')}`
+      },
+      body: formData // multipart/form-data
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Lỗi cập nhật sản phẩm');
+    return data.data;
+  },
+
+  async deleteAdminProduct(id) {
+    const res = await fetch(`${API_BASE}/products/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('phonestore_token')}`
+      }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Lỗi xóa sản phẩm');
+    return data.data;
+  },
+
+  // ── Admin Orders API ────────────────────────────────────────────────────────
+  async getAdminOrders() {
+    const res = await fetch(`${API_BASE}/orders/admin`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('phonestore_token')}` }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Lỗi lấy danh sách đơn hàng admin');
+    return data.data;
+  },
+
+  async updateOrderStatus(id, status) {
+    const res = await fetch(`${API_BASE}/orders/${id}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('phonestore_token')}`
+      },
+      body: JSON.stringify({ status })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Lỗi cập nhật trạng thái đơn hàng');
+    return data.data;
+  },
+
+  // ── Admin Users API ─────────────────────────────────────────────────────────
+  async getAdminUsers() {
+    const res = await fetch(`${API_BASE}/admin/users`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('phonestore_token')}` }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Lỗi lấy danh sách người dùng admin');
+    return data.data;
   }
 };

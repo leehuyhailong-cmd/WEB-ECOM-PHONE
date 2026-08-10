@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lịch sử Đơn hàng - Phonestore</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .orders-container {
+      max-width: 1000px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background: var(--bg-card-solid);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+    }
+    .order-card {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 1rem;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header style="background: var(--bg-card-solid); border-bottom: 1px solid var(--border-subtle); padding: 1rem 0;">
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+      <a href="/" class="logo" style="text-decoration:none;">📱 Phonestore</a>
+      <div style="display:flex; gap:1rem;">
+        <a href="/profile.html" style="color:var(--text-main);text-decoration:none;">👤 Tài khoản</a>
+        <a href="/" style="color:var(--text-main);text-decoration:none;">🏪 Về cửa hàng</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="orders-container">
+      <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+        <h2 style="font-family: var(--font-heading);">Lịch sử Đơn hàng</h2>
+      </div>
+      
+      <div id="ordersList">
+        <p style="color:var(--text-muted); text-align:center;">Đang tải dữ liệu...</p>
+      </div>
+    </div>
+  </main>
+  
+  <div id="toastContainer" class="toast-container"></div>
+  
+  <script type="module">
+    import { API } from './js/api.js';
+    import { AppStore } from './js/app.js';
+    
+    document.addEventListener('DOMContentLoaded', async () => {
+      window.appStore = new AppStore();
+      
+      if (!window.appStore.state.currentUser) {
+        window.location.href = '/login.html';
+        return;
+      }
+      
+      const ordersList = document.getElementById('ordersList');
+      try {
+        // Mock data fallback for frontend display until Phase 10 API is ready
+        ordersList.innerHTML = `
+          <div class="order-card">
+            <div class="order-header">
+              <div>
+                <strong>Mã đơn: #PS-847291</strong>
+                <div style="color:var(--text-muted); font-size:0.85rem; margin-top:0.25rem;">Đặt ngày: 10/08/2026</div>
+              </div>
+              <div>
+                <span class="badge badge-warning">Đang xử lý</span>
+              </div>
+            </div>
+            <div>
+              <p>Tổng tiền: <strong>34.990.000 đ</strong></p>
+              <p style="color:var(--text-muted);">Sản phẩm: iPhone 16 Pro Max 256GB (x1)</p>
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        ordersList.innerHTML = '<p style="color:var(--danger); text-align:center;">Lỗi tải đơn hàng.</p>';
+      }
+    });
+  </script>
+</body>
+</html>

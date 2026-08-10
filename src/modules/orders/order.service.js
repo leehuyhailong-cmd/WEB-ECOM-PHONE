@@ -36,20 +36,18 @@ const { logger } = require('../../utils/logger');
  * @returns {Promise<{ order: object, paymentUrl?: string }>}
  */
 async function createOrder(userId, data, ipAddr) {
-  const { shippingAddress, paymentMethod = 'cod', note = '' } = data;
+  const { shippingAddress, paymentMethod = 'cod', note = '', items } = data;
 
-  // 1. Load cart with populated products
-  const cart = await cartRepository.findByUserId(userId);
-  if (!cart || !cart.items?.length) {
+  if (!items || !items.length) {
     throw new BadRequestError('Giỏ hàng trống — không thể tạo đơn hàng');
   }
 
   // 2. Validate all items and snapshot prices
   const snapshots = [];
-  for (const item of cart.items) {
-    const product = item.productId; // populated
+  for (const item of items) {
+    const product = await productRepository.findById(item.productId);
     if (!product || !product.isActive) {
-      throw new ConflictError(`Sản phẩm "${item.productId}" không còn bán`);
+      throw new ConflictError(`Sản phẩm "${item.productId}" không tồn tại hoặc ngừng bán`);
     }
     if (product.stock < item.quantity) {
       throw new ConflictError(

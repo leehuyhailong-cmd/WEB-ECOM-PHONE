@@ -140,6 +140,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const app = new AppStore();
   window.appStore = app;
 
+  // ── AUTH GUARD: Buộc đăng nhập trước khi xem trang bán hàng ──────────────
+  if (!app.state.currentUser) {
+    window.location.href = '/login.html';
+    return;
+  }
+
   // Initialise components
   await CatalogComponent.init(app);
   CartCheckoutComponent.init(app);

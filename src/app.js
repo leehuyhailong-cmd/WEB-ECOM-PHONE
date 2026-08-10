@@ -111,6 +111,7 @@ app.get('/api/health', (req, res) => {
 
 // ── 11. Feature routers ──────────────────────────────────────────────────────
 const authRouter = require('./modules/auth/auth.router');
+const categoryRouter = require('./modules/categories/categories.router');
 const productRouter = require('./modules/products/product.router');
 const cartRouter = require('./modules/cart/cart.router');
 const orderRouter = require('./modules/orders/order.router');
@@ -122,6 +123,7 @@ const recommendationRouter  = require('./modules/recommendations/recommendation.
 const adminRouter           = require('./modules/admin/admin.router');
 
 app.use('/api/auth', authRouter);
+app.use('/api/categories', categoryRouter);
 app.use('/api/products', productRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/orders', orderRouter);
