@@ -3,36 +3,37 @@
    ========================================================================== */
 
 :root {
-  /* Color System */
-  --bg-dark: #0f172a;
-  --bg-card: rgba(30, 41, 59, 0.75);
-  --bg-card-solid: #1e293b;
-  --bg-input: #334155;
-  --bg-hover: #475569;
+  /* Color System - Premium Light Mode */
+  --bg-main: #F8FAFC;
+  --bg-dark: #0F172A;
+  --bg-card: #FFFFFF;
+  --bg-card-solid: #FFFFFF;
+  --bg-input: #F1F5F9;
+  --bg-hover: #E2E8F0;
   
-  --primary: #06b6d4;
-  --primary-hover: #0891b2;
-  --primary-glow: rgba(6, 182, 212, 0.25);
+  --primary: #2563EB;
+  --primary-hover: #1D4ED8;
+  --primary-glow: rgba(37, 99, 235, 0.15);
   
-  --accent: #6366f1;
-  --accent-hover: #4f46e5;
-  --accent-glow: rgba(99, 102, 241, 0.25);
+  --accent: #06B6D4;
+  --accent-hover: #0891B2;
+  --accent-glow: rgba(6, 182, 212, 0.15);
   
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #f43f5e;
+  --success: #16A34A;
+  --warning: #F59E0B;
+  --danger: #EF4444;
   
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --text-subtle: #64748b;
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  --text-subtle: #94A3B8;
   
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-focus: rgba(6, 182, 212, 0.5);
+  --border-subtle: #E2E8F0;
+  --border-focus: rgba(37, 99, 235, 0.5);
   
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 25px var(--primary-glow);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
+  --shadow-glow: 0 4px 14px var(--primary-glow);
   
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -61,16 +62,13 @@ html {
 
 body {
   font-family: var(--font-body);
-  background-color: var(--bg-dark);
+  background-color: var(--bg-main);
   color: var(--text-main);
   line-height: 1.6;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
-  background-image: 
-    radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 85% 85%, rgba(6, 182, 212, 0.08) 0%, transparent 40%);
 }
 
 img {
@@ -103,14 +101,14 @@ a {
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-dark);
+  background: var(--bg-main);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-hover);
+  background: var(--text-subtle);
   border-radius: var(--radius-full);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-subtle);
+  background: var(--text-muted);
 }
 
 /* ── Utility Classes ────────────────────────────────────────────────────── */
@@ -206,11 +204,12 @@ a {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-subtle);
   padding: 0.85rem 0;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
 .nav-container {
@@ -227,7 +226,7 @@ a {
   font-family: var(--font-heading);
   font-size: 1.5rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--text-main);
   letter-spacing: -0.02em;
 }
 .logo-icon {
@@ -263,7 +262,7 @@ a {
 .search-input:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-glow);
-  background: var(--bg-dark);
+  background: var(--bg-card);
 }
 .search-icon {
   position: absolute;
@@ -294,7 +293,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--bg-dark);
+  border: 2px solid var(--bg-card-solid);
 }
 
 /* ── Category Bar ───────────────────────────────────────────────────────── */
@@ -335,11 +334,12 @@ a {
   align-items: center;
   gap: 2rem;
   padding: 3rem;
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+  background: linear-gradient(135deg, rgba(15, 23, 42, 1), rgba(30, 41, 59, 1));
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   overflow: hidden;
   position: relative;
+  color: #fff;
 }
 .hero-card::before {
   content: '';
@@ -348,7 +348,7 @@ a {
   right: -20%;
   width: 400px;
   height: 400px;
-  background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.2) 0%, transparent 70%);
   pointer-events: none;
 }
 .hero-content h1 {
@@ -357,12 +357,12 @@ a {
   font-weight: 800;
   line-height: 1.15;
   margin: 1rem 0;
-  background: linear-gradient(135deg, #ffffff 30%, var(--primary));
+  background: linear-gradient(135deg, #ffffff 30%, #93c5fd);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .hero-content p {
-  color: var(--text-muted);
+  color: #94a3b8;
   font-size: 1.1rem;
   margin-bottom: 2rem;
   max-width: 460px;
@@ -447,7 +447,7 @@ a {
 .price-input {
   width: 100%;
   padding: 0.5rem;
-  background: var(--bg-dark);
+  background: var(--bg-input);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   color: var(--text-main);
@@ -471,7 +471,7 @@ a {
 }
 .sort-select {
   padding: 0.5rem 1rem;
-  background: var(--bg-dark);
+  background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   color: var(--text-main);
@@ -498,9 +498,9 @@ a {
   overflow: hidden;
 }
 .product-card:hover {
-  transform: translateY(-5px);
-  border-color: var(--primary);
-  box-shadow: var(--shadow-md), 0 0 20px var(--primary-glow);
+  transform: translateY(-2px);
+  border-color: rgba(37, 99, 235, 0.5);
+  box-shadow: var(--shadow-md);
 }
 .card-badge-wrap {
   position: absolute;
@@ -519,7 +519,7 @@ a {
   justify-content: center;
   margin-bottom: 1rem;
   position: relative;
-  background: rgba(15, 23, 42, 0.4);
+  background: #ffffff;
   border-radius: var(--radius-sm);
   padding: 0.5rem;
 }
@@ -529,7 +529,7 @@ a {
   transition: transform var(--transition-normal);
 }
 .product-card:hover .product-img-wrap img {
-  transform: scale(1.06);
+  transform: scale(1.03);
 }
 .product-brand {
   font-size: 0.75rem;
@@ -727,7 +727,7 @@ a {
   width: 70px;
   height: 70px;
   object-fit: contain;
-  background: var(--bg-dark);
+  background: var(--bg-main);
   border-radius: var(--radius-sm);
   padding: 0.25rem;
 }
@@ -793,7 +793,7 @@ a {
   margin-bottom: 0.85rem;
 }
 .chat-bubble.bot {
-  background: var(--bg-dark);
+  background: var(--bg-input);
   border: 1px solid var(--border-subtle);
   border-bottom-left-radius: 4px;
   color: var(--text-main);
