@@ -78,7 +78,7 @@ class AppStore {
   updateNavbarUserState() {
     const user = this.state.currentUser;
     const greeting = document.getElementById('userGreeting');
-    const userBtn = document.getElementById('userAccountBtn');
+    const authLinks = document.getElementById('authLinks');
     const adminBtn = document.getElementById('adminBtn');
 
     if (user) {
@@ -91,11 +91,11 @@ class AppStore {
           <button onclick="window.appStore.logout()" style="background:rgba(244,63,94,0.15);border:1px solid rgba(244,63,94,0.3);color:var(--danger);border-radius:6px;padding:0.2rem 0.65rem;font-size:0.75rem;font-weight:600;cursor:pointer;">Đăng xuất</button>
         `;
       }
-      if (userBtn) userBtn.title = `Tài khoản: ${user.email}`;
-      // Show admin button only for admins
+      if (authLinks) authLinks.style.display = 'none';
       if (adminBtn) adminBtn.style.display = user.role === 'admin' ? 'inline-flex' : 'none';
     } else {
       if (greeting) greeting.style.display = 'none';
+      if (authLinks) authLinks.style.display = 'flex';
       if (adminBtn) adminBtn.style.display = 'none';
     }
   }
@@ -139,15 +139,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   ChatbotComponent.init(app);
 
   // ── Nav button handlers ──────────────────────────────────────────────────
-  // 👤 User button → go to auth page (or could open profile dropdown)
-  document.getElementById('userAccountBtn')?.addEventListener('click', () => {
-    if (app.state.currentUser) {
-      // If logged in: show a quick info or redirect to profile
-      app.showToast(`Đang đăng nhập với: ${app.state.currentUser.email}`, 'info');
-    } else {
-      window.location.href = '/login.html';
-    }
-  });
 
   // ⚡ Admin button → go to admin page
   document.getElementById('adminBtn')?.addEventListener('click', () => {

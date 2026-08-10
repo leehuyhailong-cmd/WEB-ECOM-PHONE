@@ -32,7 +32,13 @@
       <div class="nav-actions">
         <div id="userGreeting" style="display:none; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--text-muted);"></div>
         <button id="adminBtn" class="btn-icon" title="Quản trị hệ thống" style="display:none;">⚡</button>
-        <button id="userAccountBtn" class="btn-icon" title="Tài khoản cá nhân">👤</button>
+        
+        <!-- Nút hiển thị khi CHƯA đăng nhập -->
+        <div id="authLinks" style="display:flex; gap: 0.5rem; align-items: center;">
+          <a href="/login.html" class="btn btn-secondary" style="padding: 0.45rem 0.8rem; font-size: 0.85rem; border-color: rgba(255,255,255,0.1);">Đăng nhập</a>
+          <a href="/register.html" class="btn btn-primary" style="padding: 0.45rem 0.8rem; font-size: 0.85rem;">Đăng ký</a>
+        </div>
+
         <button id="cartBtn" class="btn-icon" title="Giỏ hàng">
           🛒
           <span id="cartBadge" class="counter-badge">0</span>

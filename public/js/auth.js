@@ -131,15 +131,4 @@ document.getElementById('registerForm')?.addEventListener('submit', async (e) =>
   }
 });
 
-// ── Check if already logged in ──────────────────────────────────────────────
-(function checkAuth() {
-  const user = JSON.parse(localStorage.getItem('phonestore_user') || 'null');
-  if (user) {
-    // Already logged in — redirect away
-    if (user.role === 'admin') {
-      window.location.href = '/admin.html';
-    } else {
-      window.location.href = '/';
-    }
-  }
-})();
+// (Removed auto-redirect so you can view the page even when logged in)
