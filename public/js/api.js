@@ -379,7 +379,13 @@ export const API = {
       body: JSON.stringify(orderData)
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Lỗi đặt hàng');
+    if (!res.ok) {
+      let errMsg = data.message || 'Lỗi đặt hàng';
+      if (data.errors && data.errors.length > 0) {
+        errMsg = data.errors[0].message;
+      }
+      throw new Error(errMsg);
+    }
     return data.data; // { order, paymentUrl }
   },
 

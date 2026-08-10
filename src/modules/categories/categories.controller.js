@@ -1,5 +1,5 @@
 const categoryService = require('./categories.service');
-const { asyncHandler } = require('../../utils/asyncHandler');
+const asyncHandler = require('../../utils/asyncHandler');
 const { SuccessResponse } = require('../../utils/apiResponse');
 
 const getAllCategories = asyncHandler(async (req, res) => {

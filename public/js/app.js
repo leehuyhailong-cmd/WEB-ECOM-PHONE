@@ -92,8 +92,12 @@ class AppStore {
         greeting.innerHTML = `
           <span style="font-size:1rem;">👤</span>
           <span style="color:var(--text-main);font-weight:600;">${user.name || user.email}</span>
-          <button onclick="window.appStore.logout()" style="background:rgba(244,63,94,0.15);border:1px solid rgba(244,63,94,0.3);color:var(--danger);border-radius:6px;padding:0.2rem 0.65rem;font-size:0.75rem;font-weight:600;cursor:pointer;">Đăng xuất</button>
+          <button id="btnLogoutHeader" style="background:rgba(244,63,94,0.15);border:1px solid rgba(244,63,94,0.3);color:var(--danger);border-radius:6px;padding:0.2rem 0.65rem;font-size:0.75rem;font-weight:600;cursor:pointer;">Đăng xuất</button>
         `;
+        const btnLogout = document.getElementById('btnLogoutHeader');
+        if (btnLogout) {
+          btnLogout.addEventListener('click', () => this.logout());
+        }
       }
       if (authLinks) authLinks.style.display = 'none';
       if (adminBtn) adminBtn.style.display = user.role === 'admin' ? 'inline-flex' : 'none';

@@ -40,7 +40,7 @@ const registerSchema = z.object({
 
       phone: z
         .string()
-        .regex(/^[0-9]{9,11}$/, 'Số điện thoại không hợp lệ')
+        .regex(/^[0-9]{8,10}$/, 'Số điện thoại không hợp lệ')
         .optional(),
     })
     .refine(data => data.password === data.passwordConfirm, {
