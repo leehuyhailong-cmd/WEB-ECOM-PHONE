@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // If logged in: show a quick info or redirect to profile
       app.showToast(`Đang đăng nhập với: ${app.state.currentUser.email}`, 'info');
     } else {
-      window.location.href = '/auth.html';
+      window.location.href = '/login.html';
     }
   });
 

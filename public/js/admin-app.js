@@ -36,7 +36,7 @@ const AdminApp = {
   init() {
     const user = JSON.parse(localStorage.getItem('phonestore_user') || 'null');
     if (!user || user.role !== 'admin') {
-      window.location.href = '/auth.html?return=/admin.html';
+      window.location.href = '/login.html?return=/admin.html';
       return;
     }
     document.getElementById('adminUserName').textContent = user.name || user.email;
@@ -50,7 +50,7 @@ const AdminApp = {
   logout() {
     localStorage.removeItem('phonestore_user');
     localStorage.removeItem('phonestore_token');
-    window.location.href = '/auth.html';
+    window.location.href = '/login.html';
   },
 
   // ── Section Switcher ──────────────────────────────────────────────────────

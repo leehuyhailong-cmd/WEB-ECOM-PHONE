@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Đăng nhập tài khoản Phonestore để mua sắm smartphone, tablet và phụ kiện công nghệ chính hãng." />
+  <title>Đăng nhập — Phonestore</title>
+  <link rel="stylesheet" href="css/auth.css" />
+</head>
+<body>
+  <div class="auth-page">
+    <!-- ── Left: Branding Panel ─────────────────────────────────────────── -->
+    <aside class="auth-brand">
+      <div class="floating-card">
+        <span>📱</span> iPhone 16 Pro Max — 34.990.000đ
+      </div>
+      <div class="floating-card">
+        <span>🎧</span> AirPods Pro 2 — 5.690.000đ
+      </div>
+      <a href="/" class="brand-logo">
+        <div class="brand-logo-icon">📱</div>
+        <div class="brand-logo-text">Phone<span>store</span></div>
+      </a>
+      <h1 class="brand-headline">Thế Giới<br />Smartphone<br />Đỉnh Cao</h1>
+      <p class="brand-sub">
+        Tham gia cùng hơn <strong style="color:#fff">50.000 khách hàng</strong> đang mua sắm tại Phonestore — nơi quy tụ smartphone, tablet và phụ kiện công nghệ chính hãng hàng đầu Việt Nam.
+      </p>
+      <div class="brand-features">
+        <div class="brand-feature-item">
+          <span class="feat-icon">🔒</span> Bảo mật tài khoản 2 lớp, thông tin an toàn tuyệt đối
+        </div>
+        <div class="brand-feature-item">
+          <span class="feat-icon">🚀</span> Giao hàng hỏa tốc 2 giờ nội thành toàn quốc
+        </div>
+        <div class="brand-feature-item">
+          <span class="feat-icon">🔄</span> Đổi trả 30 ngày, bảo hành 1 đổi 1 chính hãng
+        </div>
+        <div class="brand-feature-item">
+          <span class="feat-icon">💳</span> Trả góp 0% lãi suất qua 12 ngân hàng liên kết
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── Right: Form Panel ─────────────────────────────────────────────── -->
+    <main class="auth-form-panel">
+      <div class="auth-card">
+        <div class="auth-card-header">
+          <h1 id="authTitle">Chào mừng trở lại! 👋</h1>
+          <p id="authSubtitle">Đăng nhập để tiếp tục mua sắm và theo dõi đơn hàng của bạn</p>
+        </div>
+
+        <!-- Alert Message -->
+        <div class="auth-alert" id="authAlert"></div>
+
+        <!-- ── Login Form ───────────────────────────────────────────────── -->
+        <div class="form-panel active" id="loginPanel">
+          <form id="loginForm" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="loginEmail">Email</label>
+              <input
+                type="email"
+                id="loginEmail"
+                name="email"
+                class="form-input"
+                placeholder="your@email.com"
+                required
+                autocomplete="email"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="loginPassword">Mật khẩu</label>
+              <input
+                type="password"
+                id="loginPassword"
+                name="password"
+                class="form-input"
+                placeholder="••••••••"
+                required
+                autocomplete="current-password"
+              />
+            </div>
+            <button type="submit" class="btn-auth" id="loginBtn">
+              Đăng Nhập
+            </button>
+          </form>
+
+          <div class="form-divider">hoặc</div>
+          <p style="text-align: center; font-size: 0.88rem; color: var(--text-muted);">
+            Chưa có tài khoản?
+            <a href="/register.html" style="color: var(--primary); font-weight: 600;">Đăng ký ngay</a>
+          </p>
+        </div>
+
+        <a href="/" class="back-to-store">
+          ← Quay về cửa hàng
+        </a>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="js/auth.js"></script>
+</body>
+</html>

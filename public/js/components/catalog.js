@@ -96,9 +96,12 @@ export const CatalogComponent = {
     `).join('');
 
     const queryParams = {
-      category: this.state.category,
       sort: this.state.sort
     };
+    // Only send category if a specific one is selected (not 'all')
+    if (this.state.category && this.state.category !== 'all') {
+      queryParams.category = this.state.category;
+    }
     if (this.state.brand.length) queryParams.brand = this.state.brand.join(',');
     if (this.state.search) queryParams.search = this.state.search;
     if (this.state.minPrice) queryParams.minPrice = this.state.minPrice;
