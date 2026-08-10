@@ -106,7 +106,10 @@ class AppStore {
 
   logout() {
     this.setCurrentUser(null);
-    this.showToast('Đã đăng xuất thành công', 'info');
+    this.showToast('Đang đăng xuất...', 'info');
+    setTimeout(() => {
+      window.location.href = '/login.html';
+    }, 500);
   }
 
   showToast(message, type = 'info') {
