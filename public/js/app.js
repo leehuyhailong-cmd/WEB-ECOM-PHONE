@@ -10,8 +10,12 @@ import { ChatbotComponent } from './components/chatbot.js';
 
 class AppStore {
   constructor() {
+    // Tự động xoá các sản phẩm lỗi (từ database cũ không có _id)
+    let cart = JSON.parse(localStorage.getItem('phonestore_cart') || '[]');
+    cart = cart.filter(item => item && item.product && item.product._id);
+    
     this.state = {
-      cart: JSON.parse(localStorage.getItem('phonestore_cart') || '[]'),
+      cart,
       currentUser: JSON.parse(localStorage.getItem('phonestore_user') || 'null')
     };
   }
