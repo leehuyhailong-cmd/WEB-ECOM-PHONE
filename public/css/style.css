@@ -482,7 +482,7 @@ a {
 /* Product Cards Grid */
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 1.5rem;
 }
 
@@ -840,7 +840,7 @@ a {
 }
 
 /* ── Responsive Breakpoints ─────────────────────────────────────────────── */
-@media (max-width: 992px) {
+@media (max-width: 1199px) {
   .hero-card {
     grid-template-columns: 1fr;
     text-align: center;
@@ -860,7 +860,7 @@ a {
   }
 }
 
-@media (max-width: 576px) {
+@media (max-width: 767px) {
   .nav-container {
     flex-wrap: wrap;
   }
