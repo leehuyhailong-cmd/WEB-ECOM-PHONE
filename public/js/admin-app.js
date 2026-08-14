@@ -128,16 +128,34 @@ const AdminApp = {
     document.getElementById('topbarSubtitle').textContent = titles[section][1];
 
     const addBtn = document.getElementById('topbarActionBtn');
-    addBtn.style.display = section === 'products' ? 'block' : 'none';
+    if (addBtn) addBtn.style.display = 'block';
   },
 
   // ── Refresh ───────────────────────────────────────────────────────────────
   async refreshData() {
-    this.showToast('🔄 Đang làm mới dữ liệu...', 'info');
-    await this.loadDashboard();
-    await this.loadProducts();
-    await this.loadOrders();
-    await this.loadUsers();
+    const refBtn = document.querySelector('button[onclick*="refreshData"]');
+    if (refBtn) {
+      refBtn.disabled = true;
+      refBtn.textContent = '🔄 Đang làm mới...';
+    }
+    this.showToast('🔄 Đang cập nhật lại toàn bộ dữ liệu...', 'info');
+
+    try {
+      await Promise.all([
+        this.loadDashboard(),
+        this.loadProducts(),
+        this.loadOrders(),
+        this.loadUsers()
+      ]);
+      this.showToast('✅ Đã làm mới dữ liệu thành công!', 'success');
+    } catch (err) {
+      this.showToast('⚠️ Lỗi khi làm mới dữ liệu', 'error');
+    } finally {
+      if (refBtn) {
+        refBtn.disabled = false;
+        refBtn.textContent = '🔄 Làm mới';
+      }
+    }
   },
 
   // ── Dashboard Stats ───────────────────────────────────────────────────────
@@ -277,6 +295,7 @@ const AdminApp = {
   },
 
   openAddProduct() {
+    this.switchSection('products');
     document.getElementById('productModalTitle').textContent = 'Thêm sản phẩm mới';
     document.getElementById('editProductId').value = '';
     document.getElementById('productForm').reset();
