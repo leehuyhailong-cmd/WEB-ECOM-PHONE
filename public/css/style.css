@@ -779,6 +779,7 @@ a {
   z-index: 301;
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
   transition: all var(--transition-normal);
   display: flex;
   flex-direction: column;
@@ -788,6 +789,7 @@ a {
 .modal.active {
   opacity: 1;
   visibility: visible;
+  pointer-events: auto;
   transform: translate(-50%, -50%) scale(1);
 }
 .modal-header {

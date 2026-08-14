@@ -31,6 +31,20 @@ export const CartCheckoutComponent = {
     // Close checkout modal
     document.getElementById('closeCheckoutModalBtn')?.addEventListener('click', () => this.closeCheckoutModal());
     document.getElementById('checkoutForm')?.addEventListener('submit', (e) => this.handleCheckoutSubmit(e));
+
+    // Close Order Success Modal button & overlay click
+    document.getElementById('closeOrderSuccessBtn')?.addEventListener('click', () => this.closeOrderSuccessModal());
+    document.getElementById('modalOverlay')?.addEventListener('click', () => {
+      this.closeCheckoutModal();
+      this.closeOrderSuccessModal();
+    });
+  },
+
+  closeOrderSuccessModal() {
+    const successModal = document.getElementById('orderSuccessModal');
+    const overlay = document.getElementById('modalOverlay');
+    if (successModal) successModal.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
   },
 
   openCart() {
