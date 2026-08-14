@@ -36,10 +36,17 @@ const { logger } = require('../../utils/logger');
  * @returns {Promise<{ order: object, paymentUrl?: string }>}
  */
 async function createOrder(userId, data, ipAddr) {
-  const { shippingAddress, paymentMethod = 'cod', note = '', items } = data;
+  let { shippingAddress, paymentMethod = 'cod', note = '', items } = data;
 
   if (!items || !items.length) {
-    throw new BadRequestError('Giỏ hàng trống — không thể tạo đơn hàng');
+    const cart = await cartRepository.findByUserId(userId);
+    if (!cart || !cart.items || !cart.items.length) {
+      throw new BadRequestError('Giỏ hàng trống — không thể tạo đơn hàng');
+    }
+    items = cart.items.map(i => ({
+      productId: i.productId._id ? i.productId._id.toString() : i.productId.toString(),
+      quantity: i.quantity
+    }));
   }
 
   // 2. Validate all items and snapshot prices
@@ -92,8 +99,10 @@ async function createOrder(userId, data, ipAddr) {
   }
 
   // 4. Create order document
+  const orderCode = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
   const order = await orderRepository.create({
     userId,
+    orderCode,
     items:           snapshots,
     shippingAddress,
     paymentMethod,

@@ -22,6 +22,10 @@ const createOrderSchema = z.object({
     paymentMethod: z.enum(PAYMENT_METHODS, {
       errorMap: () => ({ message: `Phương thức thanh toán phải là: ${PAYMENT_METHODS.join(', ')}` }),
     }).default('cod'),
+    items: z.array(z.object({
+      productId: z.string(),
+      quantity: z.number().int().min(1),
+    })).optional(),
     note: z.string().trim().max(500).optional().default(''),
   }),
 });

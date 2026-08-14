@@ -31,6 +31,9 @@ const formatVND = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', cur
 
 const AdminApp = {
   currentSection: 'dashboard',
+  lastLatestOrderId: null,
+  lastOrderCount: null,
+  pollingTimer: null,
 
   // ── Auth Guard ────────────────────────────────────────────────────────────
   async init() {
@@ -54,14 +57,47 @@ const AdminApp = {
     const nameEl = document.getElementById('adminUserName');
     if (nameEl && user) nameEl.textContent = user.name || user.email;
 
-    this.loadDashboard();
-    this.loadProducts();
-    this.loadOrders();
-    this.loadUsers();
+    await this.loadDashboard();
+    await this.loadProducts();
+    await this.loadOrders();
+    await this.loadUsers();
+
+    this.startAutoPolling();
+  },
+
+  // ── Auto Polling (Every 15 Seconds) ───────────────────────────────────────
+  startAutoPolling() {
+    if (this.pollingTimer) clearInterval(this.pollingTimer);
+    this.pollingTimer = setInterval(() => {
+      this.checkNewOrders();
+    }, 15000);
+  },
+
+  async checkNewOrders() {
+    try {
+      const ordersRes = await API.getAdminOrders();
+      const rawOrders = Array.isArray(ordersRes) ? ordersRes : [];
+      if (rawOrders.length === 0) return;
+
+      const latestOrder = rawOrders[0];
+      const latestId = latestOrder._id || latestOrder.id;
+
+      if (this.lastLatestOrderId && latestId !== this.lastLatestOrderId) {
+        this.showToast(`🔔 Có đơn hàng mới vừa khởi tạo: ${latestOrder.orderCode || 'ORD-NEW'}`, 'success');
+        this.loadDashboard();
+        this.loadOrders();
+      }
+
+      this.lastLatestOrderId = latestId;
+      this.lastOrderCount = rawOrders.length;
+    } catch (err) {
+      console.warn('Polling check note:', err);
+    }
   },
 
   // ── Logout ────────────────────────────────────────────────────────────────
   logout() {
+    if (this.pollingTimer) clearInterval(this.pollingTimer);
     localStorage.removeItem('phonestore_user');
     localStorage.removeItem('phonestore_token');
     window.location.href = '/login.html';
@@ -96,10 +132,12 @@ const AdminApp = {
   },
 
   // ── Refresh ───────────────────────────────────────────────────────────────
-  refreshData() {
+  async refreshData() {
     this.showToast('🔄 Đang làm mới dữ liệu...', 'info');
-    this.loadDashboard();
-    this.loadProducts();
+    await this.loadDashboard();
+    await this.loadProducts();
+    await this.loadOrders();
+    await this.loadUsers();
   },
 
   // ── Dashboard Stats ───────────────────────────────────────────────────────
@@ -147,13 +185,18 @@ const AdminApp = {
       const ordersRes = await API.getAdminOrders();
       const recentOrders = Array.isArray(ordersRes) ? ordersRes.slice(0, 6) : [];
 
+      if (recentOrders.length > 0) {
+        this.lastLatestOrderId = recentOrders[0]._id || recentOrders[0].id;
+        this.lastOrderCount = recentOrders.length;
+      }
+
       if (ordersBody) {
         if (recentOrders.length === 0) {
           ordersBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">Chưa có đơn hàng nào trong hệ thống</td></tr>`;
         } else {
           ordersBody.innerHTML = recentOrders.map(o => {
             const code = o.orderCode || (o._id ? `ORD-${o._id.substring(0,6).toUpperCase()}` : 'ORD-0000');
-            const customerName = o.shippingAddress?.fullName || o.shippingAddress?.name || o.userId?.name || 'Khách hàng';
+            const customerName = o.shippingAddress?.fullName || o.shippingAddress?.name || o.userId?.name || 'Khách vãng lai';
             const total = o.totalPrice || 0;
             const dateStr = o.createdAt ? new Date(o.createdAt).toLocaleDateString('vi-VN') : '—';
 

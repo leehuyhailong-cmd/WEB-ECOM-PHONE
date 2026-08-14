@@ -37,7 +37,11 @@ const ShippingAddressSchema = new mongoose.Schema(
 
 const OrderSchema = new mongoose.Schema(
   {
-    // ── Ownership ─────────────────────────────────────────────────────────────
+    // ── Ownership & Identification ────────────────────────────────────────────
+    orderCode: {
+      type:    String,
+      default: null,
+    },
     userId: {
       type:     mongoose.Schema.Types.ObjectId,
       ref:      'User',
