@@ -36,13 +36,13 @@ async function getOverview() {
   ]);
 
   return {
-    revenue: revenueMTD > 0 ? revenueMTD : 145990000,
-    revenueMTD,
-    ordersToday,
-    newUsersToday,
+    revenue: revenueMTD || 0,
+    revenueMTD: revenueMTD || 0,
+    ordersToday: ordersToday || 0,
+    newUsersToday: newUsersToday || 0,
     lowStockCount: lowStockProducts.length,
     lowStockProducts,
-    activeUsers: totals.totalUsers || 6,
+    activeUsers: totals.totalUsers || 0,
     ...totals,
   };
 }

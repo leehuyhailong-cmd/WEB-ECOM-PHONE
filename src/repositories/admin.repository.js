@@ -53,8 +53,7 @@ async function getRevenueMTD() {
   const [result] = await Order.aggregate([
     {
       $match: {
-        status:    'delivered',
-        createdAt: { $gte: _startOfMonth() },
+        status: { $ne: 'cancelled' },
       },
     },
     {

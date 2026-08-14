@@ -92,80 +92,95 @@ const AdminApp = {
 
   // ── Dashboard Stats ───────────────────────────────────────────────────────
   async loadDashboard() {
+    const statsGrid = document.getElementById('statsGrid');
+    const ordersBody = document.getElementById('recentOrdersBody');
+
     try {
       const stats = await API.getAdminStats();
-      const revenue = stats.revenue || stats.revenueMTD || 390990000;
-      const totalOrders = stats.totalOrders ?? stats.ordersToday ?? 15;
-      const totalProducts = stats.totalProducts ?? 47;
-      const activeUsers = stats.activeUsers ?? stats.totalUsers ?? 9;
+      const revenue = stats.revenue ?? stats.revenueMTD ?? 0;
+      const totalOrders = stats.totalOrders ?? 0;
+      const totalProducts = stats.totalProducts ?? 0;
+      const activeUsers = stats.totalUsers ?? stats.activeUsers ?? 0;
 
-      document.getElementById('statsGrid').innerHTML = `
-        <div class="stat-card">
-          <div class="stat-label">Doanh thu</div>
-          <div class="stat-value" style="color:var(--primary)">${formatVND(revenue)}</div>
-          <div class="stat-change up">↑ +12.5% so với tháng trước</div>
-          <span class="stat-icon">💰</span>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Đơn hàng</div>
-          <div class="stat-value" style="color:var(--accent)">${totalOrders}</div>
-          <div class="stat-change up">↑ +8 đơn hôm nay</div>
-          <span class="stat-icon">📦</span>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Sản phẩm</div>
-          <div class="stat-value" style="color:var(--success)">${totalProducts}</div>
-          <div class="stat-change">Đang kinh doanh</div>
-          <span class="stat-icon">🏷️</span>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Người dùng</div>
-          <div class="stat-value" style="color:var(--warning)">${activeUsers}</div>
-          <div class="stat-change up">↑ +45 người dùng mới</div>
-          <span class="stat-icon">👥</span>
-        </div>
-      `;
+      if (statsGrid) {
+        statsGrid.innerHTML = `
+          <div class="stat-card">
+            <div class="stat-label">Doanh thu</div>
+            <div class="stat-value" style="color:var(--primary)">${formatVND(revenue)}</div>
+            <div class="stat-change up">↑ Doanh thu thực tế</div>
+            <span class="stat-icon">💰</span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Đơn hàng</div>
+            <div class="stat-value" style="color:var(--accent)">${totalOrders}</div>
+            <div class="stat-change up">↑ Đơn hàng hệ thống</div>
+            <span class="stat-icon">📦</span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Sản phẩm</div>
+            <div class="stat-value" style="color:var(--success)">${totalProducts}</div>
+            <div class="stat-change">Đang kinh doanh</div>
+            <span class="stat-icon">🏷️</span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Người dùng</div>
+            <div class="stat-value" style="color:var(--warning)">${activeUsers}</div>
+            <div class="stat-change up">↑ Tài khoản đăng ký</div>
+            <span class="stat-icon">👥</span>
+          </div>
+        `;
+      }
 
       // Load real recent orders in Dashboard overview table
-      let recentOrders = MOCK_ORDERS;
-      try {
-        const ordersRes = await API.getAdminOrders();
-        const rawList = Array.isArray(ordersRes) ? ordersRes : (ordersRes?.orders || []);
-        if (rawList && rawList.length > 0) recentOrders = rawList.slice(0, 6);
-      } catch (e) {
-        console.warn('Recent orders fallback:', e);
-      }
+      const ordersRes = await API.getAdminOrders();
+      const recentOrders = Array.isArray(ordersRes) ? ordersRes.slice(0, 6) : [];
 
-      const ordersBody = document.getElementById('recentOrdersBody');
       if (ordersBody) {
-        ordersBody.innerHTML = recentOrders.map(o => {
-          const code = o.orderCode || o.id || (o._id ? `ORD-${o._id.substring(0,6).toUpperCase()}` : 'ORD-9821');
-          const customerName = o.shippingAddress?.fullName || o.shippingAddress?.name || o.customer || o.userId?.name || 'Khách hàng';
-          const total = o.totalPrice || o.total || 0;
-          const dateStr = o.date || (o.createdAt ? new Date(o.createdAt).toLocaleDateString('vi-VN') : '14/08/2026');
+        if (recentOrders.length === 0) {
+          ordersBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">Chưa có đơn hàng nào trong hệ thống</td></tr>`;
+        } else {
+          ordersBody.innerHTML = recentOrders.map(o => {
+            const code = o.orderCode || (o._id ? `ORD-${o._id.substring(0,6).toUpperCase()}` : 'ORD-0000');
+            const customerName = o.shippingAddress?.fullName || o.shippingAddress?.name || o.userId?.name || 'Khách hàng';
+            const total = o.totalPrice || 0;
+            const dateStr = o.createdAt ? new Date(o.createdAt).toLocaleDateString('vi-VN') : '—';
 
-          return `
-            <tr>
-              <td style="font-weight:700;color:var(--primary)">${code}</td>
-              <td>${customerName}</td>
-              <td style="font-weight:700">${formatVND(total)}</td>
-              <td>${this.statusBadge(o.status)}</td>
-              <td style="color:var(--text-muted)">${dateStr}</td>
-            </tr>
-          `;
-        }).join('');
+            return `
+              <tr>
+                <td style="font-weight:700;color:var(--primary)">${code}</td>
+                <td>${customerName}</td>
+                <td style="font-weight:700;color:var(--success)">${formatVND(total)}</td>
+                <td>${this.statusBadge(o.status)}</td>
+                <td style="color:var(--text-muted)">${dateStr}</td>
+              </tr>
+            `;
+          }).join('');
+        }
       }
     } catch (err) {
-      console.warn('Dashboard load error:', err);
+      console.error('Dashboard load error:', err);
+      if (statsGrid) {
+        statsGrid.innerHTML = `<div style="grid-column: 1 / -1; padding: 1.5rem; text-align: center; color: var(--danger); background: var(--bg-card); border-radius: var(--radius-md);">⚠️ Không thể tải dữ liệu thống kê từ máy chủ</div>`;
+      }
+      if (ordersBody) {
+        ordersBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--danger);">⚠️ Không thể tải dữ liệu đơn hàng gần đây</td></tr>`;
+      }
     }
   },
 
   // ── Products ──────────────────────────────────────────────────────────────
   async loadProducts() {
-    const res = await API.getProducts({});
-    localProducts = res?.data || [];
-    document.getElementById('productCountBadge').textContent = localProducts.length;
-    this.renderProductsTable(localProducts);
+    try {
+      const res = await API.getProducts({});
+      localProducts = Array.isArray(res?.data) ? res.data : (res?.data?.products || []);
+      const badgeEl = document.getElementById('productCountBadge');
+      if (badgeEl) badgeEl.textContent = localProducts.length;
+      this.renderProductsTable(localProducts);
+    } catch (err) {
+      console.error('loadProducts error:', err);
+      const tbody = document.getElementById('productsTableBody');
+      if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--danger);">⚠️ Không thể tải danh sách sản phẩm</td></tr>`;
+    }
   },
 
   filterProducts(query) {
@@ -182,6 +197,7 @@ const AdminApp = {
 
   renderProductsTable(products) {
     const tbody = document.getElementById('productsTableBody');
+    if (!tbody) return;
     if (!products.length) {
       tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">Không tìm thấy sản phẩm nào</td></tr>`;
       return;
@@ -255,35 +271,45 @@ const AdminApp = {
   async saveProduct() {
     const id = document.getElementById('editProductId').value;
     const name = document.getElementById('pName').value.trim();
-    if (!name) { this.showToast('Vui lòng nhập tên sản phẩm!', 'error'); return; }
+    const brand = document.getElementById('pBrand').value.trim();
+    const category = document.getElementById('pCategory').value;
+    const price = Number(document.getElementById('pPrice').value);
+    const comparePrice = Number(document.getElementById('pComparePrice').value) || undefined;
+    const stock = Number(document.getElementById('pStock').value) || 0;
+    const soldCount = Number(document.getElementById('pSold').value) || 0;
+    const description = document.getElementById('pDesc').value.trim();
+    const imageUrl = document.getElementById('pImageUrl')?.value.trim();
+
+    if (!name || !price || !category || !brand) {
+      this.showToast('Vui lòng điền đầy đủ Tên, Hãng, Danh mục và Giá sản phẩm!', 'warning');
+      return;
+    }
 
     const formData = new FormData();
     formData.append('name', name);
-    formData.append('brand', document.getElementById('pBrand').value);
-    formData.append('category', document.getElementById('pCategory').value);
-    formData.append('price', Number(document.getElementById('pPrice').value) || 0);
-    formData.append('comparePrice', Number(document.getElementById('pComparePrice').value) || 0);
-    formData.append('stock', Number(document.getElementById('pStock').value) || 0);
-    formData.append('description', document.getElementById('pDesc').value || '');
-    
-    const imageUrl = document.getElementById('pImageUrl')?.value.trim();
-    if (imageUrl) {
-      formData.append('imageUrl', imageUrl);
-    }
+    formData.append('brand', brand);
+    formData.append('category', category);
+    formData.append('price', price);
+    if (comparePrice) formData.append('comparePrice', comparePrice);
+    formData.append('stock', stock);
+    formData.append('soldCount', soldCount);
+    formData.append('description', description);
 
-    const specs = {
-      display: document.getElementById('pSpecDisplay')?.value.trim() || undefined,
-      processor: document.getElementById('pSpecProcessor')?.value.trim() || undefined,
-      ram: document.getElementById('pSpecRam')?.value.trim() || undefined,
-      storage: document.getElementById('pSpecStorage')?.value.trim() || undefined,
-      camera: document.getElementById('pSpecCamera')?.value.trim() || undefined,
-      battery: document.getElementById('pSpecBattery')?.value.trim() || undefined,
-      os: document.getElementById('pSpecOs')?.value.trim() || undefined,
-      color: document.getElementById('pSpecColor')?.value.trim() || undefined,
+    // Specs
+    const specsObj = {
+      display: document.getElementById('pSpecDisplay')?.value.trim() || '',
+      processor: document.getElementById('pSpecProcessor')?.value.trim() || '',
+      ram: document.getElementById('pSpecRam')?.value.trim() || '',
+      storage: document.getElementById('pSpecStorage')?.value.trim() || '',
+      camera: document.getElementById('pSpecCamera')?.value.trim() || '',
+      battery: document.getElementById('pSpecBattery')?.value.trim() || '',
+      os: document.getElementById('pSpecOs')?.value.trim() || '',
+      color: document.getElementById('pSpecColor')?.value.trim() || ''
     };
-    Object.keys(specs).forEach(k => specs[k] === undefined && delete specs[k]);
-    if (Object.keys(specs).length > 0) {
-      formData.append('specs', JSON.stringify(specs));
+    formData.append('specs', JSON.stringify(specsObj));
+
+    if (imageUrl) {
+      formData.append('images', JSON.stringify([{ url: imageUrl, isPrimary: true }]));
     }
 
     const fileInput = document.getElementById('pImageFile');
@@ -319,14 +345,16 @@ const AdminApp = {
 
   // ── Orders ────────────────────────────────────────────────────────────────
   async loadOrders() {
+    const tbody = document.getElementById('ordersTableBody');
     try {
       const orders = await API.getAdminOrders();
-      this.localOrders = (orders && orders.length > 0) ? orders : MOCK_ORDERS;
+      this.localOrders = Array.isArray(orders) ? orders : [];
       this.renderOrdersTable(this.localOrders);
     } catch (err) {
-      console.warn('Orders load fallback:', err);
-      this.localOrders = MOCK_ORDERS;
-      this.renderOrdersTable(this.localOrders);
+      console.error('loadOrders error:', err);
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--danger);">⚠️ Không thể tải danh sách đơn hàng từ hệ thống</td></tr>`;
+      }
     }
   },
 
@@ -338,16 +366,17 @@ const AdminApp = {
 
   renderOrdersTable(orders) {
     const tbody = document.getElementById('ordersTableBody');
+    if (!tbody) return;
     if (!orders || !orders.length) {
       tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">Chưa có đơn hàng nào</td></tr>`;
       return;
     }
     tbody.innerHTML = orders.map(o => {
-      const code = o.orderCode || o.id || (o._id ? o._id.substring(0,8).toUpperCase() : 'ORD-9821');
+      const code = o.orderCode || o.id || (o._id ? `ORD-${o._id.substring(0,6).toUpperCase()}` : 'ORD-9821');
       const customerName = o.shippingAddress?.fullName || o.shippingAddress?.name || o.customer || o.userId?.name || 'Khách hàng';
       const customerPhone = o.shippingAddress?.phone || o.phone || '';
       const total = o.totalPrice || o.total || 0;
-      const dateStr = o.date || (o.createdAt ? new Date(o.createdAt).toLocaleDateString('vi-VN') : '14/08/2026');
+      const dateStr = o.date || (o.createdAt ? new Date(o.createdAt).toLocaleDateString('vi-VN') : '—');
 
       return `
         <tr>
