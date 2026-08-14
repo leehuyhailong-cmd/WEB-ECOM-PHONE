@@ -33,7 +33,8 @@ export const ProductDetailComponent = {
   },
 
   render(p, container) {
-    const primaryImg = p.images?.[0]?.url || 'https://via.placeholder.com/400';
+    const fallbackSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiB2aWV3Qm94PSIwIDAgMzAwIDMwMCI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMzMzQxNTUiIC8+PHRleHQgeD0iMTUwIiB5PSIxNTAiIGZpbGw9IiM5NGEzYjgiIGZvbnQtZmFtaWx5PSJBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tm8gSW1hZ2U8L3RleHQ+PC9zdmc+";
+    const primaryImg = p.images?.find(i => i.isPrimary)?.url || p.images?.[0]?.url || fallbackSvg;
     const formatVND = (num) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
 
     const specsHtml = p.specs ? Object.entries(p.specs).map(([key, val]) => `
@@ -47,7 +48,7 @@ export const ProductDetailComponent = {
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start;">
         <div>
           <div style="background: rgba(15,23,42,0.6); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); text-align: center;">
-            <img src="${primaryImg}" id="mainDetailImg" style="max-height: 320px; margin: 0 auto; object-fit: contain;" alt="${p.name}" />
+            <img src="${primaryImg}" id="mainDetailImg" style="max-height: 320px; margin: 0 auto; object-fit: contain;" alt="${p.name}" onerror="this.onerror=null; this.src='${fallbackSvg}'" />
           </div>
         </div>
 

@@ -89,12 +89,13 @@ export const CartCheckoutComponent = {
       return;
     }
 
+    const fallbackSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiB2aWV3Qm94PSIwIDAgMzAwIDMwMCI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMzMzQxNTUiIC8+PHRleHQgeD0iMTUwIiB5PSIxNTAiIGZpbGw9IiM5NGEzYjgiIGZvbnQtZmFtaWx5PSJBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tm8gSW1hZ2U8L3RleHQ+PC9zdmc+";
     bodyEl.innerHTML = cartItems.map(item => {
       const p = item.product;
-      const img = p.images?.[0]?.url || 'https://via.placeholder.com/80';
+      const img = p.images?.find(i => i.isPrimary)?.url || p.images?.[0]?.url || fallbackSvg;
       return `
         <div class="cart-item">
-          <img src="${img}" class="cart-img" alt="${p.name}" />
+          <img src="${img}" class="cart-img" alt="${p.name}" onerror="this.onerror=null; this.src='${fallbackSvg}'" />
           <div class="cart-info">
             <div class="cart-title">${p.name}</div>
             <div class="cart-price">${this.formatVND(p.price)}</div>
