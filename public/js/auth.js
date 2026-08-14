@@ -117,7 +117,8 @@ document.getElementById('registerForm')?.addEventListener('submit', async (e) =>
     const res = await API.register(name, email, password);
     if (res && res.user) {
       localStorage.setItem('phonestore_user', JSON.stringify(res.user));
-      if (res.token) localStorage.setItem('phonestore_token', res.token);
+      const token = res.accessToken || res.token;
+      if (token) localStorage.setItem('phonestore_token', token);
 
       showAlert('Đăng ký thành công! Đang chuyển hướng...', 'success');
       setTimeout(() => { window.location.href = '/'; }, 1200);

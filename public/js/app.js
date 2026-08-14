@@ -3,6 +3,7 @@
  * Auth/Admin now use dedicated pages: /auth.html and /admin.html
  */
 
+import { API } from './api.js';
 import { CatalogComponent } from './components/catalog.js';
 import { ProductDetailComponent } from './components/product-detail.js';
 import { CartCheckoutComponent } from './components/cart-checkout.js';
@@ -78,7 +79,6 @@ class AppStore {
     CartCheckoutComponent.openCart();
   }
 
-  // ── Navbar: show user info or login button ─────────────────────────────
   updateNavbarUserState() {
     const user = this.state.currentUser;
     const greeting = document.getElementById('userGreeting');
@@ -86,18 +86,48 @@ class AppStore {
     const adminBtn = document.getElementById('adminBtn');
 
     if (user) {
-      // Show greeting + name
       if (greeting) {
+        const initial = (user.name || user.email || '?')[0].toUpperCase();
         greeting.style.display = 'flex';
         greeting.innerHTML = `
-          <span style="font-size:1rem;">👤</span>
-          <span style="color:var(--text-main);font-weight:600;">${user.name || user.email}</span>
-          <button id="btnLogoutHeader" style="background:rgba(244,63,94,0.15);border:1px solid rgba(244,63,94,0.3);color:var(--danger);border-radius:6px;padding:0.2rem 0.65rem;font-size:0.75rem;font-weight:600;cursor:pointer;">Đăng xuất</button>
+          <div class="user-menu-wrapper" id="userMenuWrapper">
+            <button class="user-menu-trigger" id="userMenuTrigger" title="Tài khoản của tôi">
+              <span class="user-avatar">${initial}</span>
+              <span class="user-menu-name">${user.name || user.email}</span>
+              <span class="user-menu-caret">▾</span>
+            </button>
+            <div class="user-dropdown" id="userDropdown">
+              <div class="user-dropdown-header">
+                <div class="user-dropdown-avatar">${initial}</div>
+                <div>
+                  <div class="user-dropdown-name">${user.name || 'Người dùng'}</div>
+                  <div class="user-dropdown-email">${user.email || ''}</div>
+                </div>
+              </div>
+              <div class="user-dropdown-divider"></div>
+              <a href="/profile.html" class="user-dropdown-item">
+                <span>👤</span> Tài khoản của tôi
+              </a>
+              <a href="/orders.html" class="user-dropdown-item">
+                <span>📦</span> Đơn hàng của tôi
+              </a>
+              <div class="user-dropdown-divider"></div>
+              <button class="user-dropdown-item user-dropdown-logout" id="btnLogoutHeader">
+                <span>🚪</span> Đăng xuất
+              </button>
+            </div>
+          </div>
         `;
-        const btnLogout = document.getElementById('btnLogoutHeader');
-        if (btnLogout) {
-          btnLogout.addEventListener('click', () => this.logout());
-        }
+
+        // Toggle dropdown
+        const trigger = document.getElementById('userMenuTrigger');
+        const dropdown = document.getElementById('userDropdown');
+        trigger?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          dropdown?.classList.toggle('open');
+        });
+        document.addEventListener('click', () => dropdown?.classList.remove('open'), { capture: false });
+        document.getElementById('btnLogoutHeader')?.addEventListener('click', () => this.logout());
       }
       if (authLinks) authLinks.style.display = 'none';
       if (adminBtn) adminBtn.style.display = user.role === 'admin' ? 'inline-flex' : 'none';
@@ -110,10 +140,10 @@ class AppStore {
 
   logout() {
     this.setCurrentUser(null);
-    this.showToast('Đang đăng xuất...', 'info');
+    this.showToast('Đã đăng xuất thành công', 'info');
     setTimeout(() => {
-      window.location.href = '/login.html';
-    }, 500);
+      window.location.href = '/';
+    }, 600);
   }
 
   showToast(message, type = 'info') {
@@ -144,7 +174,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   const app = new AppStore();
   window.appStore = app;
 
-  // ── AUTH GUARD REMOVED: Cho phép khách vãng lai xem trang bán hàng ──────────────
+  // ── Verify token với server (tránh hiển thị sai khi token hết hạn) ──────
+  const token = localStorage.getItem('phonestore_token');
+  if (token) {
+    const serverUser = await API.getMe();
+    if (serverUser) {
+      // Cập nhật user data mới nhất từ server
+      localStorage.setItem('phonestore_user', JSON.stringify(serverUser));
+      app.state.currentUser = serverUser;
+    } else {
+      // Token không hợp lệ → xóa
+      localStorage.removeItem('phonestore_token');
+      localStorage.removeItem('phonestore_user');
+      app.state.currentUser = null;
+    }
+  }
 
   // Initialise components
   await CatalogComponent.init(app);
@@ -171,6 +215,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize Hero Slider Carousel
   initHeroSlider();
 });
+
+export { AppStore };
 
 function initHeroSlider() {
   const slides = document.querySelectorAll('.hero-slide');

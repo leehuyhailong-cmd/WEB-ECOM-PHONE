@@ -378,6 +378,30 @@ export const API = {
     return data.data; // { user, token }
   },
 
+  async getMe() {
+    const token = localStorage.getItem('phonestore_token');
+    if (!token) return null;
+    try {
+      const res = await fetch(`${API_BASE}/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.data?.user || data.data || null;
+    } catch {
+      return null;
+    }
+  },
+
+  async getMyOrders() {
+    const res = await fetch(`${API_BASE}/orders`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('phonestore_token')}` }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Lỗi lấy đơn hàng');
+    return Array.isArray(data.data) ? data.data : (data.data?.orders || []);
+  },
+
   // ── Cart & Order API ──────────────────────────────────────────────────────
   async checkoutOrder(orderData) {
     const res = await fetch(`${API_BASE}/orders`, {

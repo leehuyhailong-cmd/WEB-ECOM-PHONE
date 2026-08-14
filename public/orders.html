@@ -6,88 +6,287 @@
   <title>Lịch sử Đơn hàng - Phonestore</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
-    .orders-container {
+    .orders-page {
       max-width: 1000px;
       margin: 2rem auto;
-      padding: 2rem;
-      background: var(--bg-card-solid);
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--border-subtle);
+      padding: 0 1.25rem 3rem;
+    }
+    .orders-page-title {
+      font-family: var(--font-heading);
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin-bottom: 0.4rem;
+    }
+    .orders-page-subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
     }
     .order-card {
+      background: var(--bg-card-solid);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
-      padding: 1.5rem;
+      padding: 1.25rem 1.5rem;
       margin-bottom: 1rem;
+      transition: box-shadow var(--transition-fast);
+    }
+    .order-card:hover {
+      box-shadow: var(--shadow-md);
     }
     .order-header {
       display: flex;
       justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 0.5rem;
       border-bottom: 1px solid var(--border-subtle);
-      padding-bottom: 1rem;
+      padding-bottom: 0.9rem;
+      margin-bottom: 0.9rem;
+    }
+    .order-code {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .order-date {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      margin-top: 0.2rem;
+    }
+    .order-items-list {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.4rem;
+    }
+    .order-total {
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 1.05rem;
+    }
+    .order-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.9rem;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .status-pending   { background: rgba(245,158,11,0.12); color: #d97706; border: 1px solid rgba(245,158,11,0.25); }
+    .status-processing{ background: rgba(37,99,235,0.1);   color: var(--primary); border: 1px solid rgba(37,99,235,0.25); }
+    .status-shipped   { background: rgba(6,182,212,0.1);   color: var(--accent);  border: 1px solid rgba(6,182,212,0.25); }
+    .status-delivered { background: rgba(22,163,74,0.1);   color: var(--success); border: 1px solid rgba(22,163,74,0.25); }
+    .status-cancelled { background: rgba(239,68,68,0.1);   color: var(--danger);  border: 1px solid rgba(239,68,68,0.25); }
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-muted);
+    }
+    .empty-state .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .empty-state p { margin-bottom: 1.5rem; }
+    .page-header-bar {
+      background: var(--bg-card-solid);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0.85rem 0;
+    }
+    .page-header-bar .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .page-header-nav {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    .page-header-nav a {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color var(--transition-fast);
+    }
+    .page-header-nav a:hover { color: var(--primary); }
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-input) 25%, var(--border-subtle) 50%, var(--bg-input) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+      border-radius: var(--radius-sm);
+      height: 16px;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .skeleton-card {
+      background: var(--bg-card-solid);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.25rem 1.5rem;
       margin-bottom: 1rem;
     }
   </style>
 </head>
 <body>
-  <header style="background: var(--bg-card-solid); border-bottom: 1px solid var(--border-subtle); padding: 1rem 0;">
-    <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-      <a href="/" class="logo" style="text-decoration:none;">📱 Phonestore</a>
-      <div style="display:flex; gap:1rem;">
-        <a href="/profile.html" style="color:var(--text-main);text-decoration:none;">👤 Tài khoản</a>
-        <a href="/" style="color:var(--text-main);text-decoration:none;">🏪 Về cửa hàng</a>
-      </div>
+  <header class="page-header-bar">
+    <div class="container">
+      <a href="/" class="logo" style="text-decoration:none;">
+        <div class="logo-icon">📱</div>
+        <div class="logo-text">Phone<span>store</span></div>
+      </a>
+      <nav class="page-header-nav">
+        <a href="/profile.html">👤 Tài khoản</a>
+        <a href="/">🏪 Về cửa hàng</a>
+        <button id="btnLogout" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:var(--danger);border-radius:var(--radius-sm);padding:0.3rem 0.8rem;font-size:0.8rem;font-weight:600;cursor:pointer;">🚪 Đăng xuất</button>
+      </nav>
     </div>
   </header>
 
-  <main class="container">
-    <div class="orders-container">
-      <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem; margin-bottom: 1.5rem;">
-        <h2 style="font-family: var(--font-heading);">Lịch sử Đơn hàng</h2>
-      </div>
-      
+  <main>
+    <div class="orders-page">
+      <h1 class="orders-page-title">📦 Lịch sử Đơn hàng</h1>
+      <p class="orders-page-subtitle" id="ordersSubtitle">Đang tải dữ liệu...</p>
       <div id="ordersList">
-        <p style="color:var(--text-muted); text-align:center;">Đang tải dữ liệu...</p>
+        <!-- Skeleton loading -->
+        <div class="skeleton-card">
+          <div class="skeleton" style="width:40%;margin-bottom:0.75rem;"></div>
+          <div class="skeleton" style="width:60%;margin-bottom:0.5rem;"></div>
+          <div class="skeleton" style="width:30%;"></div>
+        </div>
+        <div class="skeleton-card">
+          <div class="skeleton" style="width:40%;margin-bottom:0.75rem;"></div>
+          <div class="skeleton" style="width:60%;margin-bottom:0.5rem;"></div>
+          <div class="skeleton" style="width:30%;"></div>
+        </div>
       </div>
     </div>
   </main>
-  
+
   <div id="toastContainer" class="toast-container"></div>
-  
+
   <script type="module">
     import { API } from './js/api.js';
-    import { AppStore } from './js/app.js';
-    
-    document.addEventListener('DOMContentLoaded', async () => {
-      window.appStore = new AppStore();
-      
-      if (!window.appStore.state.currentUser) {
-        window.location.href = '/login.html';
+
+    const STATUS_MAP = {
+      pending:    { label: 'Chờ xác nhận', cls: 'status-pending',    icon: '🕐' },
+      processing: { label: 'Đang xử lý',   cls: 'status-processing', icon: '⚙️' },
+      shipped:    { label: 'Đang giao',     cls: 'status-shipped',    icon: '🚚' },
+      delivered:  { label: 'Đã giao',       cls: 'status-delivered',  icon: '✅' },
+      cancelled:  { label: 'Đã hủy',        cls: 'status-cancelled',  icon: '❌' },
+    };
+
+    function formatPrice(n) {
+      return new Intl.NumberFormat('vi-VN').format(n) + ' đ';
+    }
+    function formatDate(d) {
+      if (!d) return '—';
+      return new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function showToast(msg, type = 'info') {
+      const c = document.getElementById('toastContainer');
+      if (!c) return;
+      const t = document.createElement('div');
+      t.className = `toast toast-${type}`;
+      t.textContent = msg;
+      c.appendChild(t);
+      setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+    }
+
+    function renderOrders(orders) {
+      const list = document.getElementById('ordersList');
+      const subtitle = document.getElementById('ordersSubtitle');
+
+      if (!orders || orders.length === 0) {
+        subtitle.textContent = 'Bạn chưa có đơn hàng nào.';
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🛒</div>
+            <p>Bạn chưa đặt đơn hàng nào.</p>
+            <a href="/" class="btn btn-primary">Mua sắm ngay</a>
+          </div>
+        `;
         return;
       }
-      
-      const ordersList = document.getElementById('ordersList');
-      try {
-        // Mock data fallback for frontend display until Phase 10 API is ready
-        ordersList.innerHTML = `
+
+      subtitle.textContent = `Tổng cộng ${orders.length} đơn hàng`;
+      list.innerHTML = orders.map(order => {
+        const status = STATUS_MAP[order.status] || { label: order.status, cls: 'status-pending', icon: '📋' };
+        const items = (order.items || []).map(i => `${i.name || i.productName || 'Sản phẩm'} (x${i.quantity})`).join(', ');
+        const code = order.orderCode || order._id?.slice(-8).toUpperCase() || '—';
+
+        return `
           <div class="order-card">
             <div class="order-header">
               <div>
-                <strong>Mã đơn: #PS-847291</strong>
-                <div style="color:var(--text-muted); font-size:0.85rem; margin-top:0.25rem;">Đặt ngày: 10/08/2026</div>
+                <div class="order-code">Đơn hàng #${code}</div>
+                <div class="order-date">📅 ${formatDate(order.createdAt)}</div>
               </div>
-              <div>
-                <span class="badge badge-warning">Đang xử lý</span>
-              </div>
+              <span class="status-badge ${status.cls}">${status.icon} ${status.label}</span>
             </div>
-            <div>
-              <p>Tổng tiền: <strong>34.990.000 đ</strong></p>
-              <p style="color:var(--text-muted);">Sản phẩm: iPhone 16 Pro Max 256GB (x1)</p>
+            <div class="order-items-list">
+              ${items || 'Không có thông tin sản phẩm'}
+            </div>
+            <div class="order-footer">
+              <div style="font-size:0.85rem;color:var(--text-muted);">
+                Phương thức: <strong>${order.paymentMethod === 'cod' ? 'Thanh toán khi nhận hàng' : (order.paymentMethod || '—')}</strong>
+              </div>
+              <div class="order-total">${formatPrice(order.totalAmount || order.total || 0)}</div>
             </div>
           </div>
         `;
+      }).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Auth guard
+      const token = localStorage.getItem('phonestore_token');
+      const userStr = localStorage.getItem('phonestore_user');
+
+      if (!token || !userStr) {
+        window.location.href = '/login.html?return=/orders.html';
+        return;
+      }
+
+      // Verify token
+      const user = await API.getMe();
+      if (!user) {
+        localStorage.removeItem('phonestore_token');
+        localStorage.removeItem('phonestore_user');
+        window.location.href = '/login.html?return=/orders.html';
+        return;
+      }
+
+      // Logout button
+      document.getElementById('btnLogout')?.addEventListener('click', () => {
+        localStorage.removeItem('phonestore_token');
+        localStorage.removeItem('phonestore_user');
+        window.location.href = '/';
+      });
+
+      // Load orders
+      try {
+        const orders = await API.getMyOrders();
+        renderOrders(orders);
       } catch (err) {
-        ordersList.innerHTML = '<p style="color:var(--danger); text-align:center;">Lỗi tải đơn hàng.</p>';
+        console.error('Load orders error:', err);
+        document.getElementById('ordersSubtitle').textContent = 'Không thể tải đơn hàng.';
+        document.getElementById('ordersList').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">⚠️</div>
+            <p style="color:var(--danger);">${err.message || 'Lỗi khi tải dữ liệu đơn hàng.'}</p>
+            <button onclick="location.reload()" class="btn btn-secondary">Thử lại</button>
+          </div>
+        `;
       }
     });
   </script>
