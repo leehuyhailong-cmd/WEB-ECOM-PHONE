@@ -73,12 +73,18 @@ async function getProductById(id) {
  * @returns {Promise<object>}
  */
 async function createProduct(data, files = []) {
-  const images = await _uploadImages(files, 'phonestore/products');
+  let images = await _uploadImages(files, 'phonestore/products');
+  const { imageUrl, ...productData } = data;
 
-  // Mark first image as primary
+  if (images.length === 0 && imageUrl) {
+    images = [{ url: imageUrl, publicId: null, isPrimary: true }];
+  } else if (images.length === 0) {
+    images = [{ url: '/images/iphone15promax.jpg', publicId: null, isPrimary: true }];
+  }
+
   if (images.length > 0) images[0].isPrimary = true;
 
-  const product = await productRepository.create({ ...data, images });
+  const product = await productRepository.create({ ...productData, images });
   logger.info({ msg: 'Product created', productId: product._id, name: product.name });
   return product;
 }
@@ -101,25 +107,25 @@ async function updateProduct(id, data, files = []) {
   const existing = await productRepository.findById(id);
   if (!existing) throw new NotFoundError('Không tìm thấy sản phẩm');
 
-  // 1. Delete removed images from Cloudinary
-  const { removeImageIds = [], ...productData } = data;
+  const { removeImageIds = [], imageUrl, ...productData } = data;
   if (removeImageIds.length > 0) {
     await Promise.all(removeImageIds.map(pid => deleteFromCloudinary(pid)));
-    // Remove from images array
     productData.images = (existing.images || []).filter(
       img => !removeImageIds.includes(img.publicId),
     );
   }
 
-  // 2. Upload new images and merge with existing
   if (files.length > 0) {
     const newImages = await _uploadImages(files, 'phonestore/products');
     const existingImages = productData.images ?? existing.images ?? [];
     productData.images = [...existingImages, ...newImages];
+  } else if (imageUrl) {
+    productData.images = [{ url: imageUrl, publicId: null, isPrimary: true }];
+  }
 
-    // Ensure exactly one primary image
+  if (productData.images && productData.images.length > 0) {
     if (!productData.images.some(img => img.isPrimary)) {
-      productData.images[0] && (productData.images[0].isPrimary = true);
+      productData.images[0].isPrimary = true;
     }
   }
 

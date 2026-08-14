@@ -195,6 +195,8 @@ const AdminApp = {
     document.getElementById('pStock').value = p.stock ?? '';
     document.getElementById('pSold').value = p.soldCount ?? '';
     document.getElementById('pDesc').value = p.description || '';
+    const imgInput = document.getElementById('pImageUrl');
+    if (imgInput) imgInput.value = p.images?.[0]?.url || '';
     this.openProductModal();
   },
 
@@ -222,6 +224,11 @@ const AdminApp = {
     formData.append('stock', Number(document.getElementById('pStock').value) || 0);
     formData.append('description', document.getElementById('pDesc').value || '');
     
+    const imageUrl = document.getElementById('pImageUrl')?.value.trim();
+    if (imageUrl) {
+      formData.append('imageUrl', imageUrl);
+    }
+
     const fileInput = document.getElementById('pImageFile');
     if (fileInput && fileInput.files.length > 0) {
       formData.append('images', fileInput.files[0]);
