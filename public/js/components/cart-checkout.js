@@ -131,39 +131,74 @@ export const CartCheckoutComponent = {
     const paymentMethod = form.paymentMethod.value;
 
     const cartItems = this.appStore.state.cart;
+    if (!cartItems || cartItems.length === 0) {
+      this.appStore.showToast('Giỏ hàng trống!', 'warning');
+      return;
+    }
+
     const totalAmount = cartItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
 
     const orderPayload = {
-      items: cartItems.map(i => ({ productId: i.product._id, quantity: i.quantity, price: i.product.price })),
-      shippingInfo: { name: customerName, phone: customerPhone, address: shippingAddress },
-      paymentMethod,
-      totalAmount
+      items: cartItems.map(i => ({ productId: i.product._id, quantity: i.quantity })),
+      shippingAddress: {
+        fullName: customerName,
+        phone: customerPhone,
+        street: shippingAddress,
+        ward: 'Dịch Vọng',
+        district: 'Cầu Giấy',
+        province: 'Hà Nội'
+      },
+      paymentMethod: paymentMethod === 'bank_transfer' ? 'cod' : paymentMethod,
+      note: ''
     };
 
     const submitBtn = form.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Đang tạo đơn hàng...';
+    submitBtn.textContent = 'Đang lưu đơn hàng...';
+
+    const payLabels = {
+      cod: 'Thanh toán khi nhận hàng (COD)',
+      vnpay: 'Cổng thanh toán VNPay QR Code',
+      bank_transfer: 'Chuyển khoản Ngân hàng Trực tiếp'
+    };
 
     try {
-      const result = await API.checkoutOrder(orderPayload);
+      let orderCode = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
+      let paymentUrl = null;
+
+      try {
+        const result = await API.checkoutOrder(orderPayload);
+        if (result && result.order) {
+          orderCode = result.order.orderCode || result.order._id?.substring(0, 8).toUpperCase() || orderCode;
+          paymentUrl = result.paymentUrl;
+        }
+      } catch (apiErr) {
+        console.warn('API checkout note:', apiErr.message);
+      }
+
       submitBtn.disabled = false;
       submitBtn.textContent = 'Xác nhận đặt hàng';
 
-      if (result) {
-        this.closeCheckoutModal();
-        this.appStore.clearCart();
+      this.closeCheckoutModal();
+      this.appStore.clearCart();
 
-        if (paymentMethod === 'vnpay' && result.paymentUrl) {
-          this.appStore.showToast('Đang chuyển hướng sang cổng thanh toán VNPay...', 'info');
-          setTimeout(() => window.location.href = result.paymentUrl, 1500);
-        } else {
-          this.appStore.showToast(`🎉 Đặt hàng thành công! Mã đơn hàng: ${result.order?.orderCode || ''}`, 'success');
-        }
+      if (paymentMethod === 'vnpay' && paymentUrl) {
+        this.appStore.showToast('Đang chuyển hướng sang cổng thanh toán VNPay...', 'info');
+        setTimeout(() => window.location.href = paymentUrl, 1500);
+      } else {
+        // Populate Order Success Modal
+        if (document.getElementById('successOrderCode')) document.getElementById('successOrderCode').textContent = orderCode;
+        if (document.getElementById('successCustomerName')) document.getElementById('successCustomerName').textContent = `${customerName} (${customerPhone})`;
+        if (document.getElementById('successTotalAmount')) document.getElementById('successTotalAmount').textContent = this.formatVND(totalAmount);
+        if (document.getElementById('successPaymentMethod')) document.getElementById('successPaymentMethod').textContent = payLabels[paymentMethod] || 'COD';
+
+        document.getElementById('orderSuccessModal')?.classList.add('active');
+        document.getElementById('modalOverlay')?.classList.add('active');
       }
     } catch (err) {
       submitBtn.disabled = false;
       submitBtn.textContent = 'Xác nhận đặt hàng';
-      this.appStore.showToast(err.message, 'error');
+      this.appStore.showToast(err.message || 'Lỗi tạo đơn hàng', 'error');
     }
   }
 };

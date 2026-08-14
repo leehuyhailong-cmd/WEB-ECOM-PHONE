@@ -314,13 +314,33 @@
           <textarea name="shippingAddress" class="search-input" style="border-radius: var(--radius-sm); height: 70px; resize: none;" placeholder="Số nhà, Tên đường, Phường/Xã, Quận/Huyện" required></textarea>
         </div>
         <div style="margin-bottom: 1.5rem;">
-          <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem;">Phương thức thanh toán</label>
-          <div style="display: flex; gap: 1rem;">
-            <label class="checkbox-item" style="background: var(--bg-dark); padding: 0.6rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); flex: 1;">
-              <input type="radio" name="paymentMethod" value="cod" checked /> Thanh toán khi nhận hàng (COD)
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.75rem;">Phương thức thanh toán *</label>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <label class="checkbox-item" style="background: var(--bg-card); padding: 0.75rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+              <input type="radio" name="paymentMethod" value="cod" checked />
+              <span style="font-size: 1.4rem;">💵</span>
+              <div>
+                <div style="font-weight: 700; font-size: 0.9rem;">Thanh toán khi nhận hàng (COD)</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Thanh toán tiền mặt trực tiếp khi shipper giao hàng tận nhà</div>
+              </div>
             </label>
-            <label class="checkbox-item" style="background: var(--bg-dark); padding: 0.6rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); flex: 1;">
-              <input type="radio" name="paymentMethod" value="vnpay" /> VNPay QR Code
+
+            <label class="checkbox-item" style="background: var(--bg-card); padding: 0.75rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+              <input type="radio" name="paymentMethod" value="vnpay" />
+              <span style="font-size: 1.4rem;">💳</span>
+              <div>
+                <div style="font-weight: 700; font-size: 0.9rem;">Cổng thanh toán VNPay QR Code</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Quét mã QR qua app Ngân hàng / Ví VNPAY / Thẻ ATM chính hãng</div>
+              </div>
+            </label>
+
+            <label class="checkbox-item" style="background: var(--bg-card); padding: 0.75rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+              <input type="radio" name="paymentMethod" value="bank_transfer" />
+              <span style="font-size: 1.4rem;">🏦</span>
+              <div>
+                <div style="font-weight: 700; font-size: 0.9rem;">Chuyển khoản Ngân hàng Trực tiếp</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Chuyển khoản 24/7 nhận hàng nhanh chóng</div>
+              </div>
             </label>
           </div>
         </div>
@@ -330,6 +350,38 @@
         </div>
         <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem;">Xác nhận đặt hàng</button>
       </form>
+    </div>
+  </div>
+
+  <!-- Order Success Modal -->
+  <div id="orderSuccessModal" class="modal" style="max-width: 480px; text-align: center;">
+    <div class="modal-body" style="padding: 2.25rem 1.5rem;">
+      <div style="font-size: 3.5rem; margin-bottom: 0.75rem;">🎉</div>
+      <h2 style="font-family: var(--font-heading); color: var(--success); font-size: 1.5rem; margin-bottom: 0.5rem;">Đặt Hàng Thành Công!</h2>
+      <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.5rem;">Cảm ơn bạn đã mua sắm tại Phonestore. Đơn hàng của bạn đã được lưu vào hệ thống.</p>
+      
+      <div style="background: rgba(15,23,42,0.6); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); text-align: left; font-size: 0.88rem; margin-bottom: 1.5rem;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+          <span style="color:var(--text-muted);">Mã đơn hàng:</span>
+          <strong id="successOrderCode" style="color:var(--primary);">ORD-9821</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+          <span style="color:var(--text-muted);">Người nhận:</span>
+          <span id="successCustomerName">Nguyễn Văn A</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+          <span style="color:var(--text-muted);">Tổng tiền:</span>
+          <strong id="successTotalAmount" style="color:var(--success);">0 đ</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:var(--text-muted);">Thanh toán:</span>
+          <span id="successPaymentMethod">Thanh toán khi nhận hàng (COD)</span>
+        </div>
+      </div>
+
+      <button onclick="document.getElementById('orderSuccessModal').classList.remove('active'); document.getElementById('modalOverlay').classList.remove('active');" class="btn btn-primary" style="width: 100%; padding: 0.85rem;">
+        🛒 Tiếp tục mua sắm
+      </button>
     </div>
   </div>
 
