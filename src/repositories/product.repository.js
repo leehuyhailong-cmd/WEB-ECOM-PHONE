@@ -32,8 +32,17 @@ function _buildFilter(params = {}) {
   if (params.category) filter.category = params.category;
 
   if (params.brand) {
-    // Case-insensitive brand filter using regex
-    filter.brand = new RegExp(`^${params.brand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+    const brandList = typeof params.brand === 'string'
+      ? params.brand.split(',').map(b => b.trim()).filter(Boolean)
+      : (Array.isArray(params.brand) ? params.brand : [params.brand]);
+
+    if (brandList.length === 1) {
+      filter.brand = new RegExp(`^${brandList[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+    } else if (brandList.length > 1) {
+      filter.brand = {
+        $in: brandList.map(b => new RegExp(`^${b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')),
+      };
+    }
   }
 
   if (params.minPrice !== undefined || params.maxPrice !== undefined) {
