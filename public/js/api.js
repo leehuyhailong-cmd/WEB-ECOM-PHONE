@@ -429,21 +429,50 @@ export const API = {
       method: 'POST',
       body: JSON.stringify({ message, sessionId })
     });
+    if (res && res.data && res.data.reply) return res.data;
     if (res && res.reply) return res;
 
-    let reply = `Chào bạn! Tôi là Trợ lý AI Phonestore. Rất vui được hỗ trợ bạn tìm kiếm mẫu điện thoại phù hợp nhất.`;
+    let reply = `Chào bạn! Tôi là Trợ lý AI Phonestore. Rất vui được hỗ trợ bạn tìm kiếm sản phẩm phù hợp.`;
     const q = message.toLowerCase();
+
+    let matchedProducts = [];
     if (q.includes('iphone') || q.includes('apple')) {
-      reply = `iPhone 16 Pro Max là mẫu flagship cao cấp nhất của Apple hiện tại với viền Titan và chip A18 Pro. Giá từ 34.990.000đ!`;
-    } else if (q.includes('samsung') || q.includes('s24')) {
-      reply = `Samsung Galaxy S24 Ultra với bộ công cụ Galaxy AI và camera 200MP đang có chương trình giảm 2.000.000đ trực tiếp!`;
-    } else if (q.includes('rẻ') || q.includes('giá')) {
-      reply = `Phonestore có nhiều mẫu tầm trung từ 8-12 triệu như OPPO Reno 11 Pro, Xiaomi Redmi Note 13 Pro+. Trả góp 0% lãi suất!`;
-    } else if (q.includes('tai nghe') || q.includes('airpods')) {
-      reply = `AirPods Pro 2 USB-C với chống ồn ANC mạnh nhất và Spatial Audio đang có giá 5.690.000đ tại Phonestore!`;
+      reply = `Các dòng iPhone mới nhất hiện có tại Phonestore bao gồm iPhone 16 Pro Max và iPhone 15 Pro với thiết kế Titan sang trọng.`;
+      matchedProducts = MOCK_PRODUCTS.filter(p => p.brand === 'Apple').slice(0, 2);
+    } else if (q.includes('samsung') || q.includes('galaxy') || q.includes('s24')) {
+      reply = `Dòng Samsung Galaxy S24 Ultra và S24+ trang bị bộ công cụ Galaxy AI thông minh và camera sắc nét.`;
+      matchedProducts = MOCK_PRODUCTS.filter(p => p.brand === 'Samsung').slice(0, 2);
+    } else if (q.includes('xiaomi') || q.includes('redmi')) {
+      reply = `Các mẫu Xiaomi 14 Ultra camera Leica và Redmi Note 13 Pro+ sạc siêu tốc 120W đang là điểm sáng trong phân khúc.`;
+      matchedProducts = MOCK_PRODUCTS.filter(p => p.brand === 'Xiaomi').slice(0, 2);
+    } else if (q.includes('oppo') || q.includes('reno')) {
+      reply = `OPPO Reno 11 Pro 5G với thiết kế mỏng nhẹ, sạc nhanh 80W và camera chụp chân dung rất đẹp.`;
+      matchedProducts = MOCK_PRODUCTS.filter(p => p.brand === 'OPPO').slice(0, 2);
+    } else if (q.includes('tablet') || q.includes('ipad') || q.includes('máy tính bảng')) {
+      reply = `Phonestore có nhiều dòng máy tính bảng như iPad Pro M4, iPad Air 5 và Samsung Galaxy Tab S9 FE phục vụ làm việc & giải trí.`;
+      matchedProducts = MOCK_PRODUCTS.filter(p => p.category === 'tablet').slice(0, 2);
+    } else if (q.includes('watch') || q.includes('đồng hồ') || q.includes('smartwatch')) {
+      reply = `Đồng hồ thông minh Apple Watch Series 10 và Galaxy Watch 7 giúp theo dõi sức khỏe và giấc ngủ toàn diện.`;
+      matchedProducts = MOCK_PRODUCTS.filter(p => p.category === 'smartwatch').slice(0, 2);
+    } else if (q.includes('tai nghe') || q.includes('phụ kiện') || q.includes('sạc') || q.includes('airpods')) {
+      reply = `Các phụ kiện chính hãng như AirPods Pro 2, củ sạc 20W, cáp sạc và ốp lưng MagSafe đang có mức giá rất ưu đãi.`;
+      matchedProducts = MOCK_PRODUCTS.filter(p => p.category === 'accessory').slice(0, 2);
+    } else if (q.includes('rẻ') || q.includes('giá') || q.includes('dưới')) {
+      reply = `Dưới đây là các sản phẩm giá tốt phù hợp với yêu cầu của bạn:`;
+      const maxMatch = q.match(/(dưới|tầm|<)\s*(\d+)/);
+      if (maxMatch) {
+        const maxPriceVnd = parseInt(maxMatch[2], 10) * 1_000_000;
+        matchedProducts = MOCK_PRODUCTS.filter(p => p.price <= maxPriceVnd).slice(0, 2);
+      } else {
+        matchedProducts = MOCK_PRODUCTS.filter(p => p.price <= 12000000).slice(0, 2);
+      }
     }
 
-    return { reply, sessionId: sessionId || 'sess_demo', recommendations: [MOCK_PRODUCTS[0], MOCK_PRODUCTS[2]] };
+    if (matchedProducts.length === 0) {
+      matchedProducts = MOCK_PRODUCTS.filter(p => p.isFeatured).slice(0, 2);
+    }
+
+    return { reply, sessionId: sessionId || 'sess_demo', recommendations: matchedProducts };
   },
 
   async getAdminStats() {

@@ -179,7 +179,7 @@ async function _retrieveContext(intent, message, userId) {
   switch (intent) {
     case 'product_search': {
       const params = _extractSearchParams(message);
-      const { products } = await productRepository.findAll({
+      let { products } = await productRepository.findAll({
         ...params,
         inStock: true,
         sort:    'popular',
@@ -187,8 +187,25 @@ async function _retrieveContext(intent, message, userId) {
         page:    1,
       });
 
-      if (products.length === 0) {
-        return 'Không tìm thấy sản phẩm phù hợp trong kho hàng hiện tại.';
+      // Fallback: if strict budget/category filter returned 0 items, relax maxPrice
+      if ((!products || products.length === 0) && params.maxPrice) {
+        const relaxed = { ...params };
+        delete relaxed.maxPrice;
+        const res = await productRepository.findAll({
+          ...relaxed,
+          inStock: true,
+          sort:    'popular',
+          limit:   5,
+          page:    1,
+        });
+        products = res.products || [];
+      }
+
+      if (!products || products.length === 0) {
+        return {
+          contextData: 'Không tìm thấy sản phẩm phù hợp trong kho hàng hiện tại.',
+          recommendations: []
+        };
       }
 
       const list = products.map((p, i) => {
@@ -196,13 +213,19 @@ async function _retrieveContext(intent, message, userId) {
         return `${i + 1}. ${p.name} — ${price}₫ | ⭐ ${p.avgRating || 0}/5 (${p.reviewCount || 0} đánh giá) | Tồn kho: ${p.stock} | Slug: ${p.slug}`;
       }).join('\n');
 
-      return `SẢN PHẨM PHÙ HỢP (${products.length} kết quả):\n${list}`;
+      return {
+        contextData: `SẢN PHẨM PHÙ HỢP (${products.length} kết quả):\n${list}`,
+        recommendations: products.slice(0, 3)
+      };
     }
 
     case 'comparison': {
       const names = _extractComparisonProducts(message);
       if (names.length < 2) {
-        return 'Không xác định được 2 sản phẩm để so sánh. Hãy hỏi người dùng cung cấp tên cụ thể.';
+        return {
+          contextData: 'Không xác định được 2 sản phẩm để so sánh. Hãy hỏi người dùng cung cấp tên cụ thể.',
+          recommendations: []
+        };
       }
 
       // Search for each product by name
@@ -215,7 +238,10 @@ async function _retrieveContext(intent, message, userId) {
         .map(r => r.products[0]);
 
       if (found.length < 2) {
-        return `Chỉ tìm thấy ${found.length}/2 sản phẩm. Sản phẩm có thể không tồn tại trong cửa hàng.`;
+        return {
+          contextData: `Chỉ tìm thấy ${found.length}/2 sản phẩm. Sản phẩm có thể không tồn tại trong cửa hàng.`,
+          recommendations: found
+        };
       }
 
       const compare = found.map(p => {
@@ -223,17 +249,26 @@ async function _retrieveContext(intent, message, userId) {
         return `- ${p.name}: ${price}₫ | ⭐ ${p.avgRating || 0}/5 | RAM: ${p.specs?.ram || 'N/A'} | Pin: ${p.specs?.battery || 'N/A'} | Camera: ${p.specs?.camera || 'N/A'} | Slug: ${p.slug}`;
       }).join('\n');
 
-      return `SO SÁNH SẢN PHẨM:\n${compare}`;
+      return {
+        contextData: `SO SÁNH SẢN PHẨM:\n${compare}`,
+        recommendations: found
+      };
     }
 
     case 'order_status': {
       if (!userId) {
-        return 'Người dùng chưa đăng nhập. Yêu cầu đăng nhập để xem thông tin đơn hàng.';
+        return {
+          contextData: 'Người dùng chưa đăng nhập. Yêu cầu đăng nhập để xem thông tin đơn hàng.',
+          recommendations: []
+        };
       }
 
       const { orders } = await orderRepository.findByUser(userId, { page: 1, limit: 3 });
       if (orders.length === 0) {
-        return 'Người dùng chưa có đơn hàng nào.';
+        return {
+          contextData: 'Người dùng chưa có đơn hàng nào.',
+          recommendations: []
+        };
       }
 
       const statusMap = {
@@ -252,11 +287,14 @@ async function _retrieveContext(intent, message, userId) {
         return `${i + 1}. Đơn #${o._id.toString().slice(-6)} | ${statusMap[o.status] || o.status} | ${total}₫ | ${date}\n   Sản phẩm: ${items}`;
       }).join('\n');
 
-      return `ĐƠN HÀNG GẦN NHẤT (${orders.length} đơn):\n${list}`;
+      return {
+        contextData: `ĐƠN HÀNG GẦN NHẤT (${orders.length} đơn):\n${list}`,
+        recommendations: []
+      };
     }
 
     default:
-      return '';
+      return { contextData: '', recommendations: [] };
   }
 }
 
@@ -359,29 +397,31 @@ async function _callOpenAI(messages, stream = false) {
  */
 function _fallbackResponse(messages) {
   const systemMsg = messages.find(m => m.role === 'system');
-  const userMsg   = messages[messages.length - 1]?.content || '';
 
   // Check if system prompt contains product data
   if (systemMsg?.content?.includes('SẢN PHẨM PHÙ HỢP')) {
-    const productLines = systemMsg.content
+    const section = systemMsg.content.split('SẢN PHẨM PHÙ HỢP')[1] || '';
+    const productLines = section
       .split('\n')
-      .filter(l => /^\d+\./.test(l))
+      .filter(l => /^\d+\./.test(l.trim()))
       .join('\n');
     return `📱 Dựa trên yêu cầu của bạn, đây là những sản phẩm phù hợp:\n\n${productLines}\n\nBạn muốn tìm hiểu thêm về sản phẩm nào?`;
   }
 
   if (systemMsg?.content?.includes('SO SÁNH SẢN PHẨM')) {
-    const compareLines = systemMsg.content
+    const section = systemMsg.content.split('SO SÁNH SẢN PHẨM')[1] || '';
+    const compareLines = section
       .split('\n')
-      .filter(l => l.startsWith('- '))
+      .filter(l => l.trim().startsWith('- '))
       .join('\n');
     return `📊 So sánh sản phẩm:\n\n${compareLines}\n\nBạn cần thêm thông tin chi tiết nào?`;
   }
 
   if (systemMsg?.content?.includes('ĐƠN HÀNG GẦN NHẤT')) {
-    const orderLines = systemMsg.content
+    const section = systemMsg.content.split('ĐƠN HÀNG GẦN NHẤT')[1] || '';
+    const orderLines = section
       .split('\n')
-      .filter(l => /^\d+\./.test(l) || l.startsWith('   '))
+      .filter(l => /^\d+\./.test(l.trim()) || l.trim().startsWith('Sản phẩm:'))
       .join('\n');
     return `📦 Thông tin đơn hàng của bạn:\n\n${orderLines}\n\nBạn cần hỗ trợ thêm về đơn hàng nào?`;
   }
@@ -423,7 +463,7 @@ async function sendMessage(userId, sessionId, message) {
   logger.info({ msg: 'Chatbot intent classified', intent, sessionId, userId });
 
   // 3. Retrieve context from DB
-  const contextData = await _retrieveContext(intent, message, userId);
+  const { contextData, recommendations } = await _retrieveContext(intent, message, userId);
 
   // 4. Get conversation history
   const history = session.getContextWindow(6);
@@ -438,7 +478,7 @@ async function sendMessage(userId, sessionId, message) {
   await chatSessionRepository.appendMessage(session, { role: 'user', content: message, intent });
   await chatSessionRepository.appendMessage(session, { role: 'assistant', content: reply });
 
-  return { reply, intent, sessionId };
+  return { reply, intent, sessionId, recommendations };
 }
 
 /**
@@ -457,8 +497,8 @@ async function sendMessageStream(userId, sessionId, message) {
     await chatSessionRepository.setTitle(session, message.slice(0, 80));
   }
 
-  const intent      = classifyIntent(message);
-  const contextData = await _retrieveContext(intent, message, userId);
+  const intent = classifyIntent(message);
+  const { contextData, recommendations } = await _retrieveContext(intent, message, userId);
   const history     = session.getContextWindow(6);
   const promptMessages = _buildPromptMessages(contextData, history, message);
 
