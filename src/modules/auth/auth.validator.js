@@ -28,23 +28,19 @@ const registerSchema = z.object({
 
       password: z
         .string({ required_error: 'Mật khẩu là bắt buộc' })
-        .min(8,   'Mật khẩu phải có ít nhất 8 ký tự')
-        .max(100, 'Mật khẩu không được quá 100 ký tự')
-        .regex(
-          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-          'Mật khẩu phải có ít nhất 1 chữ hoa, 1 chữ thường, và 1 số',
-        ),
+        .min(6,   'Mật khẩu phải có ít nhất 6 ký tự')
+        .max(100, 'Mật khẩu không được quá 100 ký tự'),
 
       passwordConfirm: z
-        .string({ required_error: 'Xác nhận mật khẩu là bắt buộc' }),
+        .string()
+        .optional(),
 
       phone: z
         .string()
-        .regex(/^[0-9+\s-]{9,15}$/, 'Số điện thoại không hợp lệ')
         .optional()
         .or(z.literal('')),
     })
-    .refine(data => data.password === data.passwordConfirm, {
+    .refine(data => !data.passwordConfirm || data.password === data.passwordConfirm, {
       message: 'Mật khẩu xác nhận không khớp',
       path:    ['passwordConfirm'],
     }),
