@@ -92,10 +92,10 @@ const AdminApp = {
   async loadDashboard() {
     try {
       const stats = await API.getAdminStats();
-      const revenue = stats.revenue || stats.revenueMTD || 145990000;
+      const revenue = stats.revenue || stats.revenueMTD || 390990000;
       const totalOrders = stats.totalOrders ?? stats.ordersToday ?? 15;
       const totalProducts = stats.totalProducts ?? 47;
-      const activeUsers = stats.activeUsers ?? stats.totalUsers ?? 6;
+      const activeUsers = stats.activeUsers ?? stats.totalUsers ?? 9;
 
       document.getElementById('statsGrid').innerHTML = `
         <div class="stat-card">
@@ -124,19 +124,34 @@ const AdminApp = {
         </div>
       `;
 
-      // Recent orders table
-      const recentOrders = stats.recentOrders || MOCK_ORDERS;
+      // Load real recent orders in Dashboard overview table
+      let recentOrders = MOCK_ORDERS;
+      try {
+        const ordersRes = await API.getAdminOrders();
+        const rawList = Array.isArray(ordersRes) ? ordersRes : (ordersRes?.orders || []);
+        if (rawList && rawList.length > 0) recentOrders = rawList.slice(0, 6);
+      } catch (e) {
+        console.warn('Recent orders fallback:', e);
+      }
+
       const ordersBody = document.getElementById('recentOrdersBody');
       if (ordersBody) {
-        ordersBody.innerHTML = recentOrders.map(o => `
-          <tr>
-            <td style="font-weight:700;color:var(--primary)">${o.id || o._id || 'ORD-9821'}</td>
-            <td>${o.customer || o.shippingAddress?.fullName || 'Khách hàng'}</td>
-            <td style="font-weight:700">${formatVND(o.total || o.totalPrice || 0)}</td>
-            <td>${this.statusBadge(o.status)}</td>
-            <td style="color:var(--text-muted)">${o.date || new Date(o.createdAt).toLocaleDateString('vi-VN')}</td>
-          </tr>
-        `).join('');
+        ordersBody.innerHTML = recentOrders.map(o => {
+          const code = o.orderCode || o.id || (o._id ? `ORD-${o._id.substring(0,6).toUpperCase()}` : 'ORD-9821');
+          const customerName = o.shippingAddress?.fullName || o.shippingAddress?.name || o.customer || o.userId?.name || 'Khách hàng';
+          const total = o.totalPrice || o.total || 0;
+          const dateStr = o.date || (o.createdAt ? new Date(o.createdAt).toLocaleDateString('vi-VN') : '14/08/2026');
+
+          return `
+            <tr>
+              <td style="font-weight:700;color:var(--primary)">${code}</td>
+              <td>${customerName}</td>
+              <td style="font-weight:700">${formatVND(total)}</td>
+              <td>${this.statusBadge(o.status)}</td>
+              <td style="color:var(--text-muted)">${dateStr}</td>
+            </tr>
+          `;
+        }).join('');
       }
     } catch (err) {
       console.warn('Dashboard load error:', err);
