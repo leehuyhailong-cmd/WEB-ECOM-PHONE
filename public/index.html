@@ -63,22 +63,76 @@
   <!-- ── Hero Featured Banner ──────────────────────────────────────────── -->
   <section class="hero-section">
     <div class="container">
-      <div class="hero-card">
-        <div class="hero-content">
-          <span class="badge badge-accent">SIÊU PHẨM HOT 2026</span>
-          <h1>iPhone 15 Pro Max<br />Titanium Đột Phá</h1>
-          <p>Trải nghiệm sức mạnh vô song từ con chip A17 Pro, khung viền Titan siêu nhẹ và hệ thống camera 5x quang học sắc nét.</p>
-          <div style="display: flex; gap: 1rem;">
-            <button class="btn btn-primary" onclick="window.appStore?.openProductModal('iphone-15-pro-max-256gb')">
-              Khám phá ngay
-            </button>
-            <button class="btn btn-secondary" onclick="document.getElementById('searchInput').focus()">
-              Tìm siêu phẩm khác
-            </button>
+      <div class="hero-slider-container" id="heroSlider">
+        <!-- Slide 1: iPhone 16 Pro Max -->
+        <div class="hero-slide active">
+          <div class="hero-content">
+            <span class="badge badge-accent">SIÊU PHẨM HOT 2026</span>
+            <h1>iPhone 16 Pro Max<br />Titanium Đột Phá</h1>
+            <p>Trải nghiệm sức mạnh vô song từ chip A18 Pro, nút chụp ảnh Camera Control hoàn toàn mới và màn hình 6.9 inch viền siêu mỏng.</p>
+            <div style="display: flex; gap: 1rem;">
+              <button class="btn btn-primary" onclick="window.appStore?.openProductModal('iphone-15-pro-max-256gb')">
+                Khám phá ngay
+              </button>
+              <button class="btn btn-secondary" onclick="document.getElementById('searchInput').focus()">
+                Tìm siêu phẩm khác
+              </button>
+            </div>
+          </div>
+          <div class="hero-image-wrap">
+            <img src="/images/iphone15promax.jpg" class="hero-image" alt="iPhone 16 Pro Max" />
           </div>
         </div>
-        <div class="hero-image-wrap">
-          <img src="https://res.cloudinary.com/demo/image/upload/v1689000000/iphone16pro.png" class="hero-image" alt="iPhone 16 Pro Max" />
+
+        <!-- Slide 2: Smartwatch - Apple Watch Ultra 2 -->
+        <div class="hero-slide">
+          <div class="hero-content">
+            <span class="badge badge-primary">ĐỒNG HỒ THÔNG MINH</span>
+            <h1>Apple Watch Ultra 2<br />Titanium Chuyên Nghiệp</h1>
+            <p>Khung vỏ Titan 49mm chống va đập, màn hình 3000 nits siêu sáng, độ sâu lặn 40m cùng thời lượng pin ấn tượng tới 72 giờ.</p>
+            <div style="display: flex; gap: 1rem;">
+              <button class="btn btn-primary" onclick="document.querySelector('[data-cat=\'smartwatch\']')?.click()">
+                Xem Smartwatch
+              </button>
+              <button class="btn btn-secondary" onclick="window.appStore?.openProductModal('apple-watch-ultra-2-gps-cellular-49mm')">
+                Chi tiết sản phẩm
+              </button>
+            </div>
+          </div>
+          <div class="hero-image-wrap">
+            <img src="/images/Apple Watch Ultra 2 GPS + Cellular 49mm.jpg" class="hero-image" alt="Apple Watch Ultra 2" />
+          </div>
+        </div>
+
+        <!-- Slide 3: Tablet - iPad Pro 12.9 inch M2 -->
+        <div class="hero-slide">
+          <div class="hero-content">
+            <span class="badge badge-success">MÁY TÍNH BẢNG ĐỈNH CAO</span>
+            <h1>iPad Pro 12.9" M2<br />Sáng Tạo Không Giới Hạn</h1>
+            <p>Sức mạnh đỉnh cao từ vi xử lý Apple M2, màn hình Liquid Retina XDR Mini-LED và hỗ trợ bút Apple Pencil 2 diệu kỳ.</p>
+            <div style="display: flex; gap: 1rem;">
+              <button class="btn btn-primary" onclick="document.querySelector('[data-cat=\'tablet\']')?.click()">
+                Xem Tablet
+              </button>
+              <button class="btn btn-secondary" onclick="window.appStore?.openProductModal('ipad-pro-129-inch-m2-wi-fi-128gb')">
+                Chi tiết sản phẩm
+              </button>
+            </div>
+          </div>
+          <div class="hero-image-wrap">
+            <img src="/images/iPad Pro 12.9 inch M2 Wi-Fi 128GB.jpg" class="hero-image" alt="iPad Pro M2" />
+          </div>
+        </div>
+
+        <!-- Slider Controls -->
+        <button class="hero-slider-btn prev" id="heroPrevBtn" title="Trang trước">❮</button>
+        <button class="hero-slider-btn next" id="heroNextBtn" title="Trang sau">❯</button>
+        
+        <!-- Slider Dots -->
+        <div class="hero-slider-dots" id="heroDots">
+          <span class="hero-dot active" data-index="0"></span>
+          <span class="hero-dot" data-index="1"></span>
+          <span class="hero-dot" data-index="2"></span>
         </div>
       </div>
     </div>
