@@ -8,7 +8,7 @@ const ORDER_STATUSES  = ['pending','confirmed','processing','shipping','delivere
 // ── Shipping address sub-schema ───────────────────────────────────────────────
 const shippingAddressSchema = z.object({
   fullName: z.string().min(2, 'Họ tên người nhận là bắt buộc').max(100),
-  phone:    z.string().regex(/^[0-9]{8,10}$/, 'Số điện thoại không hợp lệ'),
+  phone:    z.string().regex(/^[0-9+\s-]{9,15}$/, 'Số điện thoại không hợp lệ'),
   street:   z.string().min(1, 'Địa chỉ là bắt buộc').max(200),
   ward:     z.string().min(1, 'Phường/Xã là bắt buộc').max(100),
   district: z.string().min(1, 'Quận/Huyện là bắt buộc').max(100),

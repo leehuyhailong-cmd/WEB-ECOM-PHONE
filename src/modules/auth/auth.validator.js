@@ -40,8 +40,9 @@ const registerSchema = z.object({
 
       phone: z
         .string()
-        .regex(/^[0-9]{8,10}$/, 'Số điện thoại không hợp lệ')
-        .optional(),
+        .regex(/^[0-9+\s-]{9,15}$/, 'Số điện thoại không hợp lệ')
+        .optional()
+        .or(z.literal('')),
     })
     .refine(data => data.password === data.passwordConfirm, {
       message: 'Mật khẩu xác nhận không khớp',
