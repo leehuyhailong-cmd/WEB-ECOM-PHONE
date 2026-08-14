@@ -62,8 +62,7 @@ const ProductSchema = new mongoose.Schema(
       // e.g. 'Apple', 'Samsung', 'Xiaomi', 'OPPO', 'Vivo', 'Realme'
     },
     category: {
-      type:     mongoose.Schema.Types.ObjectId,
-      ref:      'Category',
+      type:     mongoose.Schema.Types.Mixed,
       required: [true, 'Danh mục là bắt buộc'],
     },
     tags: {
