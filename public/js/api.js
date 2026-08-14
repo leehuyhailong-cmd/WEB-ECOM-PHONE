@@ -345,6 +345,16 @@ export const API = {
     return MOCK_PRODUCTS.find(p => p._id === idOrSlug || p.slug === idOrSlug) || MOCK_PRODUCTS[0];
   },
 
+  async getRelatedProducts(productId) {
+    try {
+      const res = await this.request(`/recommendations/product/${productId}`);
+      if (res && res.data) return res.data;
+    } catch (e) {
+      console.warn('Could not fetch recommendations:', e);
+    }
+    return [];
+  },
+
   // ── Auth API ──────────────────────────────────────────────────────────────
   async login(email, password) {
     const res = await fetch(`${API_BASE}/auth/login`, {

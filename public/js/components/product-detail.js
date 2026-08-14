@@ -87,6 +87,13 @@ export const ProductDetailComponent = {
           </div>
         </div>
       </div>
+
+      <div style="border-top: 1px solid var(--border-subtle); margin-top: 2rem; padding-top: 1.5rem;" id="relatedProductsSection">
+        <h4 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1rem; color: var(--primary);">💡 Sản Phẩm Gợi Ý Liên Quan</h4>
+        <div id="relatedProductsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem;">
+          <div style="color: var(--text-muted); font-size: 0.85rem;">Đang tìm sản phẩm gợi ý...</div>
+        </div>
+      </div>
     `;
 
     document.getElementById('modalAddToCartBtn')?.addEventListener('click', () => {
@@ -99,5 +106,43 @@ export const ProductDetailComponent = {
       this.close();
       this.appStore.openCartDrawer();
     });
+
+    this.loadRelatedProducts(p._id);
+  },
+
+  async loadRelatedProducts(productId) {
+    const container = document.getElementById('relatedProductsContainer');
+    if (!container) return;
+
+    try {
+      const related = await API.getRelatedProducts(productId);
+      if (!related || related.length === 0) {
+        document.getElementById('relatedProductsSection')?.remove();
+        return;
+      }
+
+      const fallbackSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiB2aWV3Qm94PSIwIDAgMzAwIDMwMCI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMzMzQxNTUiIC8+PHRleHQgeD0iMTUwIiB5PSIxNTAiIGZpbGw9IiM5NGEzYjgiIGZvbnQtZmFtaWx5PSJBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tm8gSW1hZ2U8L3RleHQ+PC9zdmc+";
+      const formatVND = (num) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
+
+      container.innerHTML = related.slice(0, 4).map(item => {
+        const img = item.images?.find(i => i.isPrimary)?.url || item.images?.[0]?.url || fallbackSvg;
+        return `
+          <div class="glass-panel related-card" data-slug="${item.slug}" style="padding: 0.75rem; text-align: center; cursor: pointer; border-radius: var(--radius-sm); transition: transform 0.2s ease;">
+            <img src="${img}" style="height: 90px; width: 100%; object-fit: contain; margin-bottom: 0.5rem;" alt="${item.name}" onerror="this.onerror=null; this.src='${fallbackSvg}'" />
+            <div style="font-size: 0.8rem; font-weight: 700; height: 2.2rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-bottom: 0.35rem;">${item.name}</div>
+            <div style="font-size: 0.85rem; font-weight: 800; color: var(--primary);">${formatVND(item.price)}</div>
+          </div>
+        `;
+      }).join('');
+
+      container.querySelectorAll('.related-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const slug = card.dataset.slug;
+          this.open(slug, this.appStore);
+        });
+      });
+    } catch (e) {
+      document.getElementById('relatedProductsSection')?.remove();
+    }
   }
 };
