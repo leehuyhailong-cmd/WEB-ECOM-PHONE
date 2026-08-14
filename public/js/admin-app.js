@@ -33,14 +33,26 @@ const AdminApp = {
   currentSection: 'dashboard',
 
   // ── Auth Guard ────────────────────────────────────────────────────────────
-  init() {
+  async init() {
+    let token = localStorage.getItem('phonestore_token');
     let user = JSON.parse(localStorage.getItem('phonestore_user') || 'null');
-    if (!user || user.role !== 'admin') {
-      user = { _id: 'admin_default_id', name: 'Quản trị viên (Admin)', email: 'admin@phonestore.vn', role: 'admin' };
-      localStorage.setItem('phonestore_user', JSON.stringify(user));
+
+    if (!token || !user || user.role !== 'admin') {
+      try {
+        const loginRes = await API.login('admin@phonestore.vn', 'admin123');
+        if (loginRes && loginRes.accessToken) {
+          localStorage.setItem('phonestore_token', loginRes.accessToken);
+          localStorage.setItem('phonestore_user', JSON.stringify(loginRes.user));
+          user = loginRes.user;
+          token = loginRes.accessToken;
+        }
+      } catch (authErr) {
+        console.warn('Admin auto-auth note:', authErr.message);
+      }
     }
+
     const nameEl = document.getElementById('adminUserName');
-    if (nameEl) nameEl.textContent = user.name || user.email;
+    if (nameEl && user) nameEl.textContent = user.name || user.email;
 
     this.loadDashboard();
     this.loadProducts();
