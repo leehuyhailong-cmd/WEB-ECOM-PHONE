@@ -489,7 +489,7 @@ export const API = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Lỗi lấy danh sách đơn hàng admin');
-    return data.data;
+    return Array.isArray(data.data) ? data.data : (data.data?.orders || []);
   },
 
   async updateOrderStatus(id, status) {
@@ -513,6 +513,6 @@ export const API = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Lỗi lấy danh sách người dùng admin');
-    return data.data;
+    return Array.isArray(data.data) ? data.data : (data.data?.users || []);
   }
 };
