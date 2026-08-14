@@ -65,8 +65,8 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
   try {
     const res = await API.login(email, password);
     if (res && res.user) {
-      localStorage.setItem('phonestore_user', JSON.stringify(res.user));
-      if (res.token) localStorage.setItem('phonestore_token', res.token);
+      const token = res.accessToken || res.token;
+      if (token) localStorage.setItem('phonestore_token', token);
 
       showAlert(`Đăng nhập thành công! Chào ${res.user.name} 🎉`, 'success');
 
