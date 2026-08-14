@@ -197,6 +197,18 @@ const AdminApp = {
     document.getElementById('pDesc').value = p.description || '';
     const imgInput = document.getElementById('pImageUrl');
     if (imgInput) imgInput.value = p.images?.[0]?.url || '';
+
+    // Populate specs
+    const s = p.specs || {};
+    if (document.getElementById('pSpecDisplay')) document.getElementById('pSpecDisplay').value = s.display || '';
+    if (document.getElementById('pSpecProcessor')) document.getElementById('pSpecProcessor').value = s.processor || '';
+    if (document.getElementById('pSpecRam')) document.getElementById('pSpecRam').value = s.ram || '';
+    if (document.getElementById('pSpecStorage')) document.getElementById('pSpecStorage').value = s.storage || '';
+    if (document.getElementById('pSpecCamera')) document.getElementById('pSpecCamera').value = s.camera || '';
+    if (document.getElementById('pSpecBattery')) document.getElementById('pSpecBattery').value = s.battery || '';
+    if (document.getElementById('pSpecOs')) document.getElementById('pSpecOs').value = s.os || '';
+    if (document.getElementById('pSpecColor')) document.getElementById('pSpecColor').value = s.color || '';
+
     this.openProductModal();
   },
 
@@ -227,6 +239,21 @@ const AdminApp = {
     const imageUrl = document.getElementById('pImageUrl')?.value.trim();
     if (imageUrl) {
       formData.append('imageUrl', imageUrl);
+    }
+
+    const specs = {
+      display: document.getElementById('pSpecDisplay')?.value.trim() || undefined,
+      processor: document.getElementById('pSpecProcessor')?.value.trim() || undefined,
+      ram: document.getElementById('pSpecRam')?.value.trim() || undefined,
+      storage: document.getElementById('pSpecStorage')?.value.trim() || undefined,
+      camera: document.getElementById('pSpecCamera')?.value.trim() || undefined,
+      battery: document.getElementById('pSpecBattery')?.value.trim() || undefined,
+      os: document.getElementById('pSpecOs')?.value.trim() || undefined,
+      color: document.getElementById('pSpecColor')?.value.trim() || undefined,
+    };
+    Object.keys(specs).forEach(k => specs[k] === undefined && delete specs[k]);
+    if (Object.keys(specs).length > 0) {
+      formData.append('specs', JSON.stringify(specs));
     }
 
     const fileInput = document.getElementById('pImageFile');

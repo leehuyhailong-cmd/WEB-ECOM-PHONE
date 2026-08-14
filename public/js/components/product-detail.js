@@ -37,12 +37,28 @@ export const ProductDetailComponent = {
     const primaryImg = p.images?.find(i => i.isPrimary)?.url || p.images?.[0]?.url || fallbackSvg;
     const formatVND = (num) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
 
-    const specsHtml = p.specs ? Object.entries(p.specs).map(([key, val]) => `
-      <tr>
-        <td style="font-weight: 600; color: var(--text-muted); padding: 0.5rem 0; width: 35%; text-transform: uppercase; font-size: 0.8rem;">${key}</td>
-        <td style="padding: 0.5rem 0; color: var(--text-main); font-weight: 500;">${val}</td>
-      </tr>
-    `).join('') : '<tr><td>Chưa có thông số kỹ thuật</td></tr>';
+    const SPEC_LABELS = {
+      display: 'Màn hình',
+      processor: 'Vi xử lý (CPU)',
+      ram: 'Bộ nhớ RAM',
+      storage: 'Bộ nhớ trong (ROM)',
+      camera: 'Camera',
+      battery: 'Pin & Sạc',
+      os: 'Hệ điều hành',
+      color: 'Màu sắc',
+      weight: 'Trọng lượng',
+      connectivity: 'Kết nối'
+    };
+
+    const specsHtml = (p.specs && Object.keys(p.specs).length > 0) ? Object.entries(p.specs).map(([key, val]) => {
+      const label = SPEC_LABELS[key.toLowerCase()] || (key.charAt(0).toUpperCase() + key.slice(1));
+      return `
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+          <td style="font-weight: 600; color: var(--text-muted); padding: 0.5rem 0; width: 40%; font-size: 0.85rem;">${label}</td>
+          <td style="padding: 0.5rem 0; color: var(--text-main); font-weight: 500; font-size: 0.9rem;">${val}</td>
+        </tr>
+      `;
+    }).join('') : '<tr><td style="color:var(--text-subtle);">Chưa có thông số kỹ thuật</td></tr>';
 
     container.innerHTML = `
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start;">
