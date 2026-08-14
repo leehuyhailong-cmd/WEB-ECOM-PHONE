@@ -25,35 +25,34 @@ const _baseOptions = {
 const apiLimiter = rateLimit({
   ..._baseOptions,
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max:      200,
+  max:      1000,           // 1000 requests per 15 mins
   message:  'Quá nhiều yêu cầu, vui lòng thử lại sau 15 phút',
 });
 
 /**
- * Strict limiter for authentication endpoints.
- * 5 failed attempts per 15 minutes → blocks IP.
- * skipSuccessfulRequests: only counts failed attempts toward the limit.
+ * Limiter for authentication endpoints.
+ * Relaxed to 500 attempts to allow smooth registration and login testing.
  */
 const authLimiter = rateLimit({
   ..._baseOptions,
   windowMs:               15 * 60 * 1000,
-  max:                    5,
+  max:                    500,
   skipSuccessfulRequests: true,
-  message:                'Quá nhiều lần đăng nhập thất bại, vui lòng thử lại sau 15 phút',
+  message:                'Quá nhiều lần đăng nhập/đăng ký, vui lòng thử lại sau 15 phút',
 });
 
 /** Lenient limiter for public browsing (product listing, search) */
 const publicLimiter = rateLimit({
   ..._baseOptions,
   windowMs: 1 * 60 * 1000, // 1 minute
-  max:      60,
+  max:      300,
 });
 
 /** Chatbot limiter — prevent prompt-injection abuse */
 const chatbotLimiter = rateLimit({
   ..._baseOptions,
   windowMs: 1 * 60 * 1000,
-  max:      20,
+  max:      100,
   message:  'Bạn đang gửi quá nhiều tin nhắn, vui lòng chờ một lúc',
 });
 
