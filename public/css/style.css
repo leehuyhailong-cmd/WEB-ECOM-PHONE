@@ -339,7 +339,7 @@ a {
   grid-template-columns: 1fr 1fr;
   align-items: center;
   gap: 2rem;
-  padding: 3.5rem 5rem;
+  padding: 3.5rem 5.5rem 3.5rem 6.5rem;
   background: linear-gradient(135deg, rgba(15, 23, 42, 1), rgba(30, 41, 59, 1));
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
@@ -370,6 +370,7 @@ a {
   font-family: 'Times New Roman', Times, serif;
   z-index: 2;
   position: relative;
+  padding-left: 1.25rem;
 }
 
 .hero-content h1 {
@@ -438,10 +439,10 @@ a {
   transform: translateY(-50%) scale(1.1);
 }
 .hero-slider-btn.prev {
-  left: 1.25rem;
+  left: 1.5rem;
 }
 .hero-slider-btn.next {
-  right: 1.25rem;
+  right: 1.5rem;
 }
 
 .hero-slider-dots {
