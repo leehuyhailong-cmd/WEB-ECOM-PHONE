@@ -111,6 +111,11 @@ class AppStore {
               <a href="/orders.html" class="user-dropdown-item">
                 <span>📦</span> Đơn hàng của tôi
               </a>
+              ${user.role === 'admin' ? `
+              <a href="/admin.html" class="user-dropdown-item" style="color:var(--primary);font-weight:600;">
+                <span>🛡️</span> Trang Admin Dashboard
+              </a>
+              ` : ''}
               <div class="user-dropdown-divider"></div>
               <button class="user-dropdown-item user-dropdown-logout" id="btnLogoutHeader">
                 <span>🚪</span> Đăng xuất

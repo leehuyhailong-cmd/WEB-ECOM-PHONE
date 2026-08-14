@@ -465,7 +465,7 @@ export const API = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Lỗi lấy danh sách sản phẩm admin');
-    return data.data.products || [];
+    return Array.isArray(data.data) ? data.data : (data.data?.products || []);
   },
 
   async createAdminProduct(formData) {
@@ -538,5 +538,33 @@ export const API = {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Lỗi lấy danh sách người dùng admin');
     return Array.isArray(data.data) ? data.data : (data.data?.users || []);
+  },
+
+  async updateUserRole(id, role) {
+    const res = await fetch(`${API_BASE}/admin/users/${id}/role`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('phonestore_token')}`
+      },
+      body: JSON.stringify({ role })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Lỗi cập nhật quyền người dùng');
+    return data.data;
+  },
+
+  async updateUserStatus(id, isActive) {
+    const res = await fetch(`${API_BASE}/admin/users/${id}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('phonestore_token')}`
+      },
+      body: JSON.stringify({ isActive })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Lỗi cập nhật trạng thái người dùng');
+    return data.data;
   }
 };

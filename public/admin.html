@@ -34,7 +34,7 @@
         <span class="nav-badge" id="productCountBadge">0</span>
       </div>
       <div class="sidebar-nav-item" data-section="orders" onclick="AdminApp.switchSection('orders')">
-        <span class="nav-icon">🛍️</span> Đơn hàng
+        <span class="nav-icon">🧾</span> Đơn hàng
         <span class="nav-badge" id="orderCountBadge">0</span>
       </div>
       <div class="sidebar-nav-item" data-section="users" onclick="AdminApp.switchSection('users')">
@@ -45,7 +45,7 @@
 
     <div class="sidebar-section">
       <div class="sidebar-section-label">Hệ thống</div>
-      <div class="sidebar-nav-item" onclick="window.open('/','_self')">
+      <div class="sidebar-nav-item" onclick="window.open('/','_blank')">
         <span class="nav-icon">🏪</span> Xem cửa hàng
       </div>
     </div>
@@ -72,7 +72,7 @@
         <div class="topbar-subtitle" id="topbarSubtitle">Chào mừng trở lại, hệ thống đang hoạt động ổn định</div>
       </div>
       <div class="topbar-actions">
-        <button class="btn-topbar btn-topbar-secondary" onclick="AdminApp.refreshData()">🔄 Làm mới</button>
+        <button id="btnRefreshDashboard" class="btn-topbar btn-topbar-secondary" onclick="AdminApp.refreshData()">🔄 Làm mới</button>
         <button class="btn-topbar btn-topbar-primary" id="topbarActionBtn" onclick="AdminApp.openAddProduct()">+ Thêm sản phẩm</button>
       </div>
     </div>
@@ -162,10 +162,12 @@
             <div class="panel-card-title">🛍️ Quản lý đơn hàng</div>
             <select class="admin-select" id="orderStatusFilter" onchange="AdminApp.filterOrders()">
               <option value="">Tất cả trạng thái</option>
-              <option value="Pending">Chờ xử lý</option>
-              <option value="Processing">Đang xử lý</option>
-              <option value="Shipping">Đang giao</option>
-              <option value="Completed">Hoàn thành</option>
+              <option value="pending">⏳ Chờ xử lý</option>
+              <option value="confirmed">✔️ Đã xác nhận</option>
+              <option value="processing">⚙️ Đang xử lý</option>
+              <option value="shipping">🚚 Đang giao</option>
+              <option value="delivered">✅ Đã giao</option>
+              <option value="cancelled">❌ Đã hủy</option>
             </select>
           </div>
           <div class="panel-card-body no-pad">
@@ -198,15 +200,16 @@
             <table class="admin-table">
               <thead>
                 <tr>
-                  <th>Tên</th>
+                  <th>Họ tên</th>
                   <th>Email</th>
                   <th>Vai trò</th>
-                  <th>Đơn hàng</th>
+                  <th>Trạng thái</th>
                   <th>Ngày tham gia</th>
+                  <th>Thao tác</th>
                 </tr>
               </thead>
               <tbody id="usersTableBody">
-                <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">Đang tải người dùng...</td></tr>
+                <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">Đang tải người dùng...</td></tr>
               </tbody>
             </table>
           </div>
@@ -238,6 +241,17 @@
               <option value="Samsung">Samsung</option>
               <option value="Xiaomi">Xiaomi</option>
               <option value="OPPO">OPPO</option>
+              <option value="Vivo">Vivo</option>
+              <option value="Realme">Realme</option>
+              <option value="Huawei">Huawei</option>
+              <option value="Nokia">Nokia</option>
+              <option value="Motorola">Motorola</option>
+              <option value="Sony">Sony</option>
+              <option value="OnePlus">OnePlus</option>
+              <option value="Google">Google</option>
+              <option value="Asus">Asus</option>
+              <option value="Lenovo">Lenovo</option>
+              <option value="Other">Khác</option>
             </select>
           </div>
           <div class="form-row">
@@ -263,12 +277,19 @@
         <div class="form-row-2">
           <div class="form-row">
             <label class="form-label">Tải ảnh từ máy (File)</label>
-            <input type="file" class="admin-input" id="pImageFile" name="images" accept="image/*" />
+            <input type="file" class="admin-input" id="pImageFile" name="images" accept="image/*"
+              onchange="AdminApp._onImageFileChange(this)" />
           </div>
           <div class="form-row">
             <label class="form-label">Hoặc Đường dẫn ảnh (URL)</label>
-            <input type="text" class="admin-input" id="pImageUrl" placeholder="/images/iphone15promax.jpg hoặc https://..." />
+            <input type="text" class="admin-input" id="pImageUrl"
+              placeholder="/images/iphone15promax.jpg hoặc https://..."
+              oninput="AdminApp._onImageUrlChange(this)" />
           </div>
+        </div>
+        <!-- Image Preview -->
+        <div class="form-row" id="imagePreviewRow" style="display:none;">
+          <img id="pImagePreview" src="" alt="Preview" style="max-height:120px;border-radius:8px;border:1px solid var(--border-subtle);object-fit:contain;background:var(--bg-input);" />
         </div>
         <div class="form-row-2">
           <div class="form-row">
@@ -330,16 +351,33 @@
           <label class="form-label">Mô tả sản phẩm</label>
           <textarea class="admin-input" id="pDesc" rows="3" placeholder="Mô tả ngắn về sản phẩm..." style="resize:vertical;"></textarea>
         </div>
+        <!-- Error Message Box -->
+        <div id="productFormError" style="display:none; margin-top:0.75rem; padding:0.75rem 1rem; background:rgba(244,63,94,0.1); border:1px solid rgba(244,63,94,0.3); border-radius:8px; color:var(--danger); font-size:0.875rem; font-weight:500;"></div>
       </form>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="AdminApp.closeProductModal()">Hủy</button>
-      <button class="btn-submit" onclick="AdminApp.saveProduct()">💾 Lưu sản phẩm</button>
+      <button id="btnSaveProduct" class="btn-submit" onclick="AdminApp.saveProduct()">💾 Lưu sản phẩm</button>
     </div>
   </div>
 
   <!-- Toast Container -->
   <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ── Modal: Order Detail ─────────────────────────────────────────────── -->
+  <div class="modal-overlay" id="orderDetailOverlay" onclick="AdminApp.closeOrderDetail()"></div>
+  <div class="modal-box" id="orderDetailModal" style="max-width:560px;">
+    <div class="modal-header">
+      <div class="modal-title" id="orderDetailTitle">Chi tiết đơn hàng</div>
+      <button class="modal-close" onclick="AdminApp.closeOrderDetail()">✕</button>
+    </div>
+    <div class="modal-body" id="orderDetailBody" style="max-height:70vh;overflow-y:auto;">
+      <!-- Nội dung được render bởi JS -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="AdminApp.closeOrderDetail()">Đóng</button>
+    </div>
+  </div>
 
   <script type="module" src="js/admin-app.js"></script>
 </body>
