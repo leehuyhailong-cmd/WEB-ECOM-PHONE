@@ -7,12 +7,12 @@ const ORDER_STATUSES  = ['pending','confirmed','processing','shipping','delivere
 
 // ── Shipping address sub-schema ───────────────────────────────────────────────
 const shippingAddressSchema = z.object({
-  fullName: z.string().min(2, 'Họ tên người nhận là bắt buộc').max(100),
-  phone:    z.string().regex(/^[0-9+\s-]{9,15}$/, 'Số điện thoại không hợp lệ'),
+  fullName: z.string().min(1, 'Họ tên người nhận là bắt buộc').max(100),
+  phone:    z.string().min(5, 'Số điện thoại không hợp lệ'),
   street:   z.string().min(1, 'Địa chỉ là bắt buộc').max(200),
-  ward:     z.string().min(1, 'Phường/Xã là bắt buộc').max(100),
-  district: z.string().min(1, 'Quận/Huyện là bắt buộc').max(100),
-  province: z.string().min(1, 'Tỉnh/Thành phố là bắt buộc').max(100),
+  ward:     z.string().optional().default('Phường 1'),
+  district: z.string().optional().default('Quận Hoàn Kiếm'),
+  province: z.string().optional().default('Hà Nội'),
 });
 
 // ── Create order ──────────────────────────────────────────────────────────────

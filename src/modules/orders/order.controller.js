@@ -11,8 +11,9 @@ const { ApiResponse, parsePagination } = require('../../utils/apiResponse');
 
 // ── POST /api/orders ──────────────────────────────────────────────────────────
 async function createOrder(req, res) {
-  const ipAddr = req.ip || req.socket.remoteAddress || '127.0.0.1';
-  const { order, paymentUrl } = await orderService.createOrder(req.user.id, req.body, ipAddr);
+  const ipAddr = req.ip || req.socket?.remoteAddress || '127.0.0.1';
+  const userId = req.user ? req.user.id : null;
+  const { order, paymentUrl } = await orderService.createOrder(userId, req.body, ipAddr);
   return ApiResponse.created(res, { order, paymentUrl }, 'Đặt hàng thành công');
 }
 

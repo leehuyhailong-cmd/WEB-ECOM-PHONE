@@ -4,7 +4,7 @@ const express = require('express');
 
 const asyncHandler             = require('../../utils/asyncHandler');
 const validate                 = require('../../middlewares/validate');
-const { authenticate, authorize } = require('../../middlewares/auth.middleware');
+const { authenticate, authorize, optionalAuthenticate } = require('../../middlewares/auth.middleware');
 const orderController          = require('./order.controller');
 const { createOrderSchema, updateStatusSchema, cancelOrderSchema } = require('./order.validator');
 
@@ -53,7 +53,7 @@ router.patch(
 // ── User routes ───────────────────────────────────────────────────────────────
 router.post(
   '/',
-  authenticate,
+  optionalAuthenticate,
   validate(createOrderSchema),
   asyncHandler(orderController.createOrder),
 );
