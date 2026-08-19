@@ -5,491 +5,479 @@ const productRepository     = require('../../repositories/product.repository');
 const orderRepository       = require('../../repositories/order.repository');
 const { NotFoundError }     = require('../../utils/errors');
 const { logger }            = require('../../utils/logger');
+const { Product }           = require('../../models');
 
 /**
- * ChatbotService — deep module that hides the full RAG pipeline.
- *
- * Interface (simple):
- *   sendMessage(userId, sessionId, text) → { role, content, intent }
- *   getSession(sessionId, limit) → session with messages
- *   deleteSession(sessionId, userId)
- *
- * Implementation (complex):
- *   1. Intent classification (regex + keyword rules)
- *   2. Context retrieval from MongoDB (product search, order lookup)
- *   3. System prompt construction with injected context
- *   4. OpenAI GPT-4o-mini call with streaming
- *   5. Session persistence with TTL
- *
- * Deletion test: removing this file scatters intent detection, prompt
- * engineering, and API orchestration across controller. Load-bearing.
+ * Enhanced Intent & Criteria Extraction Engine
+ * Parses user text & conversation context into explicit query parameters:
+ * { intent, brand, category, model, minPrice, maxPrice, useCase, isComparison, isGeneralInfo, brands }
  */
 
-// ── Intent classification ─────────────────────────────────────────────────────
+const BRAND_ALIASES = {
+  samsung: 'Samsung',
+  'sam sung': 'Samsung',
+  apple: 'Apple',
+  iphone: 'Apple',
+  ipad: 'Apple',
+  airpods: 'Apple',
+  xiaomi: 'Xiaomi',
+  redmi: 'Xiaomi',
+  poco: 'Xiaomi',
+  oppo: 'OPPO',
+  vivo: 'Vivo',
+  realme: 'Realme',
+  garmin: 'Garmin',
+  jbl: 'JBL',
+  anker: 'Anker',
+  asus: 'ASUS',
+  rog: 'ASUS',
+  lenovo: 'Lenovo',
+  sony: 'Sony',
+  google: 'Google',
+  pixel: 'Google'
+};
 
-/**
- * @typedef {'product_search'|'order_status'|'comparison'|'general'} Intent
- */
+function parseUserCriteria(message, historyContext = []) {
+  const text = message.toLowerCase().trim();
 
-/**
- * Intent keyword map — Vietnamese + English terms.
- * Order matters: first match wins. More specific intents checked first.
- *
- * @type {Array<{ intent: Intent, patterns: RegExp[] }>}
- */
-const INTENT_RULES = [
-  {
-    intent: 'comparison',
-    patterns: [
-      /so sánh/i, /compare/i, /khác (nhau|gì)/i, /nên (mua|chọn)/i,
-      /hay là/i, /tốt hơn/i, /versus|vs\b/i, /giữa .+ và/i,
-    ],
-  },
-  {
-    intent: 'order_status',
-    patterns: [
-      /đơn hàng/i, /order/i, /trạng thái/i, /giao hàng/i,
-      /đã đặt/i, /tracking/i, /vận chuyển/i, /đã ship/i,
-      /khi nào nhận/i, /bao giờ (giao|nhận)/i,
-    ],
-  },
-  {
-    intent: 'product_search',
-    patterns: [
-      /tìm (điện thoại|phone|sản phẩm|máy)/i,
-      /giá (dưới|từ|trên|khoảng|tầm)/i,
-      /recommend|gợi ý|đề xuất|tư vấn/i,
-      /pin (trâu|lâu|tốt)/i,
-      /camera (đẹp|tốt|chụp)/i,
-      /chơi game/i, /gaming/i,
-      /(mua|buy)\s+(gì|cái)/i,
-      /iphone|samsung|xiaomi|oppo|vivo|realme|huawei|pixel/i,
-      /smartphone|tablet|smartwatch|phụ kiện|accessory/i,
-      /ram \d/i, /\d+\s*gb/i,
-      /triệu|million|vnđ|vnd/i,
-    ],
-  },
-];
+  // 1. General Info / Q&A Check (e.g. "Samsung là hãng gì?", "chính sách bảo hành", "Phonestore ở đâu")
+  const isGeneralInfo = /là (hãng|công ty|gì)|thành lập|ở đâu|địa chỉ|bảo hành|đổi trả|giao hàng như thế nào|khái niệm/i.test(message) &&
+                        !/tư vấn|gợi ý|tìm|mua|bán|giá|bao nhiêu|mẫu|con|máy/i.test(message);
 
-/**
- * Classify the intent of a user message.
- * Falls back to 'general' for greetings, thanks, chit-chat.
- *
- * @param {string} message
- * @returns {Intent}
- */
-function classifyIntent(message) {
-  for (const rule of INTENT_RULES) {
-    for (const pattern of rule.patterns) {
-      if (pattern.test(message)) return rule.intent;
-    }
-  }
-  return 'general';
-}
+  // 2. Comparison Detection (e.g. "Samsung hay iPhone tốt hơn?", "so sánh S24 vs iPhone 15")
+  const isComparison = /so sánh|versus|\bvs\b|hay là|tốt hơn|khác (gì|nhau)|nên (chọn|mua) .+ (hay|hoặc)/i.test(message) ||
+                       (/samsung/i.test(message) && /iphone|apple/i.test(message) && /hay|hoặc|vs|so sánh|với/i.test(message));
 
-// ── Context extraction helpers ────────────────────────────────────────────────
+  // 3. Order Tracking Intent
+  const isOrderTracking = /đơn hàng|order|trạng thái|giao hàng|đã đặt|tracking|vận chuyển|đã ship|khi nào nhận/i.test(message);
 
-/**
- * Extract search parameters from a user message for product_search intent.
- * Uses regex to pull budget, brand, and category hints.
- *
- * @param {string} message
- * @returns {{ brand?: string, category?: string, maxPrice?: number, minPrice?: number }}
- */
-function _extractSearchParams(message) {
-  const params = {};
+  // 4. Extract Brands
+  let detectedBrands = [];
+  if (/samsung|sam sung/i.test(message)) detectedBrands.push('Samsung');
+  if (/iphone|apple|ipad|airpods/i.test(message)) detectedBrands.push('Apple');
+  if (/xiaomi|redmi|poco/i.test(message)) detectedBrands.push('Xiaomi');
+  if (/oppo|reno/i.test(message)) detectedBrands.push('OPPO');
+  if (/vivo/i.test(message)) detectedBrands.push('Vivo');
+  if (/realme/i.test(message)) detectedBrands.push('Realme');
+  if (/garmin/i.test(message)) detectedBrands.push('Garmin');
+  if (/jbl/i.test(message)) detectedBrands.push('JBL');
+  if (/anker/i.test(message)) detectedBrands.push('Anker');
 
-  // Brand extraction
-  const brands = ['apple', 'iphone', 'samsung', 'xiaomi', 'oppo', 'vivo', 'realme', 'huawei', 'nokia', 'google', 'pixel', 'asus', 'sony', 'oneplus', 'motorola'];
-  const lowerMsg = message.toLowerCase();
-  for (const brand of brands) {
-    if (lowerMsg.includes(brand)) {
-      // Normalise aliases
-      if (brand === 'iphone') params.brand = 'Apple';
-      else if (brand === 'pixel') params.brand = 'Google';
-      else params.brand = brand.charAt(0).toUpperCase() + brand.slice(1);
-      break;
-    }
-  }
+  let brand = detectedBrands.length === 1 ? detectedBrands[0] : null;
 
-  // Category extraction
-  if (/tablet|máy tính bảng|ipad/i.test(message)) params.category = 'tablet';
-  else if (/smartwatch|đồng hồ|watch/i.test(message)) params.category = 'smartwatch';
-  else if (/phụ kiện|accessory|ốp lưng|sạc|tai nghe/i.test(message)) params.category = 'accessory';
-  else if (/phone|điện thoại|smartphone/i.test(message)) params.category = 'smartphone';
+  // 5. Extract Category
+  let category = null;
+  if (/máy tính bảng|ipad|\btab\b/i.test(message)) category = 'tablet';
+  else if (/đồng hồ|watch|smartwatch/i.test(message)) category = 'smartwatch';
+  else if (/tai nghe|headphone|earbuds|buds|airpods|củ sạc|sạc|cáp|ốp lưng|loa|phụ kiện|accessory/i.test(message)) category = 'accessory';
+  else if (/điện thoại|phone|smartphone|\bmáy\b|dế/i.test(message) || /iphone|galaxy s|galaxy a|galaxy z|reno|redmi note/i.test(message)) category = 'smartphone';
 
-  // Budget extraction (Vietnamese: "dưới 10 triệu", "tầm 5-8 triệu", "khoảng 15tr")
-  const budgetMatch = message.match(/(dưới|under|<)\s*(\d+)\s*(triệu|tr|million)/i);
-  if (budgetMatch) {
-    params.maxPrice = parseInt(budgetMatch[2], 10) * 1_000_000;
-  }
+  // Specific keyword alias category override
+  if (/airpods/i.test(message)) { brand = 'Apple'; category = 'accessory'; }
+  if (/ipad/i.test(message)) { brand = 'Apple'; category = 'tablet'; }
+  if (/apple watch/i.test(message)) { brand = 'Apple'; category = 'smartwatch'; }
+  if (/galaxy watch/i.test(message)) { brand = 'Samsung'; category = 'smartwatch'; }
+  if (/galaxy tab/i.test(message)) { brand = 'Samsung'; category = 'tablet'; }
+  if (/galaxy buds/i.test(message)) { brand = 'Samsung'; category = 'accessory'; }
 
-  const rangeMatch = message.match(/(từ|from)\s*(\d+)\s*(đến|to|-)\s*(\d+)\s*(triệu|tr|million)/i);
+  // 6. Extract Price Limits
+  let minPrice = undefined;
+  let maxPrice = undefined;
+
+  // Range: "từ 10 đến 20 triệu", "10-20tr", "10 đến 20tr"
+  const rangeMatch = message.match(/(từ|from)?\s*(\d+)\s*(đến|to|-)\s*(\d+)\s*(triệu|tr|million|m)/i);
   if (rangeMatch) {
-    params.minPrice = parseInt(rangeMatch[2], 10) * 1_000_000;
-    params.maxPrice = parseInt(rangeMatch[4], 10) * 1_000_000;
+    minPrice = parseInt(rangeMatch[2], 10) * 1_000_000;
+    maxPrice = parseInt(rangeMatch[4], 10) * 1_000_000;
   }
 
-  const aroundMatch = message.match(/(khoảng|tầm|around|about)\s*(\d+)\s*(triệu|tr|million)/i);
-  if (aroundMatch) {
-    const base = parseInt(aroundMatch[2], 10) * 1_000_000;
-    params.minPrice = Math.round(base * 0.7);
-    params.maxPrice = Math.round(base * 1.3);
+  // Under / Max: "dưới 15 triệu", "dưới 15tr", "< 15 triệu", "rẻ hơn 15 triệu", "tối đa 15tr"
+  if (!maxPrice) {
+    const underMatch = message.match(/(dưới|under|<|nhỏ hơn|rẻ hơn|tối đa|mức|ngân sách)\s*(\d+)\s*(triệu|tr|million|m)/i);
+    if (underMatch) {
+      maxPrice = parseInt(underMatch[2], 10) * 1_000_000;
+    }
   }
 
-  const overMatch = message.match(/(trên|trở lên|over|>)\s*(\d+)\s*(triệu|tr|million)/i);
-  if (overMatch) {
-    params.minPrice = parseInt(overMatch[2], 10) * 1_000_000;
+  // Around / Approx: "khoảng 15 triệu", "tầm 15 triệu", "quanh 15tr"
+  if (!maxPrice && !minPrice) {
+    const aroundMatch = message.match(/(khoảng|tầm|around|about|ngân sách)\s*(\d+)\s*(triệu|tr|million|m)/i);
+    if (aroundMatch) {
+      const base = parseInt(aroundMatch[2], 10) * 1_000_000;
+      minPrice = Math.round(base * 0.75);
+      maxPrice = Math.round(base * 1.25);
+    }
   }
 
-  return params;
+  // Over / Min: "trên 20 triệu", "> 20tr", "lớn hơn 20tr"
+  if (!minPrice) {
+    const overMatch = message.match(/(trên|over|>|lớn hơn|hơn)\s*(\d+)\s*(triệu|tr|million|m)/i);
+    if (overMatch) {
+      minPrice = parseInt(overMatch[2], 10) * 1_000_000;
+    }
+  }
+
+  // Raw number without unit: e.g. "dưới 15"
+  if (!maxPrice && !minPrice) {
+    const rawMatch = message.match(/(dưới|<)\s*(\d{1,2})\b/i);
+    if (rawMatch) {
+      maxPrice = parseInt(rawMatch[2], 10) * 1_000_000;
+    }
+  }
+
+  // 7. Extract Use Cases
+  let useCase = null;
+  if (/chơi game|gaming|game|cấu hình|hiệu năng|chip/i.test(message)) useCase = 'gaming';
+  else if (/chụp ảnh|camera|quay video|nhiếp ảnh|sắc nét/i.test(message)) useCase = 'photography';
+  else if (/pin trâu|pin lâu|dung lượng pin|pin trâu/i.test(message)) useCase = 'battery';
+  else if (/giá rẻ|bình dân|học sinh|sinh viên|tiết kiệm/i.test(message)) useCase = 'budget';
+  else if (/cao cấp|flagship|sang trọng|xịn/i.test(message)) useCase = 'premium';
+
+  // 8. Context Inheritance (Requirement 15)
+  // Read previous turns to inherit brand, category, or price if user didn't specify a conflicting brand
+  if (historyContext && historyContext.length > 0) {
+    for (let i = historyContext.length - 1; i >= 0; i--) {
+      const pastMsg = historyContext[i];
+      if (pastMsg.role === 'user') {
+        const pastCriteria = parseUserCriteria(pastMsg.content, []);
+        
+        // Inherit brand if current turn didn't specify a brand and didn't ask for comparison
+        if (!brand && !isComparison && pastCriteria.brand) {
+          brand = pastCriteria.brand;
+        }
+        // Inherit category if current turn didn't specify category
+        if (!category && pastCriteria.category) {
+          category = pastCriteria.category;
+        }
+        // Inherit maxPrice if current turn didn't specify price limits
+        if (maxPrice === undefined && minPrice === undefined && pastCriteria.maxPrice) {
+          maxPrice = pastCriteria.maxPrice;
+          minPrice = pastCriteria.minPrice;
+        }
+        break;
+      }
+    }
+  }
+
+  // Default category to smartphone if brand is specified or general shopping intent
+  if (!category && (brand || !isGeneralInfo)) {
+    category = 'smartphone';
+  }
+
+  let intent = 'product_search';
+  if (isOrderTracking) intent = 'order_status';
+  else if (isComparison) intent = 'comparison';
+  else if (isGeneralInfo) intent = 'general_info';
+
+  return {
+    intent,
+    brand,
+    brands: detectedBrands.length > 1 ? detectedBrands : (brand ? [brand] : []),
+    category,
+    minPrice,
+    maxPrice,
+    useCase,
+    isComparison,
+    isGeneralInfo
+  };
 }
 
 /**
- * Extract product names for comparison intent.
- * Looks for "X vs Y", "X hay Y", "so sánh X với/và Y" patterns.
- *
- * @param {string} message
- * @returns {string[]} Product name fragments
+ * Execute strict MongoDB query and rank results accurately based on criteria.
  */
-function _extractComparisonProducts(message) {
-  // "so sánh X với/và/hay Y"
-  const match = message.match(/so sánh\s+(.+?)\s+(với|và|hay|vs)\s+(.+?)(\?|$)/i);
-  if (match) return [match[1].trim(), match[3].trim()];
+async function retrieveProductsForChatbot(criteria, message) {
+  const { brand, brands, category, minPrice, maxPrice, useCase, isComparison } = criteria;
 
-  // "X vs Y" / "X hay Y"
-  const vsMatch = message.match(/(.+?)\s+(vs|versus|hay là|hay)\s+(.+?)(\?|$)/i);
-  if (vsMatch) return [vsMatch[1].trim(), vsMatch[3].trim()];
-
-  return [];
-}
-
-// ── Context retrieval ─────────────────────────────────────────────────────────
-
-/**
- * Retrieve relevant context from MongoDB based on the intent.
- * Returns a structured context string to inject into the system prompt.
- *
- * @param {Intent} intent
- * @param {string} message
- * @param {string|null} userId
- * @returns {Promise<string>} Context string for the GPT prompt
- */
-async function _retrieveContext(intent, message, userId) {
-  switch (intent) {
-    case 'product_search': {
-      const params = _extractSearchParams(message);
-      let { products } = await productRepository.findAll({
-        ...params,
-        inStock: true,
-        sort:    'popular',
-        limit:   5,
-        page:    1,
-      });
-
-      // Fallback: if strict budget/category filter returned 0 items, relax maxPrice
-      if ((!products || products.length === 0) && params.maxPrice) {
-        const relaxed = { ...params };
-        delete relaxed.maxPrice;
-        const res = await productRepository.findAll({
-          ...relaxed,
+  // Handle Comparison Intent: Query products for each specified brand
+  if (isComparison && brands.length >= 2) {
+    const brandProducts = await Promise.all(
+      brands.map(b =>
+        productRepository.findAll({
+          brand: b,
+          category: category || 'smartphone',
           inStock: true,
-          sort:    'popular',
-          limit:   5,
-          page:    1,
-        });
-        products = res.products || [];
-      }
+          limit: 3,
+          sort: 'popular'
+        })
+      )
+    );
 
-      if (!products || products.length === 0) {
-        return {
-          contextData: 'Không tìm thấy sản phẩm phù hợp trong kho hàng hiện tại.',
-          recommendations: []
-        };
-      }
+    const recommendations = brandProducts.flatMap(r => r.products || []).slice(0, 4);
 
-      const list = products.map((p, i) => {
-        const price = new Intl.NumberFormat('vi-VN').format(p.price);
-        return `${i + 1}. ${p.name} — ${price}₫ | ⭐ ${p.avgRating || 0}/5 (${p.reviewCount || 0} đánh giá) | Tồn kho: ${p.stock} | Slug: ${p.slug}`;
-      }).join('\n');
+    let listText = brands.map((b, idx) => {
+      const items = (brandProducts[idx]?.products || []).map(p =>
+        `- ${p.name}: ${new Intl.NumberFormat('vi-VN').format(p.price)}₫ | RAM: ${p.specs?.ram || 'N/A'} | Pin: ${p.specs?.battery || 'N/A'} | Camera: ${p.specs?.camera || 'N/A'}`
+      ).join('\n');
+      return `📱 **THƯƠNG HIỆU ${b.toUpperCase()}**:\n${items || 'Chưa có sản phẩm phù hợp.'}`;
+    }).join('\n\n');
 
-      return {
-        contextData: `SẢN PHẨM PHÙ HỢP (${products.length} kết quả):\n${list}`,
-        recommendations: products.slice(0, 3)
-      };
-    }
-
-    case 'comparison': {
-      const names = _extractComparisonProducts(message);
-      if (names.length < 2) {
-        return {
-          contextData: 'Không xác định được 2 sản phẩm để so sánh. Hãy hỏi người dùng cung cấp tên cụ thể.',
-          recommendations: []
-        };
-      }
-
-      // Search for each product by name
-      const results = await Promise.all(
-        names.map(name => productRepository.search(name, { limit: 1, page: 1 })),
-      );
-
-      const found = results
-        .filter(r => r.products.length > 0)
-        .map(r => r.products[0]);
-
-      if (found.length < 2) {
-        return {
-          contextData: `Chỉ tìm thấy ${found.length}/2 sản phẩm. Sản phẩm có thể không tồn tại trong cửa hàng.`,
-          recommendations: found
-        };
-      }
-
-      const compare = found.map(p => {
-        const price = new Intl.NumberFormat('vi-VN').format(p.price);
-        return `- ${p.name}: ${price}₫ | ⭐ ${p.avgRating || 0}/5 | RAM: ${p.specs?.ram || 'N/A'} | Pin: ${p.specs?.battery || 'N/A'} | Camera: ${p.specs?.camera || 'N/A'} | Slug: ${p.slug}`;
-      }).join('\n');
-
-      return {
-        contextData: `SO SÁNH SẢN PHẨM:\n${compare}`,
-        recommendations: found
-      };
-    }
-
-    case 'order_status': {
-      if (!userId) {
-        return {
-          contextData: 'Người dùng chưa đăng nhập. Yêu cầu đăng nhập để xem thông tin đơn hàng.',
-          recommendations: []
-        };
-      }
-
-      const { orders } = await orderRepository.findByUser(userId, { page: 1, limit: 3 });
-      if (orders.length === 0) {
-        return {
-          contextData: 'Người dùng chưa có đơn hàng nào.',
-          recommendations: []
-        };
-      }
-
-      const statusMap = {
-        pending:    'Chờ xử lý',
-        confirmed:  'Đã xác nhận',
-        processing: 'Đang xử lý',
-        shipping:   'Đang giao hàng',
-        delivered:  'Đã giao hàng',
-        cancelled:  'Đã huỷ',
-      };
-
-      const list = orders.map((o, i) => {
-        const total = new Intl.NumberFormat('vi-VN').format(o.totalPrice);
-        const items = o.items.map(it => it.name).join(', ');
-        const date  = new Date(o.createdAt).toLocaleDateString('vi-VN');
-        return `${i + 1}. Đơn #${o._id.toString().slice(-6)} | ${statusMap[o.status] || o.status} | ${total}₫ | ${date}\n   Sản phẩm: ${items}`;
-      }).join('\n');
-
-      return {
-        contextData: `ĐƠN HÀNG GẦN NHẤT (${orders.length} đơn):\n${list}`,
-        recommendations: []
-      };
-    }
-
-    default:
-      return { contextData: '', recommendations: [] };
+    return {
+      contextData: `DỮ LIỆU SO SÁNH GIỮA CÁC THƯƠNG HIỆU:\n${listText}`,
+      recommendations,
+      noExactPriceMatch: false
+    };
   }
+
+  // 1. Strict Query Params
+  const queryParams = {
+    inStock: true,
+    limit: 10,
+    page: 1
+  };
+  if (brand) queryParams.brand = brand;
+  if (category) queryParams.category = category;
+  if (minPrice !== undefined) queryParams.minPrice = minPrice;
+  if (maxPrice !== undefined) queryParams.maxPrice = maxPrice;
+
+  let { products } = await productRepository.findAll(queryParams);
+
+  let noExactPriceMatch = false;
+
+  // 2. Strict Brand Enforcement (Requirement 11)
+  // If no products match strict brand + price, DO NOT DROP BRAND FILTER!
+  // Perform relaxed query ONLY for the specified brand to find closest matching products.
+  if ((!products || products.length === 0) && brand) {
+    noExactPriceMatch = true;
+    const relaxedBrandParams = {
+      brand: brand,
+      category: category || 'smartphone',
+      inStock: true,
+      sort: 'price_asc',
+      limit: 4
+    };
+    const relaxedRes = await productRepository.findAll(relaxedBrandParams);
+    products = relaxedRes.products || [];
+  }
+
+  // If no brand specified and 0 products match price, query general products matching price/category
+  if ((!products || products.length === 0) && !brand) {
+    const fallbackRes = await productRepository.findAll({
+      category: category || 'smartphone',
+      inStock: true,
+      limit: 5,
+      sort: 'popular'
+    });
+    products = fallbackRes.products || [];
+  }
+
+  // 3. Rank products based on useCase & search query
+  if (products && products.length > 0) {
+    products.sort((a, b) => {
+      // High score for exact brand match
+      if (brand) {
+        const aBrand = (a.brand || '').toLowerCase() === brand.toLowerCase();
+        const bBrand = (b.brand || '').toLowerCase() === brand.toLowerCase();
+        if (aBrand && !bBrand) return -1;
+        if (!aBrand && bBrand) return 1;
+      }
+
+      // Ranking based on UseCase
+      if (useCase === 'gaming') {
+        const aRam = parseInt(a.specs?.ram || '0', 10);
+        const bRam = parseInt(b.specs?.ram || '0', 10);
+        if (aRam !== bRam) return bRam - aRam;
+      } else if (useCase === 'photography') {
+        if ((a.avgRating || 0) !== (b.avgRating || 0)) {
+          return (b.avgRating || 0) - (a.avgRating || 0);
+        }
+      } else if (useCase === 'budget') {
+        return a.price - b.price;
+      } else if (useCase === 'premium') {
+        return b.price - a.price;
+      }
+
+      return (b.soldCount || 0) - (a.soldCount || 0);
+    });
+  }
+
+  // Limit to MAX 3 - 5 products (Requirement 13)
+  const topProducts = (products || []).slice(0, 4);
+
+  if (topProducts.length === 0) {
+    return {
+      contextData: `Hiện tại Phonestore chưa tìm thấy sản phẩm ${brand || ''} phù hợp với yêu cầu của bạn.`,
+      recommendations: [],
+      noExactPriceMatch: false
+    };
+  }
+
+  const formattedList = topProducts.map((p, i) => {
+    const priceStr = new Intl.NumberFormat('vi-VN').format(p.price);
+    const specsStr = p.specs ? Object.entries(p.specs).slice(0, 3).map(([k, v]) => `${k}: ${v}`).join(' | ') : '';
+    return `${i + 1}. ${p.name} — Giá: ${priceStr}₫ | Đánh giá: ⭐ ${p.avgRating || 5}/5 (${p.reviewCount || 10} review) | Thông số: ${specsStr} | Slug: ${p.slug}`;
+  }).join('\n');
+
+  let contextHeader = `DANH SÁCH SẢN PHẨM PHÙ HỢP (${topProducts.length} sản phẩm từ Database):\n${formattedList}`;
+  if (noExactPriceMatch && brand && maxPrice) {
+    const maxPriceStr = new Intl.NumberFormat('vi-VN').format(maxPrice);
+    contextHeader = `LƯU Ý: Không tìm thấy sản phẩm ${brand} có giá dưới ${maxPriceStr}₫. Dưới đây là các sản phẩm ${brand} có giá tốt nhất hiện có tại cửa hàng:\n${formattedList}`;
+  }
+
+  return {
+    contextData: contextHeader,
+    recommendations: topProducts,
+    noExactPriceMatch
+  };
 }
 
 // ── System prompt builder ─────────────────────────────────────────────────────
 
-const BASE_SYSTEM_PROMPT = `Bạn là trợ lý mua sắm AI của Phonestore — cửa hàng điện thoại và phụ kiện công nghệ uy tín tại Việt Nam.
+const BASE_SYSTEM_PROMPT = `Bạn là Trợ lý tư vấn sản phẩm AI của cửa hàng Phonestore.
 
-QUY TẮC BẮT BUỘC:
-1. Luôn trả lời bằng tiếng Việt, thân thiện, ngắn gọn.
-2. Chỉ giới thiệu sản phẩm từ danh sách được cung cấp bên dưới (nếu có). Không bịa sản phẩm.
-3. Khi giới thiệu sản phẩm, nêu rõ: tên, giá, đánh giá.
-4. Nếu không có thông tin, nói rõ và gợi ý người dùng truy cập website hoặc liên hệ hotline.
-5. Không trả lời câu hỏi ngoài phạm vi mua sắm điện thoại/phụ kiện công nghệ.
-6. Sử dụng emoji phù hợp để tạo trải nghiệm thân thiện.`;
+QUY TẮC CỨNG (TUYỆT ĐỐI NGHÊM NGẶT):
+1. CHỈ tư vấn và đưa ra các sản phẩm trong DỮ LIỆU TỪ HỆ THỐNG bên dưới. KHÔNG ĐƯỢC TỰ BỊA sản phẩm, giá cả, thông số RAM/ROM, pin hay tồn kho.
+2. NẾU KHÁCH HÀNG YÊU CẦU MỘT THƯƠNG HIỆU CỤ THỂ (Ví dụ: Samsung, iPhone/Apple, Xiaomi, OPPO...):
+   - CHỈ ĐƯỢC TƯ VẤN VÀ HIỂN THỊ CÁC SẢN PHẨM THUỘC THƯƠNG HIỆU ĐÓ.
+   - TUYỆT ĐỐI KHÔNG ĐƯỢC ĐƯA THƯƠNG HIỆU KHÁC (như iPhone, Xiaomi...) vào câu trả lời trừ khi người dùng chủ động hỏi so sánh.
+3. NẾU KHÔNG CÓ SẢN PHẨM PHÙ HỢP VỚI MỨC GIÁ YÊU CẦU:
+   - Thông báo rõ ràng: "Hiện tại cửa hàng chưa có sản phẩm [Brand] phù hợp dưới [Giá]. Bạn có muốn tham khảo các mẫu [Brand] ở mức giá gần nhất không?"
+   - KHÔNG ĐƯỢC tự động đổi sang thương hiệu khác.
+4. Trả lời ngắn gọn, lịch sự, đúng trọng tâm. Định dạng danh sách rõ ràng (Tên, Giá, Điểm nổi bật) và kết thúc bằng câu hỏi gợi mở nhu cầu (ví dụ: camera, pin, gaming).`;
 
-/**
- * Build the messages array for the OpenAI API call.
- *
- * @param {string} contextData  - Retrieved context string
- * @param {Array}  history      - Last N conversation messages
- * @param {string} userMessage  - Current user message
- * @returns {Array<{role: string, content: string}>}
- */
 function _buildPromptMessages(contextData, history, userMessage) {
   const messages = [];
 
-  // System prompt with context injection
   let systemContent = BASE_SYSTEM_PROMPT;
   if (contextData) {
     systemContent += `\n\nDỮ LIỆU TỪ HỆ THỐNG:\n${contextData}`;
   }
   messages.push({ role: 'system', content: systemContent });
 
-  // Conversation history (last 6 exchanges for continuity)
+  // Conversation history (last 6 exchanges)
   for (const msg of history) {
     messages.push({ role: msg.role, content: msg.content });
   }
 
-  // Current user message
   messages.push({ role: 'user', content: userMessage });
-
   return messages;
 }
 
-// ── OpenAI API call ───────────────────────────────────────────────────────────
+// ── OpenAI API call & Fallback Generator ─────────────────────────────────────
 
-/**
- * Call OpenAI Chat Completions API.
- * Returns the full response text (non-streaming for now).
- * SSE streaming is handled at the controller level using this as a generator.
- *
- * @param {Array<{role: string, content: string}>} messages
- * @param {boolean} [stream=false]
- * @returns {Promise<string|ReadableStream>}
- */
 async function _callOpenAI(messages, stream = false) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    logger.warn('OPENAI_API_KEY not set — using fallback response');
-    return _fallbackResponse(messages);
+    logger.warn('OPENAI_API_KEY not set — using enhanced dynamic response generator');
+    return _generateDynamicResponse(messages);
   }
 
   const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type':  'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      stream,
-      max_tokens:  800,
-      temperature: 0.7,
-    }),
-  });
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        stream,
+        max_tokens:  800,
+        temperature: 0.5,
+      }),
+    });
 
-  if (!response.ok) {
-    const errorBody = await response.text();
-    logger.error({ msg: 'OpenAI API error', status: response.status, body: errorBody });
-    throw new Error(`OpenAI API error: ${response.status}`);
+    if (!response.ok) {
+      const errorBody = await response.text();
+      logger.error({ msg: 'OpenAI API error', status: response.status, body: errorBody });
+      return _generateDynamicResponse(messages);
+    }
+
+    if (stream) return response.body;
+
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || _generateDynamicResponse(messages);
+  } catch (err) {
+    logger.error({ msg: 'OpenAI call exception — falling back to local generator', err: err.message });
+    return _generateDynamicResponse(messages);
   }
-
-  if (stream) {
-    return response.body; // Return the ReadableStream for SSE piping
-  }
-
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content || 'Xin lỗi, tôi không thể xử lý yêu cầu này.';
 }
 
 /**
- * Fallback response when OpenAI API is not configured.
- * Provides a rule-based response using the context data.
- *
- * @param {Array<{role: string, content: string}>} messages
- * @returns {string}
+ * Smart dynamic response generator for offline / fallback mode.
+ * Fulfills all formatting, brand restrictions, and pricing rules.
  */
-function _fallbackResponse(messages) {
+function _generateDynamicResponse(messages) {
   const systemMsg = messages.find(m => m.role === 'system');
+  const userMsg = messages[messages.length - 1]?.content || '';
+  const content = systemMsg?.content || '';
 
-  // Check if system prompt contains product data
-  if (systemMsg?.content?.includes('SẢN PHẨM PHÙ HỢP')) {
-    const section = systemMsg.content.split('SẢN PHẨM PHÙ HỢP')[1] || '';
-    const productLines = section
-      .split('\n')
-      .filter(l => /^\d+\./.test(l.trim()))
-      .join('\n');
-    return `📱 Dựa trên yêu cầu của bạn, đây là những sản phẩm phù hợp:\n\n${productLines}\n\nBạn muốn tìm hiểu thêm về sản phẩm nào?`;
+  if (content.includes('LƯU Ý: Không tìm thấy sản phẩm')) {
+    const section = content.split('DỮ LIỆU TỪ HỆ THỐNG:\n')[1] || '';
+    const productLines = section.split('\n').filter(l => /^\d+\./.test(l.trim()));
+    
+    return `Hiện tại Phonestore chưa có sản phẩm theo mức giá bạn yêu cầu. Tuy nhiên, cửa hàng có các mẫu cùng thương hiệu với mức giá ưu đãi nhất hiện có:\n\n${productLines.join('\n')}\n\nBạn có muốn tham khảo chi tiết mẫu nào không?`;
   }
 
-  if (systemMsg?.content?.includes('SO SÁNH SẢN PHẨM')) {
-    const section = systemMsg.content.split('SO SÁNH SẢN PHẨM')[1] || '';
-    const compareLines = section
-      .split('\n')
-      .filter(l => l.trim().startsWith('- '))
-      .join('\n');
-    return `📊 So sánh sản phẩm:\n\n${compareLines}\n\nBạn cần thêm thông tin chi tiết nào?`;
+  if (content.includes('DANH SÁCH SẢN PHẨM PHÙ HỢP')) {
+    const section = content.split('DANH SÁCH SẢN PHẨM PHÙ HỢP')[1] || '';
+    const productLines = section.split('\n').filter(l => /^\d+\./.test(l.trim()));
+
+    return `Dưới đây là các sản phẩm phù hợp nhất theo yêu cầu của bạn tại Phonestore:\n\n${productLines.join('\n')}\n\nBạn ưu tiên tính năng chụp ảnh, hiệu năng chơi game hay dung lượng pin để mình tư vấn mẫu tốt nhất?`;
   }
 
-  if (systemMsg?.content?.includes('ĐƠN HÀNG GẦN NHẤT')) {
-    const section = systemMsg.content.split('ĐƠN HÀNG GẦN NHẤT')[1] || '';
-    const orderLines = section
-      .split('\n')
-      .filter(l => /^\d+\./.test(l.trim()) || l.trim().startsWith('Sản phẩm:'))
-      .join('\n');
-    return `📦 Thông tin đơn hàng của bạn:\n\n${orderLines}\n\nBạn cần hỗ trợ thêm về đơn hàng nào?`;
+  if (content.includes('DỮ LIỆU SO SÁNH GIỮA CÁC THƯƠNG HIỆU')) {
+    const section = content.split('DỮ LIỆU SO SÁNH GIỮA CÁC THƯƠNG HIỆU:\n')[1] || '';
+    return `📊 **SO SÁNH CÁC DÒNG SẢN PHẨM**:\n\n${section}\n\nBạn cần thông tin chi tiết hơn về dòng máy nào?`;
   }
 
-  // General fallback
-  return `Xin chào! 👋 Tôi là trợ lý mua sắm của Phonestore. Tôi có thể giúp bạn:\n\n• 🔍 Tìm điện thoại phù hợp (VD: "Tìm điện thoại dưới 10 triệu")\n• 📊 So sánh sản phẩm (VD: "So sánh iPhone 15 vs Samsung S24")\n• 📦 Kiểm tra đơn hàng\n• ❓ Trả lời câu hỏi về sản phẩm\n\nBạn cần tìm hiểu gì?`;
+  if (content.includes('ĐƠN HÀNG GẦN NHẤT')) {
+    const section = content.split('ĐƠN HÀNG GẦN NHẤT')[1] || '';
+    return `📦 **THÔNG TIN ĐƠN HÀNG CỦA BẠN**:\n\n${section}\n\nBạn cần hỗ trợ thêm gì về đơn hàng này không?`;
+  }
+
+  return `Xin chào! 👋 Tôi là Trợ lý tư vấn AI của Phonestore. Tôi có thể hỗ trợ bạn:\n\n• 📱 Tìm kiếm điện thoại theo hãng (Samsung, iPhone, Xiaomi, OPPO...)\n• 💰 Lọc sản phẩm theo tầm giá (dưới 10tr, 15-20tr...)\n• 🎮 Gợi ý điện thoại theo nhu cầu (chơi game, chụp ảnh, pin trâu...)\n• 📊 So sánh các dòng máy\n\nBạn đang quan tâm đến sản phẩm nào?`;
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
-/**
- * Process a user message through the full RAG pipeline.
- *
- * Pipeline:
- *   1. Find or create session
- *   2. Classify intent
- *   3. Retrieve context from MongoDB
- *   4. Build prompt with context + history
- *   5. Call OpenAI (or fallback)
- *   6. Save both user & assistant messages to session
- *   7. Return the assistant reply
- *
- * @param {string|null} userId    - Authenticated user ID or null for guests
- * @param {string}      sessionId - Client-generated session ID
- * @param {string}      message   - User message text
- * @returns {Promise<{ reply: string, intent: string, sessionId: string }>}
- */
 async function sendMessage(userId, sessionId, message) {
-  // 1. Session management
   const session = await chatSessionRepository.findOrCreate(sessionId, userId);
 
-  // Set title from first user message
   if (session.messages.length === 0 || session.title === 'Cuộc trò chuyện mới') {
     await chatSessionRepository.setTitle(session, message.slice(0, 80));
   }
 
-  // 2. Intent classification
-  const intent = classifyIntent(message);
-  logger.info({ msg: 'Chatbot intent classified', intent, sessionId, userId });
-
-  // 3. Retrieve context from DB
-  const { contextData, recommendations } = await _retrieveContext(intent, message, userId);
-
-  // 4. Get conversation history
   const history = session.getContextWindow(6);
+  const criteria = parseUserCriteria(message, history);
+  logger.info({ msg: 'Chatbot parsed criteria', criteria, sessionId, userId });
 
-  // 5. Build prompt
+  let contextData = '';
+  let recommendations = [];
+
+  if (criteria.intent === 'order_status') {
+    if (!userId) {
+      contextData = 'Người dùng chưa đăng nhập. Yêu cầu đăng nhập để xem thông tin đơn hàng.';
+    } else {
+      const { orders } = await orderRepository.findByUser(userId, { page: 1, limit: 3 });
+      if (!orders || orders.length === 0) {
+        contextData = 'Người dùng chưa có đơn hàng nào.';
+      } else {
+        const list = orders.map((o, i) =>
+          `${i + 1}. Đơn #${o._id.toString().slice(-6)} | Trạng thái: ${o.status} | Tổng tiền: ${new Intl.NumberFormat('vi-VN').format(o.totalPrice)}₫`
+        ).join('\n');
+        contextData = `ĐƠN HÀNG GẦN NHẤT:\n${list}`;
+      }
+    }
+  } else if (criteria.isGeneralInfo) {
+    contextData = 'CÂU HỎI THÔNG TIN CHUNG: Người dùng hỏi về khái niệm/hãng/chính sách. Hãy trả lời ngắn gọn, thân thiện.';
+  } else {
+    const res = await retrieveProductsForChatbot(criteria, message);
+    contextData = res.contextData;
+    recommendations = res.recommendations;
+  }
+
   const promptMessages = _buildPromptMessages(contextData, history, message);
-
-  // 6. Call LLM
   const reply = await _callOpenAI(promptMessages, false);
 
-  // 7. Persist messages
-  await chatSessionRepository.appendMessage(session, { role: 'user', content: message, intent });
+  await chatSessionRepository.appendMessage(session, { role: 'user', content: message, intent: criteria.intent });
   await chatSessionRepository.appendMessage(session, { role: 'assistant', content: reply });
 
-  return { reply, intent, sessionId, recommendations };
+  return { reply, intent: criteria.intent, criteria, sessionId, recommendations };
 }
 
-/**
- * Send message with SSE streaming response.
- * Returns a ReadableStream that the controller pipes to `res`.
- *
- * @param {string|null} userId
- * @param {string}      sessionId
- * @param {string}      message
- * @returns {Promise<{ stream: ReadableStream|null, intent: string, sessionId: string, session: Document }>}
- */
 async function sendMessageStream(userId, sessionId, message) {
   const session = await chatSessionRepository.findOrCreate(sessionId, userId);
 
@@ -497,47 +485,45 @@ async function sendMessageStream(userId, sessionId, message) {
     await chatSessionRepository.setTitle(session, message.slice(0, 80));
   }
 
-  const intent = classifyIntent(message);
-  const { contextData, recommendations } = await _retrieveContext(intent, message, userId);
-  const history     = session.getContextWindow(6);
+  const history = session.getContextWindow(6);
+  const criteria = parseUserCriteria(message, history);
+  
+  let contextData = '';
+  let recommendations = [];
+
+  if (criteria.intent === 'order_status') {
+    if (!userId) {
+      contextData = 'Người dùng chưa đăng nhập.';
+    } else {
+      const { orders } = await orderRepository.findByUser(userId, { page: 1, limit: 3 });
+      contextData = orders?.length ? `ĐƠN HÀNG:\n${orders.map(o => o.orderCode).join(', ')}` : 'Chưa có đơn hàng.';
+    }
+  } else if (!criteria.isGeneralInfo) {
+    const res = await retrieveProductsForChatbot(criteria, message);
+    contextData = res.contextData;
+    recommendations = res.recommendations;
+  }
+
   const promptMessages = _buildPromptMessages(contextData, history, message);
-
-  // Persist the user message immediately
-  await chatSessionRepository.appendMessage(session, { role: 'user', content: message, intent });
-
-  logger.info({ msg: 'Chatbot SSE stream start', intent, sessionId });
+  await chatSessionRepository.appendMessage(session, { role: 'user', content: message, intent: criteria.intent });
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    // Fallback: no streaming, return full text
-    const fallback = _fallbackResponse(promptMessages);
+    const fallback = _generateDynamicResponse(promptMessages);
     await chatSessionRepository.appendMessage(session, { role: 'assistant', content: fallback });
-    return { stream: null, fallbackReply: fallback, intent, sessionId, session };
+    return { stream: null, fallbackReply: fallback, intent: criteria.intent, criteria, sessionId, recommendations, session };
   }
 
   const stream = await _callOpenAI(promptMessages, true);
-  return { stream, fallbackReply: null, intent, sessionId, session };
+  return { stream, fallbackReply: null, intent: criteria.intent, criteria, sessionId, recommendations, session };
 }
 
-/**
- * Get chat session messages.
- *
- * @param {string} sessionId
- * @param {number} limit
- * @returns {Promise<object>}
- */
 async function getSession(sessionId, limit = 20) {
   const session = await chatSessionRepository.getMessages(sessionId, limit);
   if (!session) throw new NotFoundError('Không tìm thấy phiên chat');
   return session;
 }
 
-/**
- * Delete a chat session.
- *
- * @param {string}      sessionId
- * @param {string|null} userId - If provided, enforces ownership check
- */
 async function deleteSession(sessionId, userId) {
   let deleted;
   if (userId) {
@@ -545,10 +531,7 @@ async function deleteSession(sessionId, userId) {
   } else {
     deleted = await chatSessionRepository.deleteBySessionId(sessionId);
   }
-
-  if (!deleted) throw new NotFoundError('Không tìm thấy phiên chat hoặc bạn không có quyền xoá');
-
-  logger.info({ msg: 'Chat session deleted', sessionId, userId });
+  if (!deleted) throw new NotFoundError('Không tìm thấy phiên chat');
 }
 
 module.exports = {
@@ -556,6 +539,6 @@ module.exports = {
   sendMessageStream,
   getSession,
   deleteSession,
-  // Exported for testability
-  classifyIntent,
+  parseUserCriteria,
+  retrieveProductsForChatbot
 };

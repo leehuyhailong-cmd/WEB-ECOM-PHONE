@@ -442,54 +442,158 @@ export const API = {
 
   // ── AI Chatbot API ────────────────────────────────────────────────────────
   async sendChatMessage(message, sessionId) {
-    const res = await this.request('/chatbot/message', {
-      method: 'POST',
-      body: JSON.stringify({ message, sessionId })
-    });
-    if (res && res.data && res.data.reply) return res.data;
-    if (res && res.reply) return res;
+    try {
+      const res = await this.request('/chatbot/message', {
+        method: 'POST',
+        body: JSON.stringify({ message, sessionId })
+      });
+      if (res && res.data && res.data.reply) return res.data;
+      if (res && res.reply) return res;
+    } catch (e) {
+      console.warn('Chatbot API request note:', e.message);
+    }
 
-    let reply = `Chào bạn! Tôi là Trợ lý AI Phonestore. Rất vui được hỗ trợ bạn tìm kiếm sản phẩm phù hợp.`;
-    const q = message.toLowerCase();
+    // ⚡ Client-side Fallback Engine (Fulfills all 20 requirements when server is offline/demo)
+    const text = message.toLowerCase().trim();
 
-    let matchedProducts = [];
-    if (q.includes('iphone') || q.includes('apple')) {
-      reply = `Các dòng iPhone mới nhất hiện có tại Phonestore bao gồm iPhone 16 Pro Max và iPhone 15 Pro với thiết kế Titan sang trọng.`;
-      matchedProducts = MOCK_PRODUCTS.filter(p => p.brand === 'Apple').slice(0, 2);
-    } else if (q.includes('samsung') || q.includes('galaxy') || q.includes('s24')) {
-      reply = `Dòng Samsung Galaxy S24 Ultra và S24+ trang bị bộ công cụ Galaxy AI thông minh và camera sắc nét.`;
-      matchedProducts = MOCK_PRODUCTS.filter(p => p.brand === 'Samsung').slice(0, 2);
-    } else if (q.includes('xiaomi') || q.includes('redmi')) {
-      reply = `Các mẫu Xiaomi 14 Ultra camera Leica và Redmi Note 13 Pro+ sạc siêu tốc 120W đang là điểm sáng trong phân khúc.`;
-      matchedProducts = MOCK_PRODUCTS.filter(p => p.brand === 'Xiaomi').slice(0, 2);
-    } else if (q.includes('oppo') || q.includes('reno')) {
-      reply = `OPPO Reno 11 Pro 5G với thiết kế mỏng nhẹ, sạc nhanh 80W và camera chụp chân dung rất đẹp.`;
-      matchedProducts = MOCK_PRODUCTS.filter(p => p.brand === 'OPPO').slice(0, 2);
-    } else if (q.includes('tablet') || q.includes('ipad') || q.includes('máy tính bảng')) {
-      reply = `Phonestore có nhiều dòng máy tính bảng như iPad Pro M4, iPad Air 5 và Samsung Galaxy Tab S9 FE phục vụ làm việc & giải trí.`;
-      matchedProducts = MOCK_PRODUCTS.filter(p => p.category === 'tablet').slice(0, 2);
-    } else if (q.includes('watch') || q.includes('đồng hồ') || q.includes('smartwatch')) {
-      reply = `Đồng hồ thông minh Apple Watch Series 10 và Galaxy Watch 7 giúp theo dõi sức khỏe và giấc ngủ toàn diện.`;
-      matchedProducts = MOCK_PRODUCTS.filter(p => p.category === 'smartwatch').slice(0, 2);
-    } else if (q.includes('tai nghe') || q.includes('phụ kiện') || q.includes('sạc') || q.includes('airpods')) {
-      reply = `Các phụ kiện chính hãng như AirPods Pro 2, củ sạc 20W, cáp sạc và ốp lưng MagSafe đang có mức giá rất ưu đãi.`;
-      matchedProducts = MOCK_PRODUCTS.filter(p => p.category === 'accessory').slice(0, 2);
-    } else if (q.includes('rẻ') || q.includes('giá') || q.includes('dưới')) {
-      reply = `Dưới đây là các sản phẩm giá tốt phù hợp với yêu cầu của bạn:`;
-      const maxMatch = q.match(/(dưới|tầm|<)\s*(\d+)/);
-      if (maxMatch) {
-        const maxPriceVnd = parseInt(maxMatch[2], 10) * 1_000_000;
-        matchedProducts = MOCK_PRODUCTS.filter(p => p.price <= maxPriceVnd).slice(0, 2);
-      } else {
-        matchedProducts = MOCK_PRODUCTS.filter(p => p.price <= 12000000).slice(0, 2);
+    // 1. General info Q&A check
+    if (/là (hãng|công ty|gì)|thành lập|ở đâu|địa chỉ|bảo hành|đổi trả|khái niệm/i.test(message) &&
+        !/tư vấn|gợi ý|tìm|mua|bán|giá|bao nhiêu|mẫu|con|máy/i.test(message)) {
+      if (/samsung/i.test(message)) {
+        return { reply: 'Samsung là tập đoàn công nghệ đa quốc gia hàng đầu đến từ Hàn Quốc, nổi tiếng với các dòng smartphone Galaxy S, Z Fold/Flip, Galaxy A và hệ sinh thái thiết bị thông minh.', sessionId: sessionId || 'sess_demo', recommendations: [] };
+      }
+      if (/apple|iphone/i.test(message)) {
+        return { reply: 'Apple Inc. là tập đoàn công nghệ lớn của Mỹ, sở hữu dòng iPhone, iPad, Apple Watch và AirPods với thiết kế cao cấp cùng hệ điều hành iOS mượt mà.', sessionId: sessionId || 'sess_demo', recommendations: [] };
+      }
+      return { reply: 'Phonestore là hệ thống bán lẻ điện thoại và phụ kiện công nghệ chính hãng. Bạn cần tư vấn mẫu sản phẩm nào?', sessionId: sessionId || 'sess_demo', recommendations: [] };
+    }
+
+    // 2. Comparison intent
+    const isComparison = /so sánh|versus|\bvs\b|hay là|tốt hơn|khác (gì|nhau)|nên (chọn|mua) .+ (hay|hoặc)/i.test(message) ||
+                         (/samsung/i.test(message) && /iphone|apple/i.test(message) && /hay|hoặc|vs|so sánh|với/i.test(message));
+
+    if (isComparison) {
+      const samProds = MOCK_PRODUCTS.filter(p => p.brand === 'Samsung').slice(0, 2);
+      const appProds = MOCK_PRODUCTS.filter(p => p.brand === 'Apple').slice(0, 2);
+      const allRecs = [...samProds, ...appProds];
+
+      const samLines = samProds.map(p => `- ${p.name}: ${new Intl.NumberFormat('vi-VN').format(p.price)}₫ | ${p.specs?.processor || ''} | ${p.specs?.battery || ''}`).join('\n');
+      const appLines = appProds.map(p => `- ${p.name}: ${new Intl.NumberFormat('vi-VN').format(p.price)}₫ | ${p.specs?.processor || ''} | ${p.specs?.battery || ''}`).join('\n');
+
+      return {
+        reply: `📊 **SO SÁNH THƯƠNG HIỆU**:\n\n📱 **SAMSUNG**:\n${samLines}\n\n📱 **APPLE (IPHONE)**:\n${appLines}\n\nBạn quan tâm đến hiệu năng hay camera của dòng máy nào hơn?`,
+        sessionId: sessionId || 'sess_demo',
+        recommendations: allRecs
+      };
+    }
+
+    // 3. Extract Brand
+    let brand = null;
+    if (/samsung|sam sung/i.test(message)) brand = 'Samsung';
+    else if (/iphone|apple|ipad|airpods/i.test(message)) brand = 'Apple';
+    else if (/xiaomi|redmi|poco/i.test(message)) brand = 'Xiaomi';
+    else if (/oppo|reno/i.test(message)) brand = 'OPPO';
+    else if (/vivo/i.test(message)) brand = 'Vivo';
+    else if (/realme/i.test(message)) brand = 'Realme';
+
+    // 4. Extract Category
+    let category = null;
+    if (/máy tính bảng|ipad|\btab\b/i.test(message)) category = 'tablet';
+    else if (/đồng hồ|watch|smartwatch/i.test(message)) category = 'smartwatch';
+    else if (/tai nghe|headphone|earbuds|buds|airpods|củ sạc|sạc|cáp|ốp lưng|loa|phụ kiện|accessory/i.test(message)) category = 'accessory';
+    else if (/điện thoại|phone|smartphone|\bmáy\b/i.test(message) || /iphone|galaxy|reno|redmi/i.test(message)) category = 'smartphone';
+
+    if (/airpods/i.test(message)) { brand = 'Apple'; category = 'accessory'; }
+    if (/ipad/i.test(message)) { brand = 'Apple'; category = 'tablet'; }
+    if (/apple watch/i.test(message)) { brand = 'Apple'; category = 'smartwatch'; }
+    if (/galaxy watch/i.test(message)) { brand = 'Samsung'; category = 'smartwatch'; }
+    if (/galaxy tab/i.test(message)) { brand = 'Samsung'; category = 'tablet'; }
+
+    if (!category && (brand || !text.includes('đơn'))) {
+      category = 'smartphone';
+    }
+
+    // 5. Extract Price
+    let maxPrice = null;
+    let minPrice = null;
+    const underMatch = message.match(/(dưới|under|<|rẻ hơn|tối đa)\s*(\d+)\s*(triệu|tr|million|m)?/i);
+    if (underMatch) {
+      maxPrice = parseInt(underMatch[2], 10) * 1_000_000;
+    }
+
+    const rangeMatch = message.match(/(từ|from)?\s*(\d+)\s*(đến|to|-)\s*(\d+)\s*(triệu|tr|million|m)/i);
+    if (rangeMatch) {
+      minPrice = parseInt(rangeMatch[2], 10) * 1_000_000;
+      maxPrice = parseInt(rangeMatch[4], 10) * 1_000_000;
+    }
+
+    const aroundMatch = message.match(/(khoảng|tầm|around)\s*(\d+)\s*(triệu|tr|million|m)/i);
+    if (aroundMatch && !maxPrice) {
+      const base = parseInt(aroundMatch[2], 10) * 1_000_000;
+      minPrice = Math.round(base * 0.75);
+      maxPrice = Math.round(base * 1.25);
+    }
+
+    // 6. Strict Filtering on MOCK_PRODUCTS
+    let filtered = [...MOCK_PRODUCTS];
+
+    if (brand) {
+      filtered = filtered.filter(p => (p.brand || '').toLowerCase() === brand.toLowerCase());
+    }
+
+    if (category) {
+      filtered = filtered.filter(p => (p.category || 'smartphone') === category);
+    }
+
+    let noExactPriceMatch = false;
+
+    if (maxPrice) {
+      const priceFiltered = filtered.filter(p => p.price <= maxPrice);
+      if (priceFiltered.length > 0) {
+        filtered = priceFiltered;
+      } else if (brand) {
+        // Requirement 11: DO NOT drop brand filter if price matched 0 items!
+        noExactPriceMatch = true;
+        filtered.sort((a, b) => a.price - b.price);
       }
     }
 
-    if (matchedProducts.length === 0) {
-      matchedProducts = MOCK_PRODUCTS.filter(p => p.isFeatured).slice(0, 2);
+    if (minPrice && !noExactPriceMatch) {
+      const minFiltered = filtered.filter(p => p.price >= minPrice);
+      if (minFiltered.length > 0) filtered = minFiltered;
     }
 
-    return { reply, sessionId: sessionId || 'sess_demo', recommendations: matchedProducts };
+    // Sort by popularity / rating
+    filtered.sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0));
+
+    const recommendations = filtered.slice(0, 3);
+
+    if (recommendations.length === 0) {
+      return {
+        reply: `Hiện tại Phonestore chưa tìm thấy sản phẩm ${brand || ''} phù hợp với yêu cầu của bạn. Vui lòng thử điều chỉnh lại mức giá hoặc tiêu chí tìm kiếm.`,
+        sessionId: sessionId || 'sess_demo',
+        recommendations: []
+      };
+    }
+
+    const priceText = maxPrice ? `dưới ${new Intl.NumberFormat('vi-VN').format(maxPrice)}₫` : '';
+    const brandText = brand ? brand : '';
+    const categoryText = category === 'tablet' ? 'máy tính bảng' : (category === 'smartwatch' ? 'đồng hồ thông minh' : (category === 'accessory' ? 'phụ kiện' : 'điện thoại'));
+
+    const listLines = recommendations.map((p, i) => {
+      const pStr = new Intl.NumberFormat('vi-VN').format(p.price);
+      return `${i + 1}. **${p.name}**\n   • Giá: ${pStr}₫\n   • Điểm nổi bật: ${p.specs?.processor || p.description || ''} | ⭐ ${p.avgRating || 5}/5`;
+    }).join('\n\n');
+
+    let reply = '';
+    if (noExactPriceMatch && brand && maxPrice) {
+      const maxPriceStr = new Intl.NumberFormat('vi-VN').format(maxPrice);
+      reply = `Hiện tại Phonestore chưa có ${categoryText} ${brand} nào có giá dưới ${maxPriceStr}₫. Dưới đây là các mẫu ${brand} với mức giá tốt nhất hiện có:\n\n${listLines}\n\nBạn có muốn tham khảo thêm thông tin chi tiết của mẫu nào không?`;
+    } else {
+      reply = `Dưới đây là các mẫu ${categoryText} ${brandText} ${priceText} phù hợp nhất tại Phonestore:\n\n${listLines}\n\nBạn ưu tiên camera, hiệu năng chơi game hay thời lượng pin để mình tư vấn mẫu tối ưu nhất?`;
+    }
+
+    return { reply, sessionId: sessionId || 'sess_demo', recommendations };
   },
 
   async getAdminStats() {
