@@ -206,9 +206,12 @@ export const CartCheckoutComponent = {
         shippingAddress: { fullName: customerName, phone: customerPhone, street: shippingAddress }
       };
 
-      if (paymentMethod === 'bank_transfer' || paymentMethod === 'vnpay') {
-        // Open Payment QR & Bank Transfer Popup
-        PaymentPopupComponent.open(fullOrderObj, this.appStore);
+      if (paymentMethod === 'vnpay') {
+        // Open VNPay Payment Popup
+        PaymentPopupComponent.open(fullOrderObj, this.appStore, 'vnpay');
+      } else if (paymentMethod === 'bank_transfer') {
+        // Open Manual Bank Transfer Popup
+        PaymentPopupComponent.open(fullOrderObj, this.appStore, 'bank_transfer');
       } else {
         // COD payment flow
         this.appStore.clearCart();

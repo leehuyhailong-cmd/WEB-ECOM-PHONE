@@ -353,14 +353,20 @@
     </div>
   </div>
 
-  <!-- ── Payment Popup Modal (VNPay & Bank Transfer QR Code) ─────────────── -->
+  <!-- ── Payment Popup Modal (VNPay QR Code & Bank Transfer — Standard E-Commerce Flow) ─────────── -->
   <div id="paymentPopupModal" class="modal payment-popup-modal">
     <div class="modal-header payment-popup-header">
       <div class="payment-popup-title-wrap">
-        <span class="payment-popup-icon">💳</span>
+        <div class="vnpay-logo-badge" id="payPopupBadgeLogo">
+          <span style="font-size:1.2rem;font-weight:900;color:#005baa;letter-spacing:-0.5px;">VNPAY</span><span style="font-size:1.2rem;font-weight:900;color:#ed1c24;">QR</span>
+        </div>
         <div>
-          <h3 class="payment-popup-title">Thanh Toán Đơn Hàng — <span id="payModalOrderCode" style="color:var(--primary);">ORD-000000</span></h3>
-          <p class="payment-popup-subtitle">Vui lòng quét mã QR hoặc chuyển khoản để hoàn tất đơn hàng</p>
+          <h3 class="payment-popup-title"><span id="payPopupTitleText">Thanh Toán Cổng VNPAY QR Code</span> — <span id="payModalOrderCode" style="color:var(--primary);">ORD-000000</span></h3>
+          <div class="checkout-steps-mini">
+            <span class="step-done">1. Giỏ hàng ✓</span>
+            <span class="step-done">2. Địa chỉ ✓</span>
+            <span class="step-active">3. Thanh toán</span>
+          </div>
         </div>
       </div>
       <button class="modal-close" id="closePaymentPopupBtn">&times;</button>
@@ -369,21 +375,37 @@
     <div class="modal-body payment-popup-body">
       <div class="payment-popup-grid">
         
-        <!-- Left: QR Code Section -->
+        <!-- Left: VNPay / VietQR Code Section -->
         <div class="payment-qr-col">
           <div class="payment-qr-card">
-            <h4 class="qr-card-title">📱 Quét mã QR để thanh toán</h4>
+            <div class="qr-card-header">
+              <h4 class="qr-card-title">📱 Quét mã QR thanh toán</h4>
+              <span class="vnpay-tag">VNPay QR / VietQR 24/7</span>
+            </div>
             
             <div class="qr-img-wrapper">
               <img id="payQrImage" src="" alt="VietQR Payment Code" />
-              <div class="qr-logo-badge">📱</div>
+              <div class="qr-logo-badge">
+                <span style="font-size:0.65rem;font-weight:900;color:#ed1c24;">VNPAY</span>
+              </div>
             </div>
 
-            <p class="qr-instruction">Mở ứng dụng Ngân hàng / VNPay và quét mã QR này</p>
+            <p class="qr-instruction">Mở App Ngân hàng (VCB, MB, Techcombank...) hoặc Ví VNPay để quét</p>
+
+            <!-- Supported Banking Apps Row -->
+            <div class="supported-banks-row">
+              <span class="bank-pill">Vietcombank</span>
+              <span class="bank-pill">MB Bank</span>
+              <span class="bank-pill">Techcombank</span>
+              <span class="bank-pill">VietinBank</span>
+              <span class="bank-pill">Agribank</span>
+              <span class="bank-pill">MoMo</span>
+              <span class="bank-pill vnpay-pill">Ví VNPay</span>
+            </div>
 
             <div class="qr-timer-box" id="payTimerBox">
               <span class="timer-icon">⏳</span>
-              <span>Thời gian còn lại:</span>
+              <span>Thời gian giữ hàng & QR:</span>
               <strong id="payCountdownText" class="timer-countdown">15:00</strong>
             </div>
 
@@ -391,9 +413,14 @@
               ⚠️ Mã QR đã hết hạn! Vui lòng tạo lại đơn hàng hoặc đóng cửa sổ.
             </div>
 
-            <button id="btnDownloadQr" class="btn btn-secondary btn-download-qr">
-              📥 Tải mã QR về máy
-            </button>
+            <div style="display:flex;gap:0.5rem;">
+              <button id="btnDownloadQr" class="btn btn-secondary btn-download-qr" style="flex:1;">
+                📥 Tải mã QR
+              </button>
+              <button id="btnOpenVnpayGateway" class="btn btn-accent btn-download-qr" style="flex:1;background:linear-gradient(135deg,#005baa,#0088ff);border:none;color:#fff;">
+                🌐 Mở VNPay Sandbox
+              </button>
+            </div>
           </div>
         </div>
 
@@ -405,7 +432,7 @@
             <div class="bank-info-rows">
               <div class="bank-info-row">
                 <span class="bank-label">Ngân hàng:</span>
-                <span class="bank-val-highlight">Vietcombank (VCB)</span>
+                <span class="bank-val-highlight">Vietcombank (VCB - Chi nhánh Hà Nội)</span>
               </div>
 
               <div class="bank-info-row">
@@ -436,12 +463,12 @@
             </div>
 
             <div class="payment-notice-box">
-              <p>💡 <em>Lưu ý: Vui lòng giữ nguyên nội dung chuyển khoản để hệ thống tự động xác nhận đơn hàng nhanh nhất.</em></p>
+              <p>💡 <em>Lưu ý: Giữ nguyên nội dung chuyển khoản để hệ thống tự động xác nhận đơn hàng trong 10-30 giây.</em></p>
             </div>
 
             <div class="payment-actions">
               <button id="btnConfirmPaid" class="btn btn-primary btn-confirm-paid">
-                ✅ Tôi đã thanh toán
+                ✅ Tôi đã thanh toán (Xác nhận đơn)
               </button>
             </div>
           </div>
