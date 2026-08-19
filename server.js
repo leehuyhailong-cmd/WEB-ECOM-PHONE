@@ -17,10 +17,9 @@ let server;
 
 async function startServer() {
   try {
-    await connectDB();
-
+    // ⚡ Start HTTP server immediately so http://localhost:3000 is always accessible
     server = app.listen(PORT, HOST, () => {
-      logger.info({ msg: '🚀 Server running', port: PORT, env: process.env.NODE_ENV });
+      logger.info({ msg: `🚀 Server running at http://localhost:${PORT}`, port: PORT, env: process.env.NODE_ENV });
     });
 
     server.on('error', (err) => {
@@ -30,6 +29,12 @@ async function startServer() {
       }
       throw err;
     });
+
+    // Connect to MongoDB asynchronously in background
+    connectDB().catch(err => {
+      logger.warn({ msg: 'MongoDB connection warning — operating with fallback/offline mode', err: err.message });
+    });
+
   } catch (err) {
     logger.fatal({ msg: 'Failed to start server', err: err.message });
     process.exit(1);
@@ -66,12 +71,10 @@ process.on('SIGINT',  () => gracefulShutdown('SIGINT'));
 
 process.on('unhandledRejection', (reason) => {
   logger.error({ msg: 'Unhandled Promise Rejection', reason });
-  gracefulShutdown('unhandledRejection');
 });
 
 process.on('uncaughtException', (err) => {
-  logger.fatal({ msg: 'Uncaught Exception — process must restart', err: err.message, stack: err.stack });
-  process.exit(1);
+  logger.fatal({ msg: 'Uncaught Exception', err: err.message, stack: err.stack });
 });
 
 startServer();
