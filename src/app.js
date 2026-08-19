@@ -129,6 +129,7 @@ app.use('/api/products', productRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/orders', orderRouter);
 app.use('/api/payment', paymentRouter);
+app.use('/', paymentRouter);
 // app.use('/api/users',           userRouter);
 app.use('/api/reviews',         reviewRouter);
 app.use('/api/chatbot',         chatbotRouter);
