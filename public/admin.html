@@ -160,15 +160,22 @@
         <div class="panel-card">
           <div class="panel-card-header">
             <div class="panel-card-title">🛍️ Quản lý đơn hàng</div>
-            <select class="admin-select" id="orderStatusFilter" onchange="AdminApp.filterOrders()">
-              <option value="">Tất cả trạng thái</option>
-              <option value="pending">⏳ Chờ xử lý</option>
-              <option value="confirmed">✔️ Đã xác nhận</option>
-              <option value="processing">⚙️ Đang xử lý</option>
-              <option value="shipping">🚚 Đang giao</option>
-              <option value="delivered">✅ Đã giao</option>
-              <option value="cancelled">❌ Đã hủy</option>
-            </select>
+            <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+              <div class="search-bar" style="width:220px;">
+                <span>🔍</span>
+                <input type="text" id="orderSearch" placeholder="Tìm mã đơn, khách..." oninput="AdminApp.filterOrders()" />
+              </div>
+              <select class="admin-select" id="orderStatusFilter" onchange="AdminApp.filterOrders()">
+                <option value="">Tất cả trạng thái</option>
+                <option value="pending">⏳ Chờ xử lý</option>
+                <option value="confirmed">✔️ Đã xác nhận</option>
+                <option value="processing">⚙️ Đang xử lý</option>
+                <option value="shipping">🚚 Đang giao</option>
+                <option value="delivered">✅ Đã giao</option>
+                <option value="cancelled">❌ Đã hủy</option>
+              </select>
+              <button class="btn-topbar btn-topbar-primary" onclick="AdminApp.openAddOrder()">+ Thêm đơn hàng mới</button>
+            </div>
           </div>
           <div class="panel-card-body no-pad">
             <table class="admin-table">
@@ -229,9 +236,15 @@
     <div class="modal-body">
       <form id="productForm">
         <input type="hidden" id="editProductId" />
-        <div class="form-row">
-          <label class="form-label">Tên sản phẩm *</label>
-          <input type="text" class="admin-input" id="pName" placeholder="VD: iPhone 16 Pro Max 256GB" required />
+        <div class="form-row-2">
+          <div class="form-row">
+            <label class="form-label">Tên sản phẩm *</label>
+            <input type="text" class="admin-input" id="pName" placeholder="VD: iPhone 16 Pro Max 256GB" oninput="AdminApp._autoSlug(this.value)" required />
+          </div>
+          <div class="form-row">
+            <label class="form-label">Đường dẫn Slug (Tự động)</label>
+            <input type="text" class="admin-input" id="pSlug" placeholder="iphone-16-pro-max-256gb" />
+          </div>
         </div>
         <div class="form-row-2">
           <div class="form-row">
@@ -276,7 +289,7 @@
         </div>
         <div class="form-row-2">
           <div class="form-row">
-            <label class="form-label">Tải ảnh từ máy (File)</label>
+            <label class="form-label">Tải ảnh từ máy (Cloudinary / File)</label>
             <input type="file" class="admin-input" id="pImageFile" name="images" accept="image/*"
               onchange="AdminApp._onImageFileChange(this)" />
           </div>
@@ -291,14 +304,24 @@
         <div class="form-row" id="imagePreviewRow" style="display:none;">
           <img id="pImagePreview" src="" alt="Preview" style="max-height:120px;border-radius:8px;border:1px solid var(--border-subtle);object-fit:contain;background:var(--bg-input);" />
         </div>
-        <div class="form-row-2">
+        <div class="form-row-3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;">
           <div class="form-row">
             <label class="form-label">Tồn kho</label>
             <input type="number" class="admin-input" id="pStock" placeholder="0" min="0" />
           </div>
           <div class="form-row">
-            <label class="form-label">Đã bán</label>
-            <input type="number" class="admin-input" id="pSold" placeholder="0" min="0" />
+            <label class="form-label">Trạng thái</label>
+            <select class="admin-input admin-select" id="pIsActive" style="width:100%;">
+              <option value="true">Đang kinh doanh</option>
+              <option value="false">Tạm ngưng</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label class="form-label">Nổi bật</label>
+            <select class="admin-input admin-select" id="pIsFeatured" style="width:100%;">
+              <option value="false">Không</option>
+              <option value="true">⭐ Nổi bật</option>
+            </select>
           </div>
         </div>
         
@@ -374,8 +397,96 @@
     <div class="modal-body" id="orderDetailBody" style="max-height:70vh;overflow-y:auto;">
       <!-- Nội dung được render bởi JS -->
     </div>
+  <!-- ── Modal: Create Order ─────────────────────────────────────────────── -->
+  <div class="modal-overlay" id="orderCreateOverlay" onclick="AdminApp.closeOrderCreateModal()"></div>
+  <div class="modal-box" id="orderCreateModal" style="max-width:680px;">
+    <div class="modal-header">
+      <div class="modal-title">🛍️ Tạo đơn hàng mới</div>
+      <button class="modal-close" onclick="AdminApp.closeOrderCreateModal()">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto;">
+      <form id="orderCreateForm">
+        <!-- Customer Selection -->
+        <div class="form-row">
+          <label class="form-label">Khách hàng *</label>
+          <select class="admin-input admin-select" id="orderCustomerSelect" style="width:100%;" onchange="AdminApp._onCustomerSelectChange(this.value)">
+            <option value="">-- Chọn khách hàng sẵn có hoặc nhập mới --</option>
+          </select>
+        </div>
+
+        <!-- Shipping Address -->
+        <div style="border-top:1px dashed var(--border-subtle); margin:1rem 0; padding-top:0.75rem;">
+          <div style="font-weight:700; color:var(--primary); font-size:0.9rem; margin-bottom:0.75rem;">📍 Địa chỉ giao hàng</div>
+          <div class="form-row-2">
+            <div class="form-row">
+              <label class="form-label">Họ tên người nhận *</label>
+              <input type="text" class="admin-input" id="orderShipName" placeholder="VD: Nguyễn Văn A" required />
+            </div>
+            <div class="form-row">
+              <label class="form-label">Số điện thoại *</label>
+              <input type="tel" class="admin-input" id="orderShipPhone" placeholder="VD: 0912345678" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <label class="form-label">Địa chỉ (Số nhà, đường) *</label>
+            <input type="text" class="admin-input" id="orderShipStreet" placeholder="VD: 123 Nguyễn Trãi" required />
+          </div>
+          <div class="form-row-3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;">
+            <div class="form-row">
+              <label class="form-label">Phường / Xã *</label>
+              <input type="text" class="admin-input" id="orderShipWard" placeholder="Phường Bến Nghé" required />
+            </div>
+            <div class="form-row">
+              <label class="form-label">Quận / Huyện *</label>
+              <input type="text" class="admin-input" id="orderShipDistrict" placeholder="Quận 1" required />
+            </div>
+            <div class="form-row">
+              <label class="form-label">Tỉnh / Thành phố *</label>
+              <input type="text" class="admin-input" id="orderShipProvince" placeholder="TP. Hồ Chí Minh" required />
+            </div>
+          </div>
+        </div>
+
+        <!-- Products Section -->
+        <div style="border-top:1px dashed var(--border-subtle); margin:1rem 0; padding-top:0.75rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+            <div style="font-weight:700; color:var(--primary); font-size:0.9rem;">📦 Danh sách sản phẩm trong đơn</div>
+            <button type="button" class="btn-topbar btn-topbar-secondary" style="padding:4px 10px;font-size:0.8rem;" onclick="AdminApp.addOrderItemRow()">+ Thêm sản phẩm</button>
+          </div>
+          <div id="orderItemsContainer" style="display:flex;flex-direction:column;gap:0.75rem;">
+            <!-- Rows rendered dynamically by JS -->
+          </div>
+        </div>
+
+        <!-- Payment & Note -->
+        <div class="form-row-2" style="margin-top:1rem;">
+          <div class="form-row">
+            <label class="form-label">Phương thức thanh toán</label>
+            <select class="admin-input admin-select" id="orderPayMethod" style="width:100%;">
+              <option value="cod">Thanh toán khi nhận hàng (COD)</option>
+              <option value="vnpay">Chuyển khoản VNPay</option>
+              <option value="bank_transfer">Chuyển khoản ngân hàng</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label class="form-label">Ghi chú đơn hàng</label>
+            <input type="text" class="admin-input" id="orderNote" placeholder="Ghi chú giao hàng..." />
+          </div>
+        </div>
+
+        <!-- Summary Bar -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;padding:0.75rem 1rem;background:var(--bg-card);border-radius:8px;border:1px solid var(--border-subtle);">
+          <span style="font-weight:600;">Tổng tiền đơn hàng:</span>
+          <span id="orderTotalPreview" style="font-size:1.2rem;font-weight:800;color:var(--success);">0 đ</span>
+        </div>
+
+        <!-- Error Box -->
+        <div id="orderFormError" style="display:none; margin-top:0.75rem; padding:0.75rem 1rem; background:rgba(244,63,94,0.1); border:1px solid rgba(244,63,94,0.3); border-radius:8px; color:var(--danger); font-size:0.875rem; font-weight:500;"></div>
+      </form>
+    </div>
     <div class="modal-footer">
-      <button class="btn-cancel" onclick="AdminApp.closeOrderDetail()">Đóng</button>
+      <button class="btn-cancel" onclick="AdminApp.closeOrderCreateModal()">Hủy</button>
+      <button id="btnSaveOrder" class="btn-submit" onclick="AdminApp.saveOrder()">💾 Tạo đơn hàng</button>
     </div>
   </div>
 

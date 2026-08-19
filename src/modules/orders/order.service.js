@@ -36,7 +36,8 @@ const { logger } = require('../../utils/logger');
  * @returns {Promise<{ order: object, paymentUrl?: string }>}
  */
 async function createOrder(userId, data, ipAddr) {
-  let { shippingAddress, paymentMethod = 'cod', note = '', items } = data;
+  let { shippingAddress, paymentMethod = 'cod', note = '', items, userId: targetUserId } = data;
+  const effectiveUserId = targetUserId || userId;
 
   if (!items || !items.length) {
     const cart = await cartRepository.findByUserId(userId);
@@ -101,7 +102,7 @@ async function createOrder(userId, data, ipAddr) {
   // 4. Create order document
   const orderCode = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
   const order = await orderRepository.create({
-    userId,
+    userId: effectiveUserId,
     orderCode,
     items:           snapshots,
     shippingAddress,
@@ -191,7 +192,7 @@ async function updateOrderStatus(orderId, status, cancelReason) {
   const extra = {};
   if (status === 'cancelled') {
     // Restore stock when admin cancels
-    if (['pending', 'confirmed'].includes(order.status)) {
+    if (['pending', 'confirmed', 'processing', 'shipping'].includes(order.status)) {
       await Promise.all(
         order.items.map(i =>
           productRepository.incrementStock(i.productId, i.quantity),

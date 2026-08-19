@@ -536,6 +536,20 @@ export const API = {
   },
 
   // ── Admin Orders API ────────────────────────────────────────────────────────
+  async createAdminOrder(orderData) {
+    const res = await fetch(`${API_BASE}/orders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('phonestore_token')}`
+      },
+      body: JSON.stringify(orderData)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Lỗi tạo đơn hàng');
+    return data.data;
+  },
+
   async getAdminOrders() {
     const res = await fetch(`${API_BASE}/orders/admin`, {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('phonestore_token')}` }

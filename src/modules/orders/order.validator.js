@@ -27,6 +27,7 @@ const createOrderSchema = z.object({
       quantity: z.number().int().min(1),
     })).optional(),
     note: z.string().trim().max(500).optional().default(''),
+    userId: z.string().optional(),
   }),
 });
 
