@@ -219,6 +219,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   CartCheckoutComponent.renderCart();
   app.updateNavbarUserState();
 
+  // ── Handle VNPay Return Callback Parameters ──────────────────────────────
+  const urlParams = new URLSearchParams(window.location.search);
+  const paymentState = urlParams.get('payment');
+  const returnedOrderId = urlParams.get('orderId');
+
+  if (paymentState === 'success') {
+    app.clearCart();
+    CartCheckoutComponent.renderCart();
+    app.showToast('🎉 Thanh toán qua VNPay thành công! Đơn hàng đã được xác nhận.', 'success');
+
+    if (document.getElementById('successOrderCode'))     document.getElementById('successOrderCode').textContent = returnedOrderId || 'ORD-VNPAY';
+    if (document.getElementById('successCustomerName')) document.getElementById('successCustomerName').textContent = 'Khách hàng VNPay';
+    if (document.getElementById('successTotalAmount'))  document.getElementById('successTotalAmount').textContent = 'Đã thanh toán (PAID)';
+    if (document.getElementById('successPaymentMethod')) {
+      document.getElementById('successPaymentMethod').innerHTML = '<span style="color:#34d399;font-weight:700;">✅ VNPAY Sandbox — Đã thanh toán (PAID)</span>';
+    }
+
+    document.getElementById('orderSuccessModal')?.classList.add('active');
+    document.getElementById('modalOverlay')?.classList.add('active');
+
+    // Clean URL query string
+    window.history.replaceState({}, document.title, window.location.pathname);
+  } else if (paymentState === 'failed') {
+    app.showToast('⚠️ Giao dịch VNPay không thành công hoặc đã bị hủy.', 'error');
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
   // Initialize Hero Slider Carousel
   initHeroSlider();
 });
