@@ -115,6 +115,7 @@ const categoryRouter = require('./modules/categories/categories.router');
 const productRouter = require('./modules/products/product.router');
 const cartRouter = require('./modules/cart/cart.router');
 const orderRouter = require('./modules/orders/order.router');
+const paymentRouter = require('./vnpay.integration');
 // Uncomment as each module is built:
 // const userRouter            = require('./modules/users/user.router');
 const reviewRouter          = require('./modules/reviews/review.router');
@@ -127,6 +128,7 @@ app.use('/api/categories', categoryRouter);
 app.use('/api/products', productRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/orders', orderRouter);
+app.use('/api/payment', paymentRouter);
 // app.use('/api/users',           userRouter);
 app.use('/api/reviews',         reviewRouter);
 app.use('/api/chatbot',         chatbotRouter);

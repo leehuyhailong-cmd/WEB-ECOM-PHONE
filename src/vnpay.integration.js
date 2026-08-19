@@ -1,0 +1,228 @@
+/**
+ * =============================================
+ *  TÍCH HỢP VNPAY SANDBOX - FILE TỔNG HỢP
+ *  Dùng cho dự án Phonestore (Node.js + Express)
+ *  Chạy được trên localhost
+ * =============================================
+ */
+
+require('dotenv').config();
+const express = require('express');
+const crypto = require('crypto');
+const querystring = require('qs');
+const moment = require('moment');
+const { Order } = require('./models');
+const router = express.Router();
+
+// ====================== 1. CẤU HÌNH (.env) ======================
+/*
+Thêm vào file .env của bạn:
+
+VNP_TMN_CODE=YOUR_TMN_CODE
+VNP_HASH_SECRET=YOUR_HASH_SECRET
+VNP_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+VNP_RETURN_URL=http://localhost:3000/api/payment/vnpay_return
+VNP_IPN_URL=http://localhost:3000/api/payment/vnpay_ipn
+CLIENT_URL=http://localhost:3000
+*/
+
+// ====================== 2. HÀM HỖ TRỢ ======================
+function sortObject(obj) {
+  const sorted = {};
+  Object.keys(obj)
+    .sort()
+    .forEach((key) => {
+      sorted[key] = obj[key];
+    });
+  return sorted;
+}
+
+// ====================== 3. TẠO URL THANH TOÁN ======================
+function createPaymentUrl(orderId, amount, orderInfo, ipAddr) {
+  const tmnCode = process.env.VNP_TMN_CODE || process.env.VNPAY_TMN_CODE || 'DEMO';
+  const secretKey = process.env.VNP_HASH_SECRET || process.env.VNPAY_HASH_SECRET || 'DEMO';
+  const vnpUrl = process.env.VNP_URL || process.env.VNPAY_URL || 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
+  const returnUrl = process.env.VNP_RETURN_URL || process.env.VNPAY_RETURN_URL || 'http://localhost:3000/api/payment/vnpay_return';
+
+  const createDate = moment().format('YYYYMMDDHHmmss');
+  const expireDate = moment().add(15, 'minutes').format('YYYYMMDDHHmmss');
+
+  let vnp_Params = {
+    vnp_Version: '2.1.0',
+    vnp_Command: 'pay',
+    vnp_TmnCode: tmnCode,
+    vnp_Amount: Math.round(Number(amount) * 100), // nhân 100 vì VNPay tính theo xu
+    vnp_CurrCode: 'VND',
+    vnp_TxnRef: String(orderId),
+    vnp_OrderInfo: orderInfo,
+    vnp_OrderType: 'other',
+    vnp_Locale: 'vn',
+    vnp_ReturnUrl: returnUrl,
+    vnp_IpAddr: ipAddr || '127.0.0.1',
+    vnp_CreateDate: createDate,
+    vnp_ExpireDate: expireDate,
+  };
+
+  vnp_Params = sortObject(vnp_Params);
+
+  const signData = querystring.stringify(vnp_Params, { encode: false });
+  const hmac = crypto.createHmac('sha512', secretKey);
+  const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
+  vnp_Params['vnp_SecureHash'] = signed;
+
+  return vnpUrl + '?' + querystring.stringify(vnp_Params, { encode: false });
+}
+
+// ====================== 4. KIỂM TRA CHỮ KÝ (Verify) ======================
+function verifySecureHash(vnp_Params) {
+  const secretKey = process.env.VNP_HASH_SECRET || process.env.VNPAY_HASH_SECRET || 'DEMO';
+  const secureHash = vnp_Params['vnp_SecureHash'];
+  delete vnp_Params['vnp_SecureHash'];
+  delete vnp_Params['vnp_SecureHashType'];
+
+  const sorted = sortObject(vnp_Params);
+  const signData = querystring.stringify(sorted, { encode: false });
+  const hmac = crypto.createHmac('sha512', secretKey);
+  const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
+
+  return secureHash === signed;
+}
+
+// ====================== 5. CÁC ROUTE ======================
+
+/**
+ * Tạo URL thanh toán
+ * POST /api/payment/create_payment_url
+ * Body: { orderId, amount, orderInfo }
+ */
+router.post('/create_payment_url', async (req, res) => {
+  try {
+    const { orderId, amount, orderInfo } = req.body;
+    const ipAddr =
+      req.headers['x-forwarded-for'] ||
+      req.connection?.remoteAddress ||
+      req.socket?.remoteAddress ||
+      '127.0.0.1';
+
+    if (!orderId || !amount) {
+      return res.status(400).json({ success: false, message: 'Thiếu orderId hoặc amount' });
+    }
+
+    const paymentUrl = createPaymentUrl(
+      orderId,
+      amount,
+      orderInfo || `Thanh toan don hang ${orderId}`,
+      ipAddr
+    );
+
+    return res.json({
+      success: true,
+      paymentUrl,
+      message: 'Tạo URL thanh toán thành công',
+    });
+  } catch (error) {
+    console.error('Lỗi tạo URL:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * Return URL - Người dùng được chuyển về sau khi thanh toán
+ * GET /api/payment/vnpay_return
+ */
+router.get('/vnpay_return', async (req, res) => {
+  try {
+    const clientUrl = process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:3000';
+    const vnp_Params = { ...req.query };
+
+    const isValid = verifySecureHash(vnp_Params);
+    if (!isValid) {
+      return res.redirect(`${clientUrl}/index.html?payment=failed&message=${encodeURIComponent('Chữ ký không hợp lệ')}`);
+    }
+
+    const orderId = vnp_Params.vnp_TxnRef;
+    const responseCode = vnp_Params.vnp_ResponseCode;
+
+    // Cập nhật database Order trong MongoDB
+    if (responseCode === '00') {
+      try {
+        let order = await Order.findById(orderId).catch(() => null);
+        if (!order) {
+          order = await Order.findOne({ orderCode: orderId });
+        }
+        if (order) {
+          order.paymentStatus = 'paid';
+          if (order.status === 'pending') order.status = 'confirmed';
+          order.paidAt = new Date();
+          order.vnpayTransactionId = vnp_Params.vnp_TransactionNo;
+          order.vnpayBankCode = vnp_Params.vnp_BankCode;
+          order.vnpayResponseCode = responseCode;
+          await order.save();
+        }
+      } catch (dbErr) {
+        console.error('Lỗi cập nhật Order MongoDB:', dbErr);
+      }
+
+      return res.redirect(
+        `${clientUrl}/index.html?payment=success&orderId=${orderId}`
+      );
+    } else {
+      return res.redirect(
+        `${clientUrl}/index.html?payment=failed&orderId=${orderId}&code=${responseCode}`
+      );
+    }
+  } catch (error) {
+    console.error('Lỗi return URL:', error);
+    const clientUrl = process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:3000';
+    return res.redirect(`${clientUrl}/index.html?payment=failed`);
+  }
+});
+
+/**
+ * IPN - VNPay gọi về server (quan trọng nhất)
+ * GET /api/payment/vnpay_ipn
+ */
+router.get('/vnpay_ipn', async (req, res) => {
+  try {
+    const vnp_Params = { ...req.query };
+
+    const isValid = verifySecureHash(vnp_Params);
+    if (!isValid) {
+      return res.status(200).json({ RspCode: '97', Message: 'Chu ky khong hop le' });
+    }
+
+    const orderId = vnp_Params.vnp_TxnRef;
+    const responseCode = vnp_Params.vnp_ResponseCode;
+
+    // Cập nhật database Order trong MongoDB
+    if (responseCode === '00') {
+      try {
+        let order = await Order.findById(orderId).catch(() => null);
+        if (!order) {
+          order = await Order.findOne({ orderCode: orderId });
+        }
+        if (order) {
+          order.paymentStatus = 'paid';
+          if (order.status === 'pending') order.status = 'confirmed';
+          order.paidAt = new Date();
+          order.vnpayTransactionId = vnp_Params.vnp_TransactionNo;
+          order.vnpayBankCode = vnp_Params.vnp_BankCode;
+          order.vnpayResponseCode = responseCode;
+          await order.save();
+        }
+      } catch (dbErr) {
+        console.error('Lỗi IPN DB update:', dbErr);
+      }
+
+      return res.status(200).json({ RspCode: '00', Message: 'Success' });
+    } else {
+      return res.status(200).json({ RspCode: '01', Message: 'Failed' });
+    }
+  } catch (error) {
+    console.error('Lỗi IPN:', error);
+    return res.status(200).json({ RspCode: '99', Message: 'Unknown error' });
+  }
+});
+
+// ====================== 6. EXPORT ======================
+module.exports = router;
