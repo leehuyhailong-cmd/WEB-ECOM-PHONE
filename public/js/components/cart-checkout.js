@@ -3,10 +3,12 @@
  */
 
 import { API } from '../api.js';
+import { PaymentPopupComponent } from './payment-popup.js';
 
 export const CartCheckoutComponent = {
   init(appStore) {
     this.appStore = appStore;
+    PaymentPopupComponent.init(appStore);
     this.bindEvents();
   },
 
@@ -178,11 +180,13 @@ export const CartCheckoutComponent = {
 
     try {
       let orderCode = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
+      let createdOrder = null;
       let paymentUrl = null;
 
       try {
         const result = await API.checkoutOrder(orderPayload);
         if (result && result.order) {
+          createdOrder = result.order;
           orderCode = result.order.orderCode || result.order._id?.substring(0, 8).toUpperCase() || orderCode;
           paymentUrl = result.paymentUrl;
         }
@@ -194,13 +198,20 @@ export const CartCheckoutComponent = {
       submitBtn.textContent = 'Xác nhận đặt hàng';
 
       this.closeCheckoutModal();
-      this.appStore.clearCart();
 
-      if (paymentMethod === 'vnpay' && paymentUrl) {
-        this.appStore.showToast('Đang chuyển hướng sang cổng thanh toán VNPay...', 'info');
-        setTimeout(() => window.location.href = paymentUrl, 1500);
+      const fullOrderObj = createdOrder || {
+        _id: 'ord_' + Date.now(),
+        orderCode: orderCode,
+        totalPrice: totalAmount,
+        shippingAddress: { fullName: customerName, phone: customerPhone, street: shippingAddress }
+      };
+
+      if (paymentMethod === 'bank_transfer' || paymentMethod === 'vnpay') {
+        // Open Payment QR & Bank Transfer Popup
+        PaymentPopupComponent.open(fullOrderObj, this.appStore);
       } else {
-        // Populate Order Success Modal
+        // COD payment flow
+        this.appStore.clearCart();
         if (document.getElementById('successOrderCode')) document.getElementById('successOrderCode').textContent = orderCode;
         if (document.getElementById('successCustomerName')) document.getElementById('successCustomerName').textContent = `${customerName} (${customerPhone})`;
         if (document.getElementById('successTotalAmount')) document.getElementById('successTotalAmount').textContent = this.formatVND(totalAmount);

@@ -427,6 +427,19 @@ export const API = {
     return data.data; // { order, paymentUrl }
   },
 
+  async confirmOrderPayment(orderId) {
+    const token = localStorage.getItem('phonestore_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/orders/${orderId}/pay`, {
+      method: 'POST',
+      headers
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Lỗi xác nhận thanh toán');
+    return data.data;
+  },
+
   // ── AI Chatbot API ────────────────────────────────────────────────────────
   async sendChatMessage(message, sessionId) {
     const res = await this.request('/chatbot/message', {

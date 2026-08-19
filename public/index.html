@@ -353,6 +353,104 @@
     </div>
   </div>
 
+  <!-- ── Payment Popup Modal (VNPay & Bank Transfer QR Code) ─────────────── -->
+  <div id="paymentPopupModal" class="modal payment-popup-modal">
+    <div class="modal-header payment-popup-header">
+      <div class="payment-popup-title-wrap">
+        <span class="payment-popup-icon">💳</span>
+        <div>
+          <h3 class="payment-popup-title">Thanh Toán Đơn Hàng — <span id="payModalOrderCode" style="color:var(--primary);">ORD-000000</span></h3>
+          <p class="payment-popup-subtitle">Vui lòng quét mã QR hoặc chuyển khoản để hoàn tất đơn hàng</p>
+        </div>
+      </div>
+      <button class="modal-close" id="closePaymentPopupBtn">&times;</button>
+    </div>
+
+    <div class="modal-body payment-popup-body">
+      <div class="payment-popup-grid">
+        
+        <!-- Left: QR Code Section -->
+        <div class="payment-qr-col">
+          <div class="payment-qr-card">
+            <h4 class="qr-card-title">📱 Quét mã QR để thanh toán</h4>
+            
+            <div class="qr-img-wrapper">
+              <img id="payQrImage" src="" alt="VietQR Payment Code" />
+              <div class="qr-logo-badge">📱</div>
+            </div>
+
+            <p class="qr-instruction">Mở ứng dụng Ngân hàng / VNPay và quét mã QR này</p>
+
+            <div class="qr-timer-box" id="payTimerBox">
+              <span class="timer-icon">⏳</span>
+              <span>Thời gian còn lại:</span>
+              <strong id="payCountdownText" class="timer-countdown">15:00</strong>
+            </div>
+
+            <div id="payExpiryNotice" class="pay-expiry-notice" style="display:none;">
+              ⚠️ Mã QR đã hết hạn! Vui lòng tạo lại đơn hàng hoặc đóng cửa sổ.
+            </div>
+
+            <button id="btnDownloadQr" class="btn btn-secondary btn-download-qr">
+              📥 Tải mã QR về máy
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Manual Bank Transfer Section -->
+        <div class="payment-bank-col">
+          <div class="payment-bank-card">
+            <h4 class="bank-card-title">🏦 Hoặc chuyển khoản thủ công</h4>
+
+            <div class="bank-info-rows">
+              <div class="bank-info-row">
+                <span class="bank-label">Ngân hàng:</span>
+                <span class="bank-val-highlight">Vietcombank (VCB)</span>
+              </div>
+
+              <div class="bank-info-row">
+                <span class="bank-label">Số tài khoản:</span>
+                <div class="bank-val-copy-wrap">
+                  <strong class="bank-val-acc" id="payBankAcc">0123456789</strong>
+                  <button class="btn-copy-sm" id="btnCopyAcc">📋 Sao chép</button>
+                </div>
+              </div>
+
+              <div class="bank-info-row">
+                <span class="bank-label">Chủ tài khoản:</span>
+                <span class="bank-val-bold">CÔNG TY TNHH PHONESTORE</span>
+              </div>
+
+              <div class="bank-info-row">
+                <span class="bank-label">Số tiền:</span>
+                <span class="bank-val-amount" id="payAmountText">0 đ</span>
+              </div>
+
+              <div class="bank-info-row memo-row">
+                <span class="bank-label">Nội dung CK:</span>
+                <div class="bank-val-copy-wrap">
+                  <strong class="bank-val-memo" id="payMemoText">PHONESTORE ORD-000000</strong>
+                  <button class="btn-copy-sm" id="btnCopyMemo">📋 Sao chép</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="payment-notice-box">
+              <p>💡 <em>Lưu ý: Vui lòng giữ nguyên nội dung chuyển khoản để hệ thống tự động xác nhận đơn hàng nhanh nhất.</em></p>
+            </div>
+
+            <div class="payment-actions">
+              <button id="btnConfirmPaid" class="btn btn-primary btn-confirm-paid">
+                ✅ Tôi đã thanh toán
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <!-- Order Success Modal -->
   <div id="orderSuccessModal" class="modal" style="max-width: 480px; text-align: center;">
     <div class="modal-body" style="padding: 2.25rem 1.5rem;">
@@ -393,6 +491,6 @@
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- App Bootstrap JS -->
-  <script type="module" src="js/app.js?v=4"></script>
+  <script type="module" src="js/app.js?v=5"></script>
 </body>
 </html>

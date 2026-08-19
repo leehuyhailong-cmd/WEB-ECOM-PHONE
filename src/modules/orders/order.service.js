@@ -295,6 +295,24 @@ function _createVNPayUrl(order, ipAddr) {
   });
 }
 
+// ── User: Pay order (Bank Transfer / QR confirm) ─────────────────────────────
+async function payOrder(userId, orderId) {
+  const order = await orderRepository.findById(orderId);
+  if (!order) throw new NotFoundError('Không tìm thấy đơn hàng');
+  
+  const isOwner = order.userId?._id?.toString() === userId || order.userId?.toString() === userId;
+  if (!isOwner) throw new ForbiddenError('Bạn không có quyền thanh toán đơn hàng này');
+
+  const updated = await orderRepository.updatePayment(orderId, {
+    paymentStatus: 'paid',
+    status: order.status === 'pending' ? 'confirmed' : order.status,
+    paidAt: new Date(),
+  });
+
+  logger.info({ msg: 'Order payment confirmed by user', orderId, userId });
+  return updated;
+}
+
 module.exports = {
   createOrder,
   getMyOrders,
@@ -304,4 +322,5 @@ module.exports = {
   updateOrderStatus,
   handleVNPayIpn,
   handleVNPayReturn,
+  payOrder,
 };

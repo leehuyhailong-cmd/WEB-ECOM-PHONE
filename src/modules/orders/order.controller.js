@@ -72,7 +72,13 @@ async function vnpayReturn(req, res) {
   );
 }
 
+// ── POST /api/orders/:id/pay ───────────────────────────────────────────────────
+async function payOrder(req, res) {
+  const order = await orderService.payOrder(req.user.id, req.params.id);
+  return ApiResponse.success(res, { order }, 'Xác nhận thanh toán thành công');
+}
+
 module.exports = {
   createOrder, getMyOrders, getMyOrderById, cancelOrder,
-  getAllOrders, updateOrderStatus, vnpayIpn, vnpayReturn,
+  getAllOrders, updateOrderStatus, vnpayIpn, vnpayReturn, payOrder,
 };

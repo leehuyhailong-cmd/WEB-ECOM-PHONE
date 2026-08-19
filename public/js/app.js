@@ -7,6 +7,7 @@ import { API } from './api.js';
 import { CatalogComponent } from './components/catalog.js';
 import { ProductDetailComponent } from './components/product-detail.js';
 import { CartCheckoutComponent } from './components/cart-checkout.js';
+import { PaymentPopupComponent } from './components/payment-popup.js';
 import { ChatbotComponent } from './components/chatbot.js';
 
 class AppStore {
@@ -211,6 +212,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('modalOverlay')?.addEventListener('click', () => {
     ProductDetailComponent.close();
     CartCheckoutComponent.closeCheckoutModal();
+    PaymentPopupComponent.close();
   });
 
   // Render initial state

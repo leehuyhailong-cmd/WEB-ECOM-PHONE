@@ -61,6 +61,7 @@ router.post(
 router.get('/',   authenticate, asyncHandler(orderController.getMyOrders));
 router.get('/:id', authenticate, asyncHandler(orderController.getMyOrderById));
 
+router.post('/:id/pay', authenticate, asyncHandler(orderController.payOrder));
 router.post(
   '/:id/cancel',
   authenticate,
