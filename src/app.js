@@ -29,12 +29,12 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", 'https://fonts.googleapis.com', "'unsafe-inline'"],
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-      imgSrc: ["'self'", 'data:', 'https://res.cloudinary.com'],
-      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", 'data:', 'blob:', 'https:', 'http:'],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
       connectSrc: ["'self'"],
     },
   },
-  crossOriginEmbedderPolicy: false, // Required for Cloudinary images
+  crossOriginEmbedderPolicy: false,
 }));
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS
@@ -43,11 +43,10 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 
 app.use(cors({
   origin: (origin, cb) => {
-    // Allow server-to-server calls (no origin) and whitelisted origins
     if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
     cb(new Error(`CORS: origin ${origin} not allowed`));
   },
-  credentials: true, // Required for HttpOnly cookie (refresh token)
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['X-Total-Count'],
@@ -62,25 +61,25 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── 4. Input sanitisation ─────────────────────────────────────────────────────
-app.use(mongoSanitize({ replaceWith: '_' })); // Strips MongoDB $-operator injection
-app.use(xssClean());                           // Sanitises HTML/JS from input fields
+app.use(mongoSanitize({ replaceWith: '_' }));
+app.use(xssClean());
 
-// ── 5. Session (required for Passport / Google OAuth) ────────────────────────
+// ── 5. Session ────────────────────────────────────────────────────────────────
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET || 'phonestore_session_secret_2026',
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
     mongoUrl: process.env.MONGO_URI,
     collectionName: 'sessions',
-    ttl: 24 * 60 * 60, // 1 day in seconds
+    ttl: 24 * 60 * 60,
     autoRemove: 'native',
   }),
   cookie: {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 24 * 60 * 60 * 1000, // 1 day in ms
+    maxAge: 24 * 60 * 60 * 1000,
   },
 }));
 
@@ -91,8 +90,12 @@ app.use(passport.session());
 // ── 7. Request logging ────────────────────────────────────────────────────────
 app.use(requestLogger);
 
-// ── 8. Static files ───────────────────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, '..', 'public')));
+// ── 8. Static files with 1-day browser cache & compression ────────────────────
+app.use(express.static(path.join(__dirname, '..', 'public'), {
+  maxAge: '1d',
+  etag: true,
+  lastModified: true
+}));
 
 // ── 9. Rate limiting on all API routes ───────────────────────────────────────
 app.use('/api/', apiLimiter);
