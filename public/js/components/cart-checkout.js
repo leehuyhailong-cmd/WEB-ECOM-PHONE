@@ -1,6 +1,6 @@
 /**
  * Cart & Checkout Component — Phonestore
- * Handles: Cart Drawer, Checkout Modal, Order submission, Immediate VNPay Gateway Redirect, and Bank Transfer Modal triggering.
+ * Handles: Cart Drawer rendering, Checkout Modal, Order submission, Immediate VNPay Gateway Redirect, and Bank Transfer Modal triggering.
  */
 
 import { API } from '../api.js';
@@ -29,7 +29,7 @@ export const CartCheckoutComponent = {
     });
 
     // Close checkout modal
-    document.getElementById('closeCheckoutBtn')?.addEventListener('click', () => this.closeCheckoutModal());
+    document.getElementById('closeCheckoutModalBtn')?.addEventListener('click', () => this.closeCheckoutModal());
 
     // Handle checkout form submit
     document.getElementById('checkoutForm')?.addEventListener('submit', (e) => this.handleCheckoutSubmit(e));
@@ -38,11 +38,13 @@ export const CartCheckoutComponent = {
   openCartDrawer() {
     this.renderCart();
     document.getElementById('cartDrawer')?.classList.add('active');
+    document.getElementById('drawerOverlay')?.classList.add('active');
     document.getElementById('modalOverlay')?.classList.add('active');
   },
 
   closeCartDrawer() {
     document.getElementById('cartDrawer')?.classList.remove('active');
+    document.getElementById('drawerOverlay')?.classList.remove('active');
     document.getElementById('modalOverlay')?.classList.remove('active');
   },
 
@@ -53,10 +55,10 @@ export const CartCheckoutComponent = {
       return;
     }
 
-    const user = this.appStore.user;
+    const user = this.appStore.state?.currentUser;
     const form = document.getElementById('checkoutForm');
     if (form && user) {
-      if (form.customerName) form.customerName.value = user.fullName || user.name || '';
+      if (form.customerName) form.customerName.value = user.name || user.fullName || '';
       if (form.customerPhone) form.customerPhone.value = user.phone || '';
       if (form.shippingAddress) form.shippingAddress.value = user.address || '';
     }
@@ -76,7 +78,7 @@ export const CartCheckoutComponent = {
   },
 
   renderCart() {
-    const cartItemsEl = document.getElementById('cartDrawerItems');
+    const cartItemsEl = document.getElementById('cartBody') || document.getElementById('cartDrawerItems');
     const cartBadge = document.getElementById('cartBadge');
     const totalAmountEl = document.getElementById('cartTotalAmount');
     if (!cartItemsEl) return;
@@ -103,6 +105,7 @@ export const CartCheckoutComponent = {
       const img = p.images?.[0]?.url || p.images?.[0] || 'https://via.placeholder.com/80?text=No+Image';
       const name = p.name || 'Sản phẩm';
       const price = item.price || p.price || 0;
+      const productId = p._id || p.id || item.productId;
 
       return `
         <div class="cart-item-card" style="display: flex; gap: 0.75rem; padding: 0.75rem; background: var(--bg-card); border-radius: var(--radius-sm); margin-bottom: 0.75rem; border: 1px solid var(--border-subtle); align-items: center;">
@@ -111,12 +114,12 @@ export const CartCheckoutComponent = {
             <h5 style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${name}</h5>
             <div style="font-size: 0.82rem; color: var(--primary); font-weight: 700;">${this.formatVND(price)}</div>
             <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.4rem;">
-              <button class="btn-qty-minus" data-id="${p._id || item.productId}" style="width: 22px; height: 22px; border-radius: 4px; border: 1px solid var(--border-subtle); background: var(--bg-body); color: var(--text-main); font-size: 0.75rem; cursor: pointer;">-</button>
-              <span style="font-size: 0.82rem; font-weight: 700;">${item.quantity}</span>
-              <button class="btn-qty-plus" data-id="${p._id || item.productId}" style="width: 22px; height: 22px; border-radius: 4px; border: 1px solid var(--border-subtle); background: var(--bg-body); color: var(--text-main); font-size: 0.75rem; cursor: pointer;">+</button>
+              <button class="btn-qty-minus" data-id="${productId}" style="width: 24px; height: 24px; border-radius: 4px; border: 1px solid var(--border-subtle); background: var(--bg-body); color: var(--text-main); font-size: 0.85rem; cursor: pointer; font-weight:700;">-</button>
+              <span style="font-size: 0.85rem; font-weight: 700; min-width: 18px; text-align: center;">${item.quantity}</span>
+              <button class="btn-qty-plus" data-id="${productId}" style="width: 24px; height: 24px; border-radius: 4px; border: 1px solid var(--border-subtle); background: var(--bg-body); color: var(--text-main); font-size: 0.85rem; cursor: pointer; font-weight:700;">+</button>
             </div>
           </div>
-          <button class="btn-cart-remove" data-id="${p._id || item.productId}" style="background: none; border: none; color: var(--danger); font-size: 1.1rem; cursor: pointer; padding: 0.25rem;">&times;</button>
+          <button class="btn-cart-remove" data-id="${productId}" style="background: none; border: none; color: var(--danger); font-size: 1.2rem; cursor: pointer; padding: 0.25rem;">&times;</button>
         </div>
       `;
     }).join('');
@@ -183,7 +186,9 @@ export const CartCheckoutComponent = {
         fullName: customerName,
         phone: customerPhone,
         street: shippingAddress,
-        city: 'Hà Nội'
+        ward: 'Phường 1',
+        district: 'Quận Hoàn Kiếm',
+        province: 'Hà Nội'
       },
       paymentMethod: paymentMethod
     };

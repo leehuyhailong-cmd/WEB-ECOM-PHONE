@@ -1,6 +1,6 @@
 /**
  * Main Application Entry Point & State Store
- * Auth/Admin now use dedicated pages: /auth.html and /admin.html
+ * Robust Cart Management with Safe Normalization & LocalStorage Synchronization
  */
 
 import { API } from './api.js';
@@ -12,34 +12,88 @@ import { ChatbotComponent } from './components/chatbot.js';
 
 class AppStore {
   constructor() {
-    // Tự động xoá các sản phẩm lỗi (từ database cũ không có _id)
-    let cart = JSON.parse(localStorage.getItem('phonestore_cart') || '[]');
-    cart = cart.filter(item => item && item.product && item.product._id);
-    
+    let rawCart = [];
+    try {
+      rawCart = JSON.parse(localStorage.getItem('phonestore_cart') || '[]');
+    } catch (e) {
+      rawCart = [];
+    }
+
+    // Normalize cart items safely (handles _id vs id, missing product object, etc.)
+    const normalizedCart = (Array.isArray(rawCart) ? rawCart : []).map(item => {
+      if (!item) return null;
+      const product = item.product || item;
+      const productId = product._id || product.id || item.productId || ('p_' + Math.random());
+      product._id = productId;
+      return {
+        product,
+        productId,
+        quantity: Math.max(1, item.quantity || 1),
+        price: item.price || product.price || 0
+      };
+    }).filter(Boolean);
+
     this.state = {
-      cart,
+      cart: normalizedCart,
       currentUser: JSON.parse(localStorage.getItem('phonestore_user') || 'null')
     };
   }
 
+  getCart() {
+    return this.state.cart || [];
+  }
+
+  getCartCount() {
+    return (this.state.cart || []).reduce((sum, item) => sum + (item.quantity || 1), 0);
+  }
+
+  getCartTotal() {
+    return (this.state.cart || []).reduce((sum, item) => {
+      const price = item.price || item.product?.price || 0;
+      return sum + (price * (item.quantity || 1));
+    }, 0);
+  }
+
   saveCart() {
     localStorage.setItem('phonestore_cart', JSON.stringify(this.state.cart));
+    const cartBadge = document.getElementById('cartBadge');
+    if (cartBadge) cartBadge.textContent = this.getCartCount();
     CartCheckoutComponent.renderCart();
   }
 
   addToCart(product, quantity = 1) {
-    const existingIndex = this.state.cart.findIndex(item => item.product._id === product._id);
+    if (!product) return;
+    const productId = product._id || product.id || ('p_' + Date.now());
+    product._id = productId;
+
+    const existingIndex = this.state.cart.findIndex(item => {
+      const pId = item.product?._id || item.product?.id || item.productId;
+      return pId === productId;
+    });
+
     if (existingIndex > -1) {
       this.state.cart[existingIndex].quantity += quantity;
     } else {
-      this.state.cart.push({ product, quantity });
+      this.state.cart.push({
+        product: product,
+        productId: productId,
+        quantity: quantity,
+        price: product.price || 0
+      });
     }
     this.saveCart();
-    this.showToast(`Đã thêm "${product.name}" vào giỏ hàng`, 'success');
+    this.showToast(`🎉 Đã thêm "${product.name || 'Sản phẩm'}" vào giỏ hàng`, 'success');
+  }
+
+  updateCartQuantity(productId, delta) {
+    this.updateCartQty(productId, delta);
   }
 
   updateCartQty(productId, delta) {
-    const item = this.state.cart.find(i => i.product._id === productId);
+    const item = this.state.cart.find(i => {
+      const pId = i.product?._id || i.product?.id || i.productId;
+      return pId === productId;
+    });
     if (item) {
       item.quantity += delta;
       if (item.quantity <= 0) {
@@ -51,9 +105,12 @@ class AppStore {
   }
 
   removeFromCart(productId) {
-    this.state.cart = this.state.cart.filter(i => i.product._id !== productId);
+    this.state.cart = this.state.cart.filter(i => {
+      const pId = i.product?._id || i.product?.id || i.productId;
+      return pId !== productId;
+    });
     this.saveCart();
-    this.showToast('Đã xóa sản phẩm khỏi giỏ hàng', 'info');
+    this.showToast('🗑️ Đã xóa sản phẩm khỏi giỏ hàng', 'info');
   }
 
   clearCart() {
@@ -77,7 +134,7 @@ class AppStore {
   }
 
   openCartDrawer() {
-    CartCheckoutComponent.openCart();
+    CartCheckoutComponent.openCartDrawer();
   }
 
   updateNavbarUserState() {
@@ -178,18 +235,14 @@ class AppStore {
 
 document.addEventListener('DOMContentLoaded', async () => {
   const app = new AppStore();
-  window.appStore = app;
 
-  // ── Verify token với server (tránh hiển thị sai khi token hết hạn) ──────
+  // Try fetching current user profile if token is stored
   const token = localStorage.getItem('phonestore_token');
-  if (token) {
-    const serverUser = await API.getMe();
-    if (serverUser) {
-      // Cập nhật user data mới nhất từ server
-      localStorage.setItem('phonestore_user', JSON.stringify(serverUser));
-      app.state.currentUser = serverUser;
+  if (token && !app.state.currentUser) {
+    const user = await API.getMe();
+    if (user) {
+      app.setCurrentUser(user);
     } else {
-      // Token không hợp lệ → xóa
       localStorage.removeItem('phonestore_token');
       localStorage.removeItem('phonestore_user');
       app.state.currentUser = null;
@@ -202,8 +255,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   ChatbotComponent.init(app);
 
   // ── Nav button handlers ──────────────────────────────────────────────────
-
-  // ⚡ Admin button → go to admin page
   document.getElementById('adminBtn')?.addEventListener('click', () => {
     window.location.href = '/admin.html';
   });
@@ -216,7 +267,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Render initial state
-  CartCheckoutComponent.renderCart();
+  app.saveCart();
   app.updateNavbarUserState();
 
   // ── Handle VNPay Return Callback Parameters ──────────────────────────────
@@ -226,7 +277,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (paymentState === 'success') {
     app.clearCart();
-    CartCheckoutComponent.renderCart();
     app.showToast('🎉 Thanh toán qua VNPay thành công! Đơn hàng đã được xác nhận.', 'success');
 
     if (document.getElementById('successOrderCode'))     document.getElementById('successOrderCode').textContent = returnedOrderId || 'ORD-VNPAY';
@@ -257,7 +307,6 @@ function initHeroSlider() {
   const dots = document.querySelectorAll('.hero-dot');
   const prevBtn = document.getElementById('heroPrevBtn');
   const nextBtn = document.getElementById('heroNextBtn');
-  const sliderContainer = document.getElementById('heroSlider');
 
   if (!slides.length) return;
 
@@ -307,16 +356,12 @@ function initHeroSlider() {
     startAutoPlay();
   });
 
-  dots.forEach(dot => {
-    dot.addEventListener('click', (e) => {
-      const idx = parseInt(e.target.dataset.index, 10);
-      showSlide(idx);
+  dots.forEach((dot, index) => {
+    dot.addEventListener('click', () => {
+      showSlide(index);
       startAutoPlay();
     });
   });
-
-  sliderContainer?.addEventListener('mouseenter', stopAutoPlay);
-  sliderContainer?.addEventListener('mouseleave', startAutoPlay);
 
   startAutoPlay();
 }
