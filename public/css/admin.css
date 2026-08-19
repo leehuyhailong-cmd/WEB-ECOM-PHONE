@@ -401,6 +401,43 @@ img { max-width: 100%; display: block; }
 .badge-primary { background: rgba(6,182,212,0.15);  color: var(--primary); border: 1px solid rgba(6,182,212,0.3); }
 .badge-accent  { background: rgba(99,102,241,0.15); color: var(--accent);  border: 1px solid rgba(99,102,241,0.3); }
 
+/* ── Status Pills (image26.png style) ────────────────────────────────── */
+.status-pill {
+  display: inline-block;
+  padding: 0.22rem 0.7rem;
+  border-radius: 99px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+.badge-pending {
+  background: rgba(99, 102, 241, 0.22);
+  color: #a5b4fc;
+  border: 1px solid rgba(99, 102, 241, 0.35);
+}
+.badge-delivered, .badge-completed {
+  background: rgba(14, 165, 233, 0.22);
+  color: #38bdf8;
+  border: 1px solid rgba(14, 165, 233, 0.35);
+}
+.badge-shipping, .badge-confirmed {
+  background: rgba(6, 182, 212, 0.22);
+  color: #22d3ee;
+  border: 1px solid rgba(6, 182, 212, 0.35);
+}
+.badge-processing {
+  background: rgba(245, 158, 11, 0.22);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+.badge-cancelled {
+  background: rgba(239, 68, 68, 0.22);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
 /* ── Form / Input ────────────────────────────────────────────────────────── */
 .admin-input {
   width: 100%;

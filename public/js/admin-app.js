@@ -1079,17 +1079,18 @@ const AdminApp = {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   statusBadge(status) {
+    const s = (status || 'pending').toLowerCase();
     const map = {
-      'completed':  ['badge-success', '✅ Hoàn thành'],
-      'delivered':  ['badge-success', '✅ Đã giao'],
-      'shipping':   ['badge-primary', '🚚 Đang giao'],
-      'processing': ['badge-accent',  '⚙️ Đang xử lý'],
-      'confirmed':  ['badge-primary', '✔️ Đã xác nhận'],
-      'pending':    ['badge-warning', '⏳ Chờ xử lý'],
-      'cancelled':  ['badge-danger',  '❌ Đã hủy']
+      'pending':    ['badge-pending',   'PENDING'],
+      'confirmed':  ['badge-confirmed', 'CONFIRMED'],
+      'processing': ['badge-processing','PROCESSING'],
+      'shipping':   ['badge-shipping',  'SHIPPING'],
+      'delivered':  ['badge-delivered', 'DELIVERED'],
+      'completed':  ['badge-completed', 'COMPLETED'],
+      'cancelled':  ['badge-cancelled', 'CANCELLED']
     };
-    const [cls, label] = map[(status || '').toLowerCase()] || ['badge-accent', status];
-    return `<span class="badge ${cls}">${label}</span>`;
+    const [cls, label] = map[s] || ['badge-pending', s.toUpperCase()];
+    return `<span class="status-pill ${cls}">${label}</span>`;
   },
 
   catLabel(cat) {
