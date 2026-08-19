@@ -1,7 +1,9 @@
 /**
  * Payment Popup Component — Phonestore
- * Handles: SEPARATE interfaces for VNPay QR Payment vs Manual Bank Transfer (24/7 VietQR)
- * Generates exact corresponding QR image for each payment method.
+ * Handles 2 COMPLETELY SEPARATE Popups:
+ * 1. #vnpayPaymentModal (Official VNPay QR Image, Sandbox Redirect)
+ * 2. #bankTransferModal (BIDV VietQR - LE HUY HAI LONG - 4610474410)
+ * And Redesigned Premium #orderSuccessModal
  */
 
 import { API } from '../api.js';
@@ -23,21 +25,26 @@ export const PaymentPopupComponent = {
   },
 
   bindEvents() {
-    // Close button & overlay
-    document.getElementById('closePaymentPopupBtn')?.addEventListener('click', () => this.close());
+    // Close modal buttons
+    document.getElementById('closeVnpayModalBtn')?.addEventListener('click', () => this.close());
+    document.getElementById('closeBankModalBtn')?.addEventListener('click', () => this.close());
+    document.getElementById('closeOrderSuccessBtn')?.addEventListener('click', () => {
+      document.getElementById('orderSuccessModal')?.classList.remove('active');
+      document.getElementById('modalOverlay')?.classList.remove('active');
+    });
 
-    // Copy buttons
+    // Copy buttons in BIDV Modal
     document.getElementById('btnCopyAcc')?.addEventListener('click', () => {
-      const accNum = document.getElementById('payBankAcc')?.textContent || '0123456789';
+      const accNum = document.getElementById('payBankAcc')?.textContent || '4610474410';
       navigator.clipboard.writeText(accNum.replace(/\s+/g, '')).then(() => {
-        this.appStore?.showToast('📋 Đã sao chép số tài khoản Vietcombank!', 'success');
+        this.appStore?.showToast('📋 Đã sao chép số tài khoản BIDV (4610474410)!', 'success');
       }).catch(() => {
-        this.appStore?.showToast('📋 Số tài khoản: ' + accNum, 'info');
+        this.appStore?.showToast('📋 STK BIDV: ' + accNum, 'info');
       });
     });
 
     document.getElementById('btnCopyMemo')?.addEventListener('click', () => {
-      const memo = document.getElementById('payMemoText')?.textContent || '';
+      const memo = document.getElementById('bankMemoText')?.textContent || '';
       navigator.clipboard.writeText(memo).then(() => {
         this.appStore?.showToast('📋 Đã sao chép nội dung chuyển khoản!', 'success');
       }).catch(() => {
@@ -45,14 +52,16 @@ export const PaymentPopupComponent = {
       });
     });
 
-    // Download QR button
-    document.getElementById('btnDownloadQr')?.addEventListener('click', () => this.downloadQrCode());
+    // Download QR buttons
+    document.getElementById('btnDownloadVnpayQr')?.addEventListener('click', () => this.downloadQrCode('vnpayQrImage', 'VNPay_QR'));
+    document.getElementById('btnDownloadBankQr')?.addEventListener('click', () => this.downloadQrCode('bankQrImage', 'BIDV_VietQR'));
 
-    // Redirect to Official VNPay Gateway button
+    // Open VNPay Gateway button
     document.getElementById('btnOpenVnpayGateway')?.addEventListener('click', () => this.openVnpayGateway());
 
-    // "Tôi đã thanh toán" button
-    document.getElementById('btnConfirmPaid')?.addEventListener('click', () => this.handleConfirmPayment());
+    // Confirm Payment buttons
+    document.getElementById('btnConfirmVnpayPaid')?.addEventListener('click', () => this.handleConfirmPayment('vnpay'));
+    document.getElementById('btnConfirmBankPaid')?.addEventListener('click', () => this.handleConfirmPayment('bank_transfer'));
   },
 
   async open(orderData, appStore, mode = 'vnpay') {
@@ -61,68 +70,33 @@ export const PaymentPopupComponent = {
     this.currentMode = mode;
     this.vnpayGatewayUrl = null;
 
-    const modalEl = document.getElementById('paymentPopupModal');
     const overlayEl = document.getElementById('modalOverlay');
-    if (!modalEl || !overlayEl) return;
+    const vnpayModalEl = document.getElementById('vnpayPaymentModal');
+    const bankModalEl = document.getElementById('bankTransferModal');
+
+    // Close any open modals first
+    vnpayModalEl?.classList.remove('active');
+    bankModalEl?.classList.remove('active');
 
     const id = orderData._id || orderData.id || 'ORDER_ID';
     const code = orderData.orderCode || `ORD-${(id || '').substring(0, 6).toUpperCase()}`;
     const amount = orderData.totalPrice || orderData.total || 0;
     const memoText = `PHONESTORE ${code}`;
 
-    // Populate order & amount details
-    if (document.getElementById('payModalOrderCode')) document.getElementById('payModalOrderCode').textContent = code;
-    if (document.getElementById('payBankAcc')) document.getElementById('payBankAcc').textContent = '0123456789';
-    if (document.getElementById('payAmountText')) document.getElementById('payAmountText').textContent = this.formatVND(amount);
-    if (document.getElementById('payMemoText')) document.getElementById('payMemoText').textContent = memoText;
-
-    // Apply Mode specific view & corresponding QR Image
-    await this.applyModeUI(mode, amount, memoText, code);
-
-    // Reset button states & notices
-    const confirmBtn = document.getElementById('btnConfirmPaid');
-    if (confirmBtn) {
-      confirmBtn.disabled = false;
-      confirmBtn.innerHTML = mode === 'vnpay' ? '✅ Tôi đã thanh toán qua VNPay' : '✅ Tôi đã chuyển khoản xong';
-    }
-
-    const expiryNotice = document.getElementById('payExpiryNotice');
-    if (expiryNotice) expiryNotice.style.display = 'none';
-
-    const timerBox = document.getElementById('payTimerBox');
-    if (timerBox) timerBox.style.display = 'flex';
-
-    // Start 15-minute countdown
-    this.startCountdown(900);
-
-    // Open modal
-    modalEl.classList.add('active');
-    overlayEl.classList.add('active');
-  },
-
-  async applyModeUI(mode, amount, memoText, code) {
-    const titleEl = document.getElementById('payPopupTitleText');
-    const badgeEl = document.getElementById('payPopupBadgeLogo');
-    const qrTitleEl = document.querySelector('.qr-card-title');
-    const qrInstructionEl = document.querySelector('.qr-instruction');
-    const vnpayBtn = document.getElementById('btnOpenVnpayGateway');
-    const qrTagEl = document.querySelector('.vnpay-tag');
-
-    const qrImg = document.getElementById('payQrImage');
-
     if (mode === 'vnpay') {
-      // ⚡ VNPay Dedicated UI Mode — Exact VNPay Payment Gateway QR Code
-      if (titleEl) titleEl.textContent = 'Thanh Toán Cổng VNPAY QR Code';
-      if (badgeEl) {
-        badgeEl.innerHTML = `<span style="font-size:1.2rem;font-weight:900;color:#005baa;">VNPAY</span><span style="font-size:1.2rem;font-weight:900;color:#ed1c24;">QR</span>`;
-      }
-      if (qrTitleEl) qrTitleEl.textContent = '📱 Quét mã VNPAY QR Code';
-      if (qrInstructionEl) qrInstructionEl.textContent = 'Mở Ví VNPAY hoặc App Ngân hàng để quét mã VNPay';
-      if (vnpayBtn) vnpayBtn.style.display = 'inline-flex';
-      if (qrTagEl) qrTagEl.textContent = 'VNPAY Sandbox (AFZ79VBT)';
+      // ⚡ Open Dedicated VNPay Modal
+      if (document.getElementById('vnpayOrderCode')) document.getElementById('vnpayOrderCode').textContent = code;
+      if (document.getElementById('vnpayAmountText')) document.getElementById('vnpayAmountText').textContent = this.formatVND(amount);
+      if (document.getElementById('vnpayMemoText')) document.getElementById('vnpayMemoText').textContent = memoText;
 
-      // Generate VNPay Payment URL & convert to QR Code image
-      let vnpayQrUrl = `https://img.vietqr.io/image/VCB-0123456789-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(memoText)}&accountName=${encodeURIComponent('CONG TY TNHH PHONESTORE')}`;
+      const confirmBtn = document.getElementById('btnConfirmVnpayPaid');
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '✅ Tôi đã thanh toán qua VNPay';
+      }
+
+      // Generate VNPay Payment URL & display QR code image
+      let vnpayQrUrl = `https://img.vietqr.io/image/VCB-0123456789-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(memoText)}&accountName=${encodeURIComponent('PHONESTORE')}`;
       try {
         const res = await API.request('/payment/create_payment_url', {
           method: 'POST',
@@ -134,40 +108,55 @@ export const PaymentPopupComponent = {
         });
         if (res && res.paymentUrl) {
           this.vnpayGatewayUrl = res.paymentUrl;
-          // Encode VNPay Sandbox payment gateway URL directly into QR image
           vnpayQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(res.paymentUrl)}`;
         }
       } catch (e) {
         console.warn('VNPay payment URL generation note:', e.message);
       }
 
-      if (qrImg) {
-        qrImg.src = vnpayQrUrl;
-      }
-    } else {
-      // 🏦 Bank Transfer Dedicated UI Mode — Standard VietQR Vietcombank Code
-      if (titleEl) titleEl.textContent = 'Chuyển Khoản Ngân Hàng Trực Tiếp (24/7)';
-      if (badgeEl) {
-        badgeEl.innerHTML = `<span style="font-size:1.4rem;">🏦</span>`;
-      }
-      if (qrTitleEl) qrTitleEl.textContent = '📱 Mã VietQR Ngân Hàng (VCB)';
-      if (qrInstructionEl) qrInstructionEl.textContent = 'Mở App Ngân hàng (Vietcombank, MB, Techcombank...) để quét mã VietQR';
-      if (vnpayBtn) vnpayBtn.style.display = 'none'; // Hide VNPay direct button in manual bank mode
-      if (qrTagEl) qrTagEl.textContent = 'VietQR 24/7 (Vietcombank)';
+      const vnpImg = document.getElementById('vnpayQrImage');
+      if (vnpImg) vnpImg.src = vnpayQrUrl;
 
-      const vietQrUrl = `https://img.vietqr.io/image/VCB-0123456789-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(memoText)}&accountName=${encodeURIComponent('CONG TY TNHH PHONESTORE')}`;
-      if (qrImg) {
-        qrImg.src = vietQrUrl;
-        qrImg.onerror = () => {
-          qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`STK:0123456789|VCB|${amount}|${memoText}`)}`;
+      vnpayModalEl?.classList.add('active');
+
+    } else {
+      // 🏦 Open Dedicated BIDV Bank Transfer Modal
+      if (document.getElementById('bankOrderCode')) document.getElementById('bankOrderCode').textContent = code;
+      if (document.getElementById('bidvAccHolder')) document.getElementById('bidvAccHolder').textContent = 'LE HUY HAI LONG';
+      if (document.getElementById('bidvAccNum')) document.getElementById('bidvAccNum').textContent = '4610474410';
+      if (document.getElementById('payBankAcc')) document.getElementById('payBankAcc').textContent = '4610474410';
+      if (document.getElementById('bankAmountText')) document.getElementById('bankAmountText').textContent = this.formatVND(amount);
+      if (document.getElementById('bankMemoText')) document.getElementById('bankMemoText').textContent = memoText;
+
+      const confirmBtn = document.getElementById('btnConfirmBankPaid');
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '✅ Tôi đã chuyển khoản xong';
+      }
+
+      // Generate BIDV VietQR Code Image (BIDV-4610474410-compact2.png)
+      const bidvQrUrl = `https://img.vietqr.io/image/BIDV-4610474410-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(memoText)}&accountName=${encodeURIComponent('LE HUY HAI LONG')}`;
+      const bankImg = document.getElementById('bankQrImage');
+      if (bankImg) {
+        bankImg.src = bidvQrUrl;
+        bankImg.onerror = () => {
+          bankImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(`STK:4610474410|BIDV|LE HUY HAI LONG|${amount}|${memoText}`)}`;
         };
       }
+
+      bankModalEl?.classList.add('active');
     }
+
+    if (overlayEl) overlayEl.classList.add('active');
+
+    // Start 15-minute countdown
+    this.startCountdown(900);
   },
 
   close() {
     this.stopCountdown();
-    document.getElementById('paymentPopupModal')?.classList.remove('active');
+    document.getElementById('vnpayPaymentModal')?.classList.remove('active');
+    document.getElementById('bankTransferModal')?.classList.remove('active');
     document.getElementById('modalOverlay')?.classList.remove('active');
   },
 
@@ -198,21 +187,21 @@ export const PaymentPopupComponent = {
     const mins = Math.floor(Math.max(0, this.remainingSeconds) / 60);
     const secs = Math.max(0, this.remainingSeconds) % 60;
     const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-    const timerTextEl = document.getElementById('payCountdownText');
-    if (timerTextEl) timerTextEl.textContent = formatted;
+    const vnpTimerEl = document.getElementById('vnpayCountdownText');
+    if (vnpTimerEl) vnpTimerEl.textContent = formatted;
   },
 
   handleTimerExpired() {
-    const expiryNotice = document.getElementById('payExpiryNotice');
+    const expiryNotice = document.getElementById('vnpayExpiryNotice');
     if (expiryNotice) expiryNotice.style.display = 'block';
 
-    const timerBox = document.getElementById('payTimerBox');
+    const timerBox = document.getElementById('vnpayTimerBox');
     if (timerBox) timerBox.style.display = 'none';
 
-    const confirmBtn = document.getElementById('btnConfirmPaid');
-    if (confirmBtn) {
-      confirmBtn.disabled = true;
-      confirmBtn.innerHTML = '⚠️ Mã QR đã hết hạn';
+    const confirmVnpBtn = document.getElementById('btnConfirmVnpayPaid');
+    if (confirmVnpBtn) {
+      confirmVnpBtn.disabled = true;
+      confirmVnpBtn.innerHTML = '⚠️ Mã QR đã hết hạn';
     }
 
     this.appStore?.showToast('⚠️ Mã QR đã hết hạn thanh toán (15 phút). Vui lòng đặt lại đơn hàng.', 'warning');
@@ -223,7 +212,7 @@ export const PaymentPopupComponent = {
       this.appStore?.showToast('🚀 Đang chuyển hướng sang cổng thanh toán VNPay Sandbox...', 'info');
       setTimeout(() => {
         window.location.href = this.vnpayGatewayUrl;
-      }, 500);
+      }, 400);
       return;
     }
 
@@ -252,7 +241,7 @@ export const PaymentPopupComponent = {
         this.appStore?.showToast('🚀 Đang chuyển hướng sang cổng thanh toán VNPay Sandbox...', 'info');
         setTimeout(() => {
           window.location.href = res.paymentUrl;
-        }, 800);
+        }, 600);
       } else {
         throw new Error('Không thể tạo liên kết cổng VNPay');
       }
@@ -265,18 +254,21 @@ export const PaymentPopupComponent = {
     }
   },
 
-  async handleConfirmPayment() {
+  async handleConfirmPayment(mode = 'vnpay') {
     if (!this.currentOrder) return;
     const id = this.currentOrder._id || this.currentOrder.id;
 
-    const confirmBtn = document.getElementById('btnConfirmPaid');
+    const confirmBtn = mode === 'vnpay' 
+      ? document.getElementById('btnConfirmVnpayPaid')
+      : document.getElementById('btnConfirmBankPaid');
+
     if (confirmBtn) {
       confirmBtn.disabled = true;
-      confirmBtn.innerHTML = '<span style="display:inline-block;animation:spin 1s linear infinite">⚙️</span> Đang kiểm tra thanh toán...';
+      confirmBtn.innerHTML = '<span style="display:inline-block;animation:spin 1s linear infinite">⚙️</span> Đang xác nhận thanh toán...';
     }
 
     try {
-      await new Promise(res => setTimeout(res, 1200));
+      await new Promise(res => setTimeout(res, 1000));
 
       if (id) {
         try {
@@ -292,10 +284,10 @@ export const PaymentPopupComponent = {
       // Clear cart
       this.appStore?.clearCart();
 
-      const isVnp = this.currentMode === 'vnpay';
+      const isVnp = mode === 'vnpay';
       const successMsg = isVnp 
         ? '🎉 Thanh toán VNPay thành công! Đơn hàng đã chuyển sang trạng thái ĐÃ THANH TOÁN (PAID).'
-        : '🎉 Chuyển khoản thành công! Đơn hàng đã chuyển sang trạng thái ĐÃ THANH TOÁN (PAID).';
+        : '🎉 Chuyển khoản BIDV thành công! Đơn hàng đã chuyển sang trạng thái ĐÃ THANH TOÁN (PAID).';
       this.appStore?.showToast(successMsg, 'success');
 
       const code = this.currentOrder.orderCode || `ORD-${(id || '').substring(0, 6).toUpperCase()}`;
@@ -309,29 +301,29 @@ export const PaymentPopupComponent = {
       if (document.getElementById('successTotalAmount'))  document.getElementById('successTotalAmount').textContent = this.formatVND(amount);
       if (document.getElementById('successPaymentMethod')) {
         document.getElementById('successPaymentMethod').innerHTML = isVnp 
-          ? '<span style="color:var(--success);font-weight:700;">✅ VNPAY QR — Đã thanh toán (PAID)</span>'
-          : '<span style="color:var(--success);font-weight:700;">✅ Vietcombank CK 24/7 — Đã thanh toán (PAID)</span>';
+          ? '<span style="color:#34d399;font-weight:700;">✅ VNPAY QR — Đã thanh toán (PAID)</span>'
+          : '<span style="color:#34d399;font-weight:700;">✅ BIDV CK 24/7 (LE HUY HAI LONG) — Đã thanh toán (PAID)</span>';
       }
 
+      // Open Redesigned Premium Success Modal
       document.getElementById('orderSuccessModal')?.classList.add('active');
       document.getElementById('modalOverlay')?.classList.add('active');
     } catch (err) {
       if (confirmBtn) {
         confirmBtn.disabled = false;
-        confirmBtn.innerHTML = this.currentMode === 'vnpay' ? '✅ Tôi đã thanh toán qua VNPay' : '✅ Tôi đã chuyển khoản xong';
+        confirmBtn.innerHTML = mode === 'vnpay' ? '✅ Tôi đã thanh toán qua VNPay' : '✅ Tôi đã chuyển khoản xong';
       }
       this.appStore?.showToast(err.message || 'Chưa nhận được thanh toán. Vui lòng kiểm tra lại.', 'error');
     }
   },
 
-  downloadQrCode() {
-    const qrImg = document.getElementById('payQrImage');
+  downloadQrCode(imgId, prefix) {
+    const qrImg = document.getElementById(imgId);
     if (!qrImg || !qrImg.src) {
       this.appStore?.showToast('Không thể tải mã QR lúc này', 'warning');
       return;
     }
 
-    const prefix = this.currentMode === 'vnpay' ? 'VNPay_QR' : 'VietQR_Bank';
     const link = document.createElement('a');
     link.href = qrImg.src;
     link.download = `${prefix}_Phonestore_${this.currentOrder?.orderCode || 'ORDER'}.png`;

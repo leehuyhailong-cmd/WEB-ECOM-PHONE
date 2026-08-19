@@ -1444,3 +1444,157 @@ a {
   color: #fca5a5;
   font-weight: 700;
 }
+
+/* ── VNPay QR Frame Style (Image 1 Format) ────────────────────────────── */
+.vnpay-qr-frame {
+  background: #ffffff;
+  padding: 1.25rem 1rem;
+  border-radius: 16px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  border: 2px solid #005baa;
+}
+.vnpay-qr-top-logo {
+  font-size: 1.4rem;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.5px;
+}
+.vnpay-scan-text {
+  font-style: italic;
+  font-weight: 700;
+  color: #0088ff;
+  margin-top: 0.5rem;
+  font-size: 1.05rem;
+}
+.vnpay-mid-tid {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #003b70;
+  margin-top: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px dashed #cbd5e1;
+}
+
+/* ── Premium Order Success Modal Styling ──────────────────────────────── */
+.order-success-modal {
+  background: linear-gradient(145deg, #0f172a, #1e293b) !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  box-shadow: 0 25px 50px -12px rgba(16, 185, 129, 0.25) !important;
+}
+
+.success-checkmark-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.success-checkmark-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #059669);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+  animation: pulseGlow 2s infinite alternate;
+}
+
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+    transform: scale(0.96);
+  }
+  100% {
+    box-shadow: 0 0 35px rgba(16, 185, 129, 0.8);
+    transform: scale(1.04);
+  }
+}
+
+.checkmark-icon {
+  font-size: 2.75rem;
+  color: #ffffff;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.success-modal-title {
+  font-family: var(--font-heading);
+  background: linear-gradient(135deg, #34d399, #10b981);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 1.65rem;
+  font-weight: 800;
+  margin-bottom: 0.4rem;
+}
+
+.success-modal-subtitle {
+  color: #94a3b8;
+  font-size: 0.88rem;
+  margin-bottom: 1.5rem;
+}
+
+.success-detail-card {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
+  padding: 1.25rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: left;
+  font-size: 0.88rem;
+}
+
+.success-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.45rem 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.detail-label {
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+
+.order-code-badge {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-family: monospace;
+}
+
+.detail-price {
+  color: #34d399;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.detail-payment-status {
+  color: #34d399;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.order-status-badge {
+  color: #a7f3d0;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.shipping-estimate-box {
+  margin-top: 1rem;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  color: #7dd3fc;
+  padding: 0.65rem 1rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
