@@ -341,8 +341,12 @@ export const API = {
 
   async getProductBySlugOrId(idOrSlug) {
     const res = await this.request(`/products/${idOrSlug}`);
-    if (res && res.data) return res.data;
-    return MOCK_PRODUCTS.find(p => p._id === idOrSlug || p.slug === idOrSlug) || MOCK_PRODUCTS[0];
+    if (res && res.data) {
+      return res.data.product || res.data;
+    }
+    const found = MOCK_PRODUCTS.find(p => p._id === idOrSlug || p.slug === idOrSlug);
+    if (found) return found;
+    return MOCK_PRODUCTS[0];
   },
 
   async getRelatedProducts(productId) {

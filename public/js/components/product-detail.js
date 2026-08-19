@@ -17,8 +17,11 @@ export const ProductDetailComponent = {
     modalEl.classList.add('active');
     overlayEl.classList.add('active');
 
-    const product = await API.getProductBySlugOrId(slugOrId);
-    if (!product) {
+    let product = await API.getProductBySlugOrId(slugOrId);
+    if (product && product.product) {
+      product = product.product;
+    }
+    if (!product || !product.name) {
       bodyEl.innerHTML = `<div style="text-align: center; padding: 3rem; color: var(--danger);">Không tìm thấy thông tin sản phẩm.</div>`;
       return;
     }
@@ -35,7 +38,15 @@ export const ProductDetailComponent = {
   render(p, container) {
     const fallbackSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiB2aWV3Qm94PSIwIDAgMzAwIDMwMCI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMzMzQxNTUiIC8+PHRleHQgeD0iMTUwIiB5PSIxNTAiIGZpbGw9IiM5NGEzYjgiIGZvbnQtZmFtaWx5PSJBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tm8gSW1hZ2U8L3RleHQ+PC9zdmc+";
     const primaryImg = p.images?.find(i => i.isPrimary)?.url || p.images?.[0]?.url || fallbackSvg;
-    const formatVND = (num) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
+    const formatVND = (num) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num || 0);
+
+    const brandName = p.brand || 'Phonestore';
+    const productName = p.name || 'Sản phẩm';
+    const priceVal = typeof p.price === 'number' ? p.price : 0;
+    const comparePriceVal = typeof p.comparePrice === 'number' ? p.comparePrice : 0;
+    const stockVal = typeof p.stock === 'number' ? p.stock : 0;
+    const avgRatingVal = p.avgRating || 5.0;
+    const reviewCountVal = p.reviewCount || 12;
 
     const SPEC_LABELS = {
       display: 'Màn hình',
@@ -64,24 +75,24 @@ export const ProductDetailComponent = {
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start;">
         <div>
           <div style="background: rgba(15,23,42,0.6); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); text-align: center;">
-            <img src="${primaryImg}" id="mainDetailImg" style="max-height: 320px; margin: 0 auto; object-fit: contain;" alt="${p.name}" onerror="this.onerror=null; this.src='${fallbackSvg}'" />
+            <img src="${primaryImg}" id="mainDetailImg" style="max-height: 320px; margin: 0 auto; object-fit: contain;" alt="${productName}" onerror="this.onerror=null; this.src='${fallbackSvg}'" />
           </div>
         </div>
 
         <div>
-          <span class="badge badge-primary">${p.brand}</span>
-          <h2 style="font-family: var(--font-heading); font-size: 1.75rem; margin: 0.5rem 0 1rem;">${p.name}</h2>
+          <span class="badge badge-primary">${brandName}</span>
+          <h2 style="font-family: var(--font-heading); font-size: 1.75rem; margin: 0.5rem 0 1rem;">${productName}</h2>
           
           <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; color: var(--warning);">
-            ★ <strong style="color: var(--text-main);">${p.avgRating || 5.0}</strong>
-            <span style="color: var(--text-subtle);">(${p.reviewCount || 12} đánh giá)</span>
+            ★ <strong style="color: var(--text-main);">${avgRatingVal}</strong>
+            <span style="color: var(--text-subtle);">(${reviewCountVal} đánh giá)</span>
             <span style="margin: 0 0.5rem; color: var(--border-subtle);">|</span>
-            <span style="color: var(--success); font-size: 0.9rem; font-weight: 600;">✓ Còn hàng (${p.stock} sản phẩm)</span>
+            <span style="color: var(--success); font-size: 0.9rem; font-weight: 600;">✓ Còn hàng (${stockVal} sản phẩm)</span>
           </div>
 
           <div style="font-size: 1.85rem; font-weight: 800; color: var(--primary); margin-bottom: 1.25rem;">
-            ${formatVND(p.price)}
-            ${p.comparePrice > p.price ? `<span style="font-size: 1.1rem; color: var(--text-subtle); text-decoration: line-through; margin-left: 0.5rem;">${formatVND(p.comparePrice)}</span>` : ''}
+            ${formatVND(priceVal)}
+            ${comparePriceVal > priceVal ? `<span style="font-size: 1.1rem; color: var(--text-subtle); text-decoration: line-through; margin-left: 0.5rem;">${formatVND(comparePriceVal)}</span>` : ''}
           </div>
 
           <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">${p.description || 'Sản phẩm chính hãng đầy đủ tem bảo hành 12 tháng.'}</p>
