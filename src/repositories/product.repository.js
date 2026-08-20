@@ -36,11 +36,19 @@ function _buildFilter(params = {}) {
       ? params.brand.split(',').map(b => b.trim()).filter(Boolean)
       : (Array.isArray(params.brand) ? params.brand : [params.brand]);
 
+    const makeBrandRegex = (b) => {
+      const clean = (b || '').trim();
+      if (/^apple$/i.test(clean) || /^iphone$/i.test(clean) || /apple\s*\(/i.test(clean)) {
+        return /^(apple|iphone)/i;
+      }
+      return new RegExp(`^${clean.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+    };
+
     if (brandList.length === 1) {
-      filter.brand = new RegExp(`^${brandList[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+      filter.brand = makeBrandRegex(brandList[0]);
     } else if (brandList.length > 1) {
       filter.brand = {
-        $in: brandList.map(b => new RegExp(`^${b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')),
+        $in: brandList.map(b => makeBrandRegex(b)),
       };
     }
   }
