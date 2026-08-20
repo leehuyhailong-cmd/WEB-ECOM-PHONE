@@ -1339,5 +1339,6 @@ const AdminApp = {
   }
 };
 
+// Gán trực tiếp đối tượng AdminApp vào window để gọi từ các sự kiện onclick trên HTML
 window.AdminApp = AdminApp;
 AdminApp.init();
