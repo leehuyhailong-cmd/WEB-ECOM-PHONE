@@ -103,7 +103,13 @@ router.delete(
   asyncHandler(productController.remove),
 );
 
-// ── Public: product detail — MUST be last (catches /:slug) ───────────────────
+// ── Public: related products & product detail ─────────────────────────────────
+router.get(
+  '/:id/related',
+  publicLimiter,
+  asyncHandler(productController.getRelated),
+);
+
 router.get(
   '/:slug',
   publicLimiter,

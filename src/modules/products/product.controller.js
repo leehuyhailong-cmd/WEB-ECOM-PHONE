@@ -80,4 +80,10 @@ async function recommended(req, res) {
   return ApiResponse.success(res, data, 'Lấy danh sách sản phẩm gợi ý thành công');
 }
 
-module.exports = { list, brands, getBySlug, getById, listAdmin, create, update, remove, recommended };
+// ── GET /api/products/:id/related ──────────────────────────────────────────
+async function getRelated(req, res) {
+  const related = await productService.getRelatedProducts(req.params.id, 4);
+  return ApiResponse.success(res, related, 'Lấy danh sách sản phẩm liên quan thành công');
+}
+
+module.exports = { list, brands, getBySlug, getById, listAdmin, create, update, remove, recommended, getRelated };

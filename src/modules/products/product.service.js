@@ -285,6 +285,23 @@ async function getRecommendedProducts(userId = null, productId = null) {
   return recommended.slice(0, 8);
 }
 
+/**
+ * Get content-based related products for a product (same brand or category, excluding current product).
+ */
+async function getRelatedProducts(idOrSlug, limit = 4) {
+  let product = null;
+  if (typeof idOrSlug === 'string' && idOrSlug.match(/^[0-9a-fA-F]{24}$/)) {
+    product = await productRepository.findById(idOrSlug);
+  }
+  if (!product) {
+    product = await productRepository.findBySlug(idOrSlug);
+  }
+  if (!product) throw new NotFoundError('Không tìm thấy sản phẩm');
+
+  const related = await productRepository.findRelated(product, limit);
+  return related;
+}
+
 module.exports = {
   listProducts,
   getProductBySlug,
@@ -295,4 +312,5 @@ module.exports = {
   listProductsAdmin,
   getBrands,
   getRecommendedProducts,
+  getRelatedProducts,
 };
