@@ -65,9 +65,13 @@ const AdminApp = {
         if (loginRes && loginRes.accessToken) {
           localStorage.setItem('phonestore_token', loginRes.accessToken);
           localStorage.setItem('phonestore_user', JSON.stringify(loginRes.user));
+          this.showToast('✅ Đăng nhập Admin thành công (admin@phonestore.vn)', 'success');
+        } else {
+          this.showToast('⚠️ Không thể tự động đăng nhập tài khoản Admin', 'warning');
         }
       } catch (authErr) {
-        console.warn('Admin auto-login note:', authErr.message);
+        console.error('Admin auto-login error:', authErr.message);
+        this.showToast(`⚠️ Đăng nhập Admin thất bại: ${authErr.message}`, 'error');
       }
     }
   },
