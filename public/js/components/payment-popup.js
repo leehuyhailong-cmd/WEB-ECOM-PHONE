@@ -33,20 +33,34 @@ export const PaymentPopupComponent = {
       document.getElementById('modalOverlay')?.classList.remove('active');
     });
 
-    // Copy buttons in BIDV Modal
-    document.getElementById('btnCopyAcc')?.addEventListener('click', () => {
+    // Copy buttons in BIDV Modal with sleek interactive feedback
+    document.getElementById('btnCopyAcc')?.addEventListener('click', (e) => {
+      const btn = e.currentTarget;
       const accNum = document.getElementById('payBankAcc')?.textContent || '4610474410';
       navigator.clipboard.writeText(accNum.replace(/\s+/g, '')).then(() => {
         this.appStore?.showToast('📋 Đã sao chép số tài khoản BIDV (4610474410)!', 'success');
+        if (btn) {
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '✓ Đã copy';
+          btn.classList.add('copied');
+          setTimeout(() => { btn.innerHTML = originalHTML; btn.classList.remove('copied'); }, 2000);
+        }
       }).catch(() => {
         this.appStore?.showToast('📋 STK BIDV: ' + accNum, 'info');
       });
     });
 
-    document.getElementById('btnCopyMemo')?.addEventListener('click', () => {
+    document.getElementById('btnCopyMemo')?.addEventListener('click', (e) => {
+      const btn = e.currentTarget;
       const memo = document.getElementById('bankMemoText')?.textContent || '';
       navigator.clipboard.writeText(memo).then(() => {
         this.appStore?.showToast('📋 Đã sao chép nội dung chuyển khoản!', 'success');
+        if (btn) {
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '✓ Đã copy';
+          btn.classList.add('copied');
+          setTimeout(() => { btn.innerHTML = originalHTML; btn.classList.remove('copied'); }, 2000);
+        }
       }).catch(() => {
         this.appStore?.showToast('📋 Nội dung CK: ' + memo, 'info');
       });
@@ -59,7 +73,7 @@ export const PaymentPopupComponent = {
     // Open VNPay Gateway button
     document.getElementById('btnOpenVnpayGateway')?.addEventListener('click', () => this.openVnpayGateway());
 
-    // Confirm Payment buttons
+    // Confirm Payment button for VNPay
     document.getElementById('btnConfirmVnpayPaid')?.addEventListener('click', () => this.handleConfirmPayment('vnpay'));
     document.getElementById('btnConfirmBankPaid')?.addEventListener('click', () => this.handleConfirmPayment('bank_transfer'));
   },

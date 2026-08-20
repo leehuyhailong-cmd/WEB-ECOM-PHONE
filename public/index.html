@@ -460,7 +460,7 @@
           <span>BIDV</span> <span style="font-size:0.75rem;background:#e11d48;padding:2px 6px;border-radius:4px;">VIETQR</span>
         </div>
         <div>
-          <h3 class="payment-popup-title">Chuyển Khoản Ngân Hàng (BIDV) — <span id="bankOrderCode" style="color:var(--primary);">ORD-000000</span></h3>
+          <h3 class="payment-popup-title">Chuyển Khoản Ngân Hàng (BIDV) — <span id="bankOrderCode" style="color:var(--primary);">ORD-822531</span></h3>
           <div class="checkout-steps-mini">
             <span class="step-done">1. Giỏ hàng ✓</span>
             <span class="step-done">2. Địa chỉ ✓</span>
@@ -476,23 +476,23 @@
         
         <!-- Left: BIDV VietQR Card -->
         <div class="payment-qr-col">
-          <div class="payment-qr-card bidv-styled-card" style="background:#042f2e;border:1px solid #0d9488;">
+          <div class="payment-qr-card bidv-styled-card" style="background:#042f2e;border:1px solid #0d9488;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);">
             <div class="bidv-header-banner" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid rgba(255,255,255,0.1);">
               <span style="font-weight:900;color:#2dd4bf;font-size:1.1rem;">BIDV 🌼</span>
               <span style="font-size:0.75rem;background:rgba(225,29,72,0.2);color:#f43f5e;padding:2px 8px;border-radius:12px;font-weight:700;">VietQR 24/7</span>
             </div>
             
-            <div class="qr-img-wrapper" style="border-color:#0d9488;">
+            <div class="qr-img-wrapper" style="border-color:#0d9488;border-radius:12px;">
               <img id="bankQrImage" src="" alt="BIDV VietQR Code" />
             </div>
 
             <div style="text-align:center;margin-top:0.75rem;">
               <div style="font-weight:800;color:#5eead4;font-size:1.05rem;" id="bidvAccHolder">LE HUY HAI LONG</div>
               <div style="font-weight:900;color:#fff;font-size:1.2rem;letter-spacing:1px;" id="bidvAccNum">4610474410</div>
-              <div style="font-size:0.75rem;color:#99f6e4;">Ngân hàng TMCP Đầu tư & Phát triển Việt Nam (BIDV)</div>
+              <div style="font-size:0.75rem;color:#99f6e4;margin-top:2px;">Ngân hàng TMCP Đầu tư & Phát triển Việt Nam (BIDV)</div>
             </div>
 
-            <button id="btnDownloadBankQr" class="btn btn-secondary btn-download-qr" style="margin-top:1rem;width:100%;">
+            <button id="btnDownloadBankQr" class="btn btn-secondary btn-download-qr" style="margin-top:1rem;width:100%;border-radius:8px;">
               📥 Tải mã VietQR về máy
             </button>
           </div>
@@ -500,51 +500,62 @@
 
         <!-- Right: BIDV Transfer Details -->
         <div class="payment-bank-col">
-          <div class="payment-bank-card">
-            <h4 class="bank-card-title" style="color:#2dd4bf;">🏦 Thông Tin Chuyển Khoản BIDV</h4>
+          <div class="payment-bank-card" style="border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);">
+            <h4 class="bank-card-title" style="color:#2dd4bf;font-weight:800;margin-bottom:1rem;">🏦 Thông Tin Chuyển Khoản BIDV</h4>
 
             <div class="bank-info-rows">
               <div class="bank-info-row">
-                <span class="bank-label">Ngân hàng:</span>
-                <span class="bank-val-highlight" style="color:#2dd4bf;">BIDV (Ngân hàng TMCP Đầu tư & Phát triển VN)</span>
+                <span class="bank-label" style="color:#94a3b8;">Ngân hàng:</span>
+                <span class="bank-val-highlight" style="color:#2dd4bf;font-weight:700;">BIDV (Ngân hàng TMCP Đầu tư & Phát triển VN)</span>
               </div>
 
               <div class="bank-info-row">
-                <span class="bank-label">Chủ tài khoản:</span>
-                <span class="bank-val-bold">LE HUY HAI LONG</span>
+                <span class="bank-label" style="color:#94a3b8;">Chủ tài khoản:</span>
+                <span class="bank-val-bold" style="color:#f8fafc;font-weight:700;">LE HUY HAI LONG</span>
               </div>
 
               <div class="bank-info-row">
-                <span class="bank-label">Số tài khoản:</span>
-                <div class="bank-val-copy-wrap">
-                  <strong class="bank-val-acc" id="payBankAcc" style="color:#2dd4bf;">4610474410</strong>
-                  <button class="btn-copy-sm" id="btnCopyAcc">📋 Sao chép</button>
+                <span class="bank-label" style="color:#94a3b8;">Số tài khoản:</span>
+                <div class="bank-val-copy-wrap" style="display:flex;align-items:center;gap:0.5rem;">
+                  <strong class="bank-val-acc" id="payBankAcc" style="color:#2dd4bf;font-size:1.15rem;letter-spacing:0.5px;">4610474410</strong>
+                  <button class="btn-copy-icon" id="btnCopyAcc" title="Sao chép số tài khoản">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <span class="copy-text">Sao chép</span>
+                  </button>
                 </div>
               </div>
 
-              <div class="bank-info-row">
-                <span class="bank-label">Số tiền:</span>
-                <span class="bank-val-amount" id="bankAmountText" style="color:#34d399;">0 đ</span>
+              <div class="bank-info-row amount-row" style="background:rgba(16,185,129,0.08);padding:0.65rem 0.75rem;border-radius:8px;border:1px solid rgba(16,185,129,0.2);margin:0.2rem 0;">
+                <span class="bank-label" style="font-weight:700;color:#94a3b8;">Số tiền:</span>
+                <span class="bank-val-amount" id="bankAmountText" style="color:#34d399;font-size:1.35rem;font-weight:900;">0 đ</span>
               </div>
 
-              <div class="bank-info-row memo-row">
-                <span class="bank-label">Nội dung CK:</span>
-                <div class="bank-val-copy-wrap">
-                  <strong class="bank-val-memo" id="bankMemoText">PHONESTORE ORD-000000</strong>
-                  <button class="btn-copy-sm" id="btnCopyMemo">📋 Sao chép</button>
+              <div class="bank-info-row memo-row" style="background:rgba(245,158,11,0.08);padding:0.65rem 0.75rem;border-radius:8px;border:1px solid rgba(245,158,11,0.2);margin:0.2rem 0;">
+                <span class="bank-label" style="font-weight:700;color:#94a3b8;">Nội dung CK:</span>
+                <div class="bank-val-copy-wrap" style="display:flex;align-items:center;gap:0.5rem;">
+                  <strong class="bank-val-memo" id="bankMemoText" style="color:#fbbf24;font-size:1.1rem;font-weight:900;">PHONESTORE ORD-000000</strong>
+                  <button class="btn-copy-icon btn-copy-memo" id="btnCopyMemo" title="Sao chép nội dung chuyển khoản">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <span class="copy-text">Sao chép</span>
+                  </button>
                 </div>
               </div>
             </div>
 
-            <div class="payment-notice-box">
-              <p>💡 <em>Lưu ý: Giữ nguyên nội dung chuyển khoản để hệ thống tự động xác nhận đơn hàng nhanh nhất.</em></p>
+            <!-- Warning Notice Alert Box (Shopee/Tiki Style) -->
+            <div class="payment-alert-box" style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:0.65rem 0.85rem;margin-top:0.6rem;margin-bottom:0.85rem;display:flex;align-items:flex-start;gap:0.5rem;">
+              <span style="font-size:1.05rem;line-height:1.2;">💡</span>
+              <p style="margin:0;font-size:0.82rem;line-height:1.45;color:#b45309;font-weight:600;">
+                <strong>Lưu ý:</strong> Giữ nguyên nội dung chuyển khoản để hệ thống tự động xác nhận đơn hàng nhanh nhất.
+              </p>
             </div>
 
-            <div class="payment-actions">
-              <button id="btnConfirmBankPaid" class="btn btn-primary btn-confirm-paid" style="background:linear-gradient(135deg,#0d9488,#059669);">
-                ✅ Tôi đã chuyển khoản xong
-              </button>
+            <!-- Auto Loading State Component (Replacing manual button) -->
+            <div class="auto-checking-status" style="background:rgba(13,148,136,0.12);border:1px solid rgba(13,148,136,0.3);border-radius:8px;padding:0.85rem;display:flex;align-items:center;justify-content:center;gap:0.75rem;margin-top:auto;">
+              <div class="spinner-smooth" style="width:20px;height:20px;border:2.5px solid rgba(45,212,191,0.25);border-top-color:#2dd4bf;border-radius:50%;animation:spinSmooth 0.8s linear infinite;"></div>
+              <span style="font-size:0.88rem;font-weight:700;color:#2dd4bf;">Hệ thống đang tự động kiểm tra giao dịch...</span>
             </div>
+
           </div>
         </div>
 
