@@ -25,13 +25,15 @@ const app = express();
 // ── 1. Security (always first) ────────────────────────────────────────────────
 app.use(helmet({
   contentSecurityPolicy: {
+    useDefaults: true,
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", 'https://fonts.googleapis.com', "'unsafe-inline'"],
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       imgSrc: ["'self'", 'data:', 'blob:', 'https:', 'http:'],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrcAttr: ["'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      scriptSrcElem: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      "script-src-attr": ["'unsafe-inline'"],
       frameSrc: ["'self'"],
       connectSrc: ["'self'"],
     },
