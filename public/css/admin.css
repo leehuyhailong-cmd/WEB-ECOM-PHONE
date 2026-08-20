@@ -553,24 +553,100 @@ img { max-width: 100%; display: block; }
 .modal-box.modal-sm { max-width: 420px; }
 .modal-box.modal-md { max-width: 680px; }
 .modal-box.modal-lg { max-width: 960px; }
-.modal-box.modal-xl,
+/* ── All Orders Modal Ultra-Wide UI/UX Redesign ───────────────────────────────── */
 #allOrdersModal {
-  width: 95vw !important;
-  max-width: 1680px !important;
-  height: 90vh !important;
-  max-height: 90vh !important;
+  width: min(92vw, 1400px) !important;
+  max-width: min(92vw, 1400px) !important;
+  height: 85vh !important;
+  max-height: 85vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border-radius: 16px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
+  overflow: hidden !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  background: var(--bg-card-solid) !important;
+  border: 1px solid var(--border-subtle) !important;
 }
-.modal-box.modal-full { width: 96vw; height: 94vh; max-height: 94vh; }
+
+#allOrdersModal .modal-header {
+  flex-shrink: 0 !important;
+  padding: 1.25rem 1.5rem !important;
+  background: var(--bg-card) !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+}
+
+#allOrdersModal > div:nth-child(2) {
+  flex-shrink: 0 !important;
+}
+
+#allOrdersModal .modal-body {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 0 !important;
+  background: var(--bg-dark) !important;
+}
 
 #allOrdersModal .admin-table {
   width: 100% !important;
-  table-layout: auto !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  table-layout: fixed !important;
 }
 
-#allOrdersModal .admin-table th,
+#allOrdersModal .admin-table th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  background: #1e293b !important;
+  padding: 1rem 1.25rem !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em !important;
+  color: #94a3b8 !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  text-transform: uppercase !important;
+}
+
 #allOrdersModal .admin-table td {
-  padding: 0.95rem 1.25rem !important;
-  font-size: 0.92rem !important;
+  padding: 1.1rem 1.25rem !important;
+  font-size: 0.9rem !important;
+  vertical-align: middle !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  line-height: 1.5 !important;
+}
+
+#allOrdersModal .admin-table tr:hover td {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Balanced Column Widths */
+#allOrdersModal .admin-table th:nth-child(1),
+#allOrdersModal .admin-table td:nth-child(1) { width: 140px; }
+
+#allOrdersModal .admin-table th:nth-child(2),
+#allOrdersModal .admin-table td:nth-child(2) { width: 280px; }
+
+#allOrdersModal .admin-table th:nth-child(3),
+#allOrdersModal .admin-table td:nth-child(3) { width: 170px; }
+
+#allOrdersModal .admin-table th:nth-child(4),
+#allOrdersModal .admin-table td:nth-child(4) { width: 180px; }
+
+#allOrdersModal .admin-table th:nth-child(5),
+#allOrdersModal .admin-table td:nth-child(5) { width: 160px; }
+
+#allOrdersModal .admin-table th:nth-child(6),
+#allOrdersModal .admin-table td:nth-child(6) { width: 130px; text-align: center; }
+
+#allOrdersModal .pagination-container {
+  flex-shrink: 0 !important;
+  padding: 1rem 1.5rem !important;
+  background: #1e293b !important;
+  border-top: 1px solid var(--border-subtle) !important;
+  margin-top: auto !important;
 }
 
 .modal-header {
