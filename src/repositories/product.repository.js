@@ -55,6 +55,16 @@ function _buildFilter(params = {}) {
 
   if (params.featured) filter.isFeatured = true;
 
+  if (params.search && typeof params.search === 'string' && params.search.trim()) {
+    const searchRegex = new RegExp(params.search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    filter.$or = [
+      { name: searchRegex },
+      { brand: searchRegex },
+      { category: searchRegex },
+      { description: searchRegex }
+    ];
+  }
+
   return filter;
 }
 
@@ -70,10 +80,10 @@ function _buildFilter(params = {}) {
 async function findAll(params = {}) {
   const {
     page = 1, limit = 12, sort = 'newest',
-    category, brand, minPrice, maxPrice, inStock, featured,
+    category, brand, minPrice, maxPrice, inStock, featured, search,
   } = params;
 
-  const filter = _buildFilter({ category, brand, minPrice, maxPrice, inStock, featured });
+  const filter = _buildFilter({ category, brand, minPrice, maxPrice, inStock, featured, search });
   const sortObj = SORT_MAP[sort] || SORT_MAP.newest;
   const skip = (page - 1) * limit;
 

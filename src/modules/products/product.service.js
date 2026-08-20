@@ -76,13 +76,18 @@ async function createProduct(data, files = []) {
   let images = await _uploadImages(files, 'phonestore/products');
   const { imageUrl, ...productData } = data;
 
-  if (images.length === 0 && imageUrl) {
-    images = [{ url: imageUrl, publicId: null, isPrimary: true }];
-  } else if (images.length === 0) {
+  if (imageUrl) {
+    const exists = images.some(i => i.url === imageUrl);
+    if (!exists) {
+      images.unshift({ url: imageUrl, publicId: null, isPrimary: true });
+    }
+  }
+
+  if (images.length === 0) {
     images = [{ url: '/images/iphone15promax.jpg', publicId: null, isPrimary: true }];
   }
 
-  if (images.length > 0) images[0].isPrimary = true;
+  images.forEach((img, i) => { img.isPrimary = i === 0; });
 
   const product = await productRepository.create({ ...productData, images });
   logger.info({ msg: 'Product created', productId: product._id, name: product.name });
@@ -108,26 +113,32 @@ async function updateProduct(id, data, files = []) {
   if (!existing) throw new NotFoundError('Không tìm thấy sản phẩm');
 
   const { removeImageIds = [], imageUrl, ...productData } = data;
+  let currentImages = existing.images || [];
+
   if (removeImageIds.length > 0) {
     await Promise.all(removeImageIds.map(pid => deleteFromCloudinary(pid)));
-    productData.images = (existing.images || []).filter(
+    currentImages = currentImages.filter(
       img => !removeImageIds.includes(img.publicId),
     );
   }
 
   if (files.length > 0) {
     const newImages = await _uploadImages(files, 'phonestore/products');
-    const existingImages = productData.images ?? existing.images ?? [];
-    productData.images = [...existingImages, ...newImages];
-  } else if (imageUrl) {
-    productData.images = [{ url: imageUrl, publicId: null, isPrimary: true }];
+    currentImages = [...newImages, ...currentImages];
   }
 
-  if (productData.images && productData.images.length > 0) {
-    if (!productData.images.some(img => img.isPrimary)) {
-      productData.images[0].isPrimary = true;
+  if (imageUrl) {
+    const exists = currentImages.some(i => i.url === imageUrl);
+    if (!exists) {
+      currentImages = [{ url: imageUrl, publicId: null, isPrimary: true }, ...currentImages];
     }
   }
+
+  if (currentImages.length > 0) {
+    currentImages.forEach((img, i) => { img.isPrimary = i === 0; });
+  }
+
+  productData.images = currentImages;
 
   const updated = await productRepository.update(id, productData);
   logger.info({ msg: 'Product updated', productId: id });

@@ -551,10 +551,27 @@ img { max-width: 100%; display: block; }
 
 /* Modal Variants */
 .modal-box.modal-sm { max-width: 420px; }
-.modal-box.modal-md { max-width: 560px; }
-.modal-box.modal-lg { max-width: 760px; }
-.modal-box.modal-xl { width: 98vw; max-width: 1780px; height: 92vh; max-height: 92vh; }
+.modal-box.modal-md { max-width: 680px; }
+.modal-box.modal-lg { max-width: 960px; }
+.modal-box.modal-xl,
+#allOrdersModal {
+  width: 95vw !important;
+  max-width: 1680px !important;
+  height: 90vh !important;
+  max-height: 90vh !important;
+}
 .modal-box.modal-full { width: 96vw; height: 94vh; max-height: 94vh; }
+
+#allOrdersModal .admin-table {
+  width: 100% !important;
+  table-layout: auto !important;
+}
+
+#allOrdersModal .admin-table th,
+#allOrdersModal .admin-table td {
+  padding: 0.95rem 1.25rem !important;
+  font-size: 0.92rem !important;
+}
 
 .modal-header {
   padding: 1.25rem 1.5rem;

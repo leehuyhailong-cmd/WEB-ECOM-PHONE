@@ -159,10 +159,10 @@ function parseUserCriteria(message, historyContext = []) {
     }
   }
 
-  // Default category to smartphone if brand is specified or general shopping intent
-  if (!category && (brand || !isGeneralInfo)) {
-    category = 'smartphone';
-  }
+  // Extract search keywords (strip stop words)
+  const cleanSearchQuery = message
+    .replace(/(tư vấn|gợi ý|tìm|cho tôi|mua|bán|giá|bao nhiêu|mẫu|con|máy|thông tin|có|không|sản phẩm|nào|hàng)/gi, '')
+    .trim();
 
   let intent = 'product_search';
   if (isOrderTracking) intent = 'order_status';
@@ -178,7 +178,8 @@ function parseUserCriteria(message, historyContext = []) {
     maxPrice,
     useCase,
     isComparison,
-    isGeneralInfo
+    isGeneralInfo,
+    searchQuery: cleanSearchQuery.length >= 2 ? cleanSearchQuery : null
   };
 }
 
@@ -186,7 +187,7 @@ function parseUserCriteria(message, historyContext = []) {
  * Execute strict MongoDB query and rank results accurately based on criteria.
  */
 async function retrieveProductsForChatbot(criteria, message) {
-  const { brand, brands, category, minPrice, maxPrice, useCase, isComparison } = criteria;
+  const { brand, brands, category, minPrice, maxPrice, useCase, isComparison, searchQuery } = criteria;
 
   // Handle Comparison Intent: Query products for each specified brand
   if (isComparison && brands.length >= 2) {
@@ -194,7 +195,7 @@ async function retrieveProductsForChatbot(criteria, message) {
       brands.map(b =>
         productRepository.findAll({
           brand: b,
-          category: category || 'smartphone',
+          category: category || undefined,
           inStock: true,
           limit: 3,
           sort: 'popular'
@@ -218,7 +219,7 @@ async function retrieveProductsForChatbot(criteria, message) {
     };
   }
 
-  // 1. Strict Query Params
+  // 1. Query Params with search keyword support
   const queryParams = {
     inStock: true,
     limit: 10,
@@ -228,8 +229,16 @@ async function retrieveProductsForChatbot(criteria, message) {
   if (category) queryParams.category = category;
   if (minPrice !== undefined) queryParams.minPrice = minPrice;
   if (maxPrice !== undefined) queryParams.maxPrice = maxPrice;
+  if (searchQuery) queryParams.search = searchQuery;
 
   let { products } = await productRepository.findAll(queryParams);
+
+  // If search with keyword returned 0 items, retry without search keyword
+  if ((!products || products.length === 0) && searchQuery) {
+    delete queryParams.search;
+    const retryRes = await productRepository.findAll(queryParams);
+    products = retryRes.products || [];
+  }
 
   let noExactPriceMatch = false;
 
