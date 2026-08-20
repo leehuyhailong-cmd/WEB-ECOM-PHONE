@@ -18,8 +18,12 @@ const AdminApp = {
   isRefreshing: false,
   localOrders: [],
   localUsers: [],
+  isProductFormDirty: false,
+  allOrdersPage: 1,
+  allOrdersPerPage: 8,
+  filteredAllOrdersModal: [],
 
-  // ── Auth Guard ────────────────────────────────────────────────────────────
+  // ── Auth Guard & Initialization ───────────────────────────────────────────
   async init() {
     let token = localStorage.getItem('phonestore_token');
     let user = JSON.parse(localStorage.getItem('phonestore_user') || 'null');
@@ -41,12 +45,42 @@ const AdminApp = {
     const nameEl = document.getElementById('adminUserName');
     if (nameEl && user) nameEl.textContent = user.name || user.email;
 
+    this.setupGlobalListeners();
+
     await this.loadDashboard();
     await this.loadProducts();
     await this.loadOrders();
     await this.loadUsers();
 
     this.startAutoPolling();
+  },
+
+  setupGlobalListeners() {
+    // ESC key closes active modal (with dirty prompt for product modal)
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (document.getElementById('refreshConfirmModal')?.classList.contains('active')) {
+          this.closeRefreshConfirmModal();
+        } else if (document.getElementById('storePreviewModal')?.classList.contains('active')) {
+          this.closeStorePreviewModal();
+        } else if (document.getElementById('allOrdersModal')?.classList.contains('active')) {
+          this.closeAllOrdersModal();
+        } else if (document.getElementById('orderDetailModal')?.classList.contains('active')) {
+          this.closeOrderDetail();
+        } else if (document.getElementById('orderCreateModal')?.classList.contains('active')) {
+          this.closeOrderCreateModal();
+        } else if (document.getElementById('productModal')?.classList.contains('active')) {
+          this.closeProductModal();
+        }
+      }
+    });
+
+    // Form dirty tracking for product form
+    const productForm = document.getElementById('productForm');
+    if (productForm) {
+      productForm.addEventListener('input', () => { this.isProductFormDirty = true; });
+      productForm.addEventListener('change', () => { this.isProductFormDirty = true; });
+    }
   },
 
   // ── Auto Polling (Every 15 Seconds) ───────────────────────────────────────
@@ -123,6 +157,21 @@ const AdminApp = {
   },
 
   // ── Refresh ───────────────────────────────────────────────────────────────
+  openRefreshConfirmModal() {
+    document.getElementById('refreshConfirmModal')?.classList.add('active');
+    document.getElementById('refreshConfirmOverlay')?.classList.add('active');
+  },
+
+  closeRefreshConfirmModal() {
+    document.getElementById('refreshConfirmModal')?.classList.remove('active');
+    document.getElementById('refreshConfirmOverlay')?.classList.remove('active');
+  },
+
+  async confirmRefreshData() {
+    this.closeRefreshConfirmModal();
+    await this.refreshData();
+  },
+
   async refreshData() {
     if (this.isRefreshing) return;
     this.isRefreshing = true;
@@ -436,7 +485,9 @@ const AdminApp = {
 
   openAddProduct() {
     this.switchSection('products');
-    document.getElementById('productModalTitle').textContent = 'Thêm sản phẩm mới';
+    document.getElementById('productModalTitle').textContent = '+ Thêm sản phẩm mới';
+    const saveBtn = document.getElementById('btnSaveProduct');
+    if (saveBtn) saveBtn.textContent = '+ Thêm sản phẩm';
     document.getElementById('editProductId').value = '';
     document.getElementById('productForm').reset();
     
@@ -451,6 +502,7 @@ const AdminApp = {
 
     const errEl = document.getElementById('productFormError');
     if (errEl) errEl.style.display = 'none';
+    this.isProductFormDirty = false;
     this.openProductModal();
     setTimeout(() => document.getElementById('pName')?.focus(), 150);
   },
@@ -459,6 +511,8 @@ const AdminApp = {
     const p = localProducts?.find(x => x._id === id);
     if (!p) return;
     document.getElementById('productModalTitle').textContent = 'Chỉnh sửa sản phẩm';
+    const saveBtn = document.getElementById('btnSaveProduct');
+    if (saveBtn) saveBtn.textContent = '💾 Lưu sản phẩm';
     document.getElementById('editProductId').value = p._id;
     document.getElementById('pName').value = p.name;
     if (document.getElementById('pSlug')) document.getElementById('pSlug').value = p.slug || '';
@@ -496,21 +550,28 @@ const AdminApp = {
     if (document.getElementById('pSpecOs'))        document.getElementById('pSpecOs').value        = s.os        || '';
     if (document.getElementById('pSpecColor'))     document.getElementById('pSpecColor').value     = s.color     || '';
 
+    this.isProductFormDirty = false;
     this.openProductModal();
   },
 
   openProductModal() {
-    document.getElementById('productModal').classList.add('active');
-    document.getElementById('productModalOverlay').classList.add('active');
+    document.getElementById('productModal')?.classList.add('active');
+    document.getElementById('productModalOverlay')?.classList.add('active');
   },
 
-  closeProductModal() {
-    document.getElementById('productModal').classList.remove('active');
-    document.getElementById('productModalOverlay').classList.remove('active');
+  closeProductModal(force = false) {
+    if (!force && this.isProductFormDirty) {
+      if (!confirm('Bạn có thông tin chưa lưu trong form sản phẩm. Bạn có chắc muốn thoát mà không lưu?')) {
+        return;
+      }
+    }
+    document.getElementById('productModal')?.classList.remove('active');
+    document.getElementById('productModalOverlay')?.classList.remove('active');
     const preview = document.getElementById('pImagePreview');
     const previewRow = document.getElementById('imagePreviewRow');
     if (preview) preview.src = '';
     if (previewRow) previewRow.style.display = 'none';
+    this.isProductFormDirty = false;
   },
 
   _onImageFileChange(input) {
@@ -655,7 +716,7 @@ const AdminApp = {
         await API.createAdminProduct(formData);
         this.showToast('✅ Đã thêm sản phẩm mới vào hệ thống!', 'success');
       }
-      this.closeProductModal();
+      this.closeProductModal(true);
       await this.loadProducts();
       await this.loadDashboard();
     } catch (err) {
@@ -1074,6 +1135,172 @@ const AdminApp = {
     } catch (err) {
       this.showToast(err.message || `Lỗi khi ${actionText} tài khoản`, 'error');
       this.loadUsers();
+    }
+  },
+
+  // ── All Orders Modal (Xem tất cả đơn hàng) ──────────────────────────────
+  async openAllOrdersModal() {
+    if (!this.localOrders || this.localOrders.length === 0) {
+      await this.loadOrders();
+    }
+    const searchInput = document.getElementById('allOrdersSearch');
+    const filterSelect = document.getElementById('allOrdersStatusFilter');
+    if (searchInput) searchInput.value = '';
+    if (filterSelect) filterSelect.value = '';
+    
+    this.allOrdersPage = 1;
+    this.filterAllOrdersModal();
+
+    document.getElementById('allOrdersModal')?.classList.add('active');
+    document.getElementById('allOrdersOverlay')?.classList.add('active');
+  },
+
+  closeAllOrdersModal() {
+    document.getElementById('allOrdersModal')?.classList.remove('active');
+    document.getElementById('allOrdersOverlay')?.classList.remove('active');
+  },
+
+  filterAllOrdersModal() {
+    const query = (document.getElementById('allOrdersSearch')?.value || '').toLowerCase().trim();
+    const status = (document.getElementById('allOrdersStatusFilter')?.value || '').toLowerCase().trim();
+
+    let list = this.localOrders || [];
+    if (status) {
+      list = list.filter(o => (o.status || '').toLowerCase() === status);
+    }
+    if (query) {
+      list = list.filter(o => {
+        const id   = o._id || o.id || '';
+        const code = (o.orderCode || (id ? `ORD-${id.substring(0,6)}` : '')).toLowerCase();
+        const name = (o.shippingAddress?.fullName || o.shippingAddress?.name || o.userId?.name || '').toLowerCase();
+        const phone = (o.shippingAddress?.phone || '').toLowerCase();
+        return code.includes(query) || name.includes(query) || phone.includes(query);
+      });
+    }
+
+    this.filteredAllOrdersModal = list;
+    this.allOrdersPage = 1;
+    this.renderAllOrdersModalTable();
+  },
+
+  renderAllOrdersModalTable() {
+    const tbody = document.getElementById('allOrdersTableBody');
+    if (!tbody) return;
+
+    const list = this.filteredAllOrdersModal || [];
+    const total = list.length;
+    const badge = document.getElementById('allOrdersCountBadge');
+    if (badge) badge.textContent = `${total} đơn`;
+
+    if (total === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2.5rem;color:var(--text-muted);">Không tìm thấy đơn hàng phù hợp</td></tr>`;
+      if (document.getElementById('allOrdersPaginationInfo')) document.getElementById('allOrdersPaginationInfo').textContent = 'Hiển thị 0 - 0 trong tổng số 0 đơn hàng';
+      if (document.getElementById('allOrdersPageLabel')) document.getElementById('allOrdersPageLabel').textContent = 'Trang 1 / 1';
+      if (document.getElementById('allOrdersPrevBtn')) document.getElementById('allOrdersPrevBtn').disabled = true;
+      if (document.getElementById('allOrdersNextBtn')) document.getElementById('allOrdersNextBtn').disabled = true;
+      return;
+    }
+
+    const totalPages = Math.ceil(total / this.allOrdersPerPage);
+    if (this.allOrdersPage > totalPages) this.allOrdersPage = totalPages;
+    if (this.allOrdersPage < 1) this.allOrdersPage = 1;
+
+    const startIdx = (this.allOrdersPage - 1) * this.allOrdersPerPage;
+    const endIdx = Math.min(startIdx + this.allOrdersPerPage, total);
+    const pageItems = list.slice(startIdx, endIdx);
+
+    tbody.innerHTML = pageItems.map(o => {
+      const id           = o._id || o.id;
+      const code         = o.orderCode || (id ? `ORD-${id.substring(0,6).toUpperCase()}` : 'N/A');
+      const customerName = o.shippingAddress?.fullName || o.shippingAddress?.name || o.userId?.name || 'Khách hàng';
+      const customerPhone= o.shippingAddress?.phone || '';
+      const totalAmt     = o.totalPrice || o.total || 0;
+      const dateStr      = o.createdAt ? new Date(o.createdAt).toLocaleString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+      const statusLower  = (o.status || 'pending').toLowerCase();
+
+      return `
+        <tr>
+          <td>
+            <a href="javascript:void(0)" onclick="AdminApp.viewOrderDetail('${id}')" style="font-weight:700;color:var(--primary);text-decoration:none;">
+              ${code}
+            </a>
+          </td>
+          <td>
+            <strong>${customerName}</strong>
+            ${customerPhone ? `<br><small style="color:var(--text-muted)">📱 ${customerPhone}</small>` : ''}
+          </td>
+          <td style="font-weight:700;color:var(--success)">${formatVND(totalAmt)}</td>
+          <td>
+            <select class="admin-input" style="padding:4px 8px; font-size:12px; border-radius:4px;"
+              onchange="AdminApp.changeOrderStatus('${id}', this.value)">
+              <option value="pending"     ${statusLower==='pending'    ?'selected':''}>⏳ Chờ xử lý</option>
+              <option value="confirmed"   ${statusLower==='confirmed'  ?'selected':''}>✔️ Đã xác nhận</option>
+              <option value="processing"  ${statusLower==='processing' ?'selected':''}>⚙️ Đang xử lý</option>
+              <option value="shipping"    ${statusLower==='shipping'   ?'selected':''}>🚚 Đang giao</option>
+              <option value="delivered"   ${statusLower==='delivered'  ?'selected':''}>✅ Đã giao</option>
+              <option value="cancelled"   ${statusLower==='cancelled'  ?'selected':''}>❌ Đã hủy</option>
+            </select>
+          </td>
+          <td style="color:var(--text-muted);font-size:0.8rem;">${dateStr}</td>
+          <td>
+            <button class="btn-action btn-action-edit" onclick="AdminApp.viewOrderDetail('${id}')">
+              👁 Chi tiết
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    if (document.getElementById('allOrdersPaginationInfo')) document.getElementById('allOrdersPaginationInfo').textContent = `Hiển thị ${startIdx + 1} - ${endIdx} trong tổng số ${total} đơn hàng`;
+    if (document.getElementById('allOrdersPageLabel')) document.getElementById('allOrdersPageLabel').textContent = `Trang ${this.allOrdersPage} / ${totalPages}`;
+    if (document.getElementById('allOrdersPrevBtn')) document.getElementById('allOrdersPrevBtn').disabled = (this.allOrdersPage <= 1);
+    if (document.getElementById('allOrdersNextBtn')) document.getElementById('allOrdersNextBtn').disabled = (this.allOrdersPage >= totalPages);
+  },
+
+  prevAllOrdersPage() {
+    if (this.allOrdersPage > 1) {
+      this.allOrdersPage--;
+      this.renderAllOrdersModalTable();
+    }
+  },
+
+  nextAllOrdersPage() {
+    const totalPages = Math.ceil((this.filteredAllOrdersModal?.length || 0) / this.allOrdersPerPage);
+    if (this.allOrdersPage < totalPages) {
+      this.allOrdersPage++;
+      this.renderAllOrdersModalTable();
+    }
+  },
+
+  // ── Storefront Preview Modal (Xem cửa hàng) ──────────────────────────────
+  openStorePreviewModal() {
+    const iframe = document.getElementById('storePreviewFrame');
+    if (iframe) iframe.src = '/';
+    this.setStorePreviewMode('desktop');
+    document.getElementById('storePreviewModal')?.classList.add('active');
+    document.getElementById('storePreviewOverlay')?.classList.add('active');
+  },
+
+  closeStorePreviewModal() {
+    document.getElementById('storePreviewModal')?.classList.remove('active');
+    document.getElementById('storePreviewOverlay')?.classList.remove('active');
+    const iframe = document.getElementById('storePreviewFrame');
+    if (iframe) iframe.src = 'about:blank';
+  },
+
+  setStorePreviewMode(mode) {
+    const container = document.getElementById('storeIframeContainer');
+    const btnDesktop = document.getElementById('btnDeviceDesktop');
+    const btnMobile  = document.getElementById('btnDeviceMobile');
+
+    if (mode === 'mobile') {
+      container?.classList.add('mobile-mode');
+      btnDesktop?.classList.remove('active');
+      btnMobile?.classList.add('active');
+    } else {
+      container?.classList.remove('mobile-mode');
+      btnDesktop?.classList.add('active');
+      btnMobile?.classList.remove('active');
     }
   },
 

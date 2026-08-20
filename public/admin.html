@@ -45,7 +45,7 @@
 
     <div class="sidebar-section">
       <div class="sidebar-section-label">Hệ thống</div>
-      <div class="sidebar-nav-item" onclick="window.open('/','_blank')">
+      <div class="sidebar-nav-item" onclick="AdminApp.openStorePreviewModal()">
         <span class="nav-icon">🏪</span> Xem cửa hàng
       </div>
     </div>
@@ -72,7 +72,7 @@
         <div class="topbar-subtitle" id="topbarSubtitle">Chào mừng trở lại, hệ thống đang hoạt động ổn định</div>
       </div>
       <div class="topbar-actions">
-        <button id="btnRefreshDashboard" class="btn-topbar btn-topbar-secondary" onclick="AdminApp.refreshData()">🔄 Làm mới</button>
+        <button id="btnRefreshDashboard" class="btn-topbar btn-topbar-secondary" onclick="AdminApp.openRefreshConfirmModal()">🔄 Làm mới</button>
         <button class="btn-topbar btn-topbar-primary" id="topbarActionBtn" onclick="AdminApp.openAddProduct()">+ Thêm sản phẩm</button>
       </div>
     </div>
@@ -93,7 +93,7 @@
         <div class="panel-card">
           <div class="panel-card-header">
             <div class="panel-card-title">📋 Đơn hàng gần đây</div>
-            <button class="btn-topbar btn-topbar-secondary" onclick="AdminApp.switchSection('orders')">Xem tất cả →</button>
+            <button class="btn-topbar btn-topbar-secondary" onclick="AdminApp.openAllOrdersModal()">Xem tất cả →</button>
           </div>
           <div class="panel-card-body no-pad">
             <table class="admin-table" id="recentOrdersTable">
@@ -226,9 +226,31 @@
     </div><!-- /admin-content -->
   </main>
 
-  <!-- ── Modal: Add/Edit Product ─────────────────────────────────────────── -->
+  <!-- ── Modal 1: Refresh Confirmation (Làm mới) ───────────────────────── -->
+  <div class="modal-overlay" id="refreshConfirmOverlay" onclick="AdminApp.closeRefreshConfirmModal()"></div>
+  <div class="modal-box modal-sm" id="refreshConfirmModal">
+    <div class="modal-header">
+      <div class="modal-title">🔄 Xác nhận làm mới</div>
+      <button class="modal-close" onclick="AdminApp.closeRefreshConfirmModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding: 1.5rem 1.5rem 0.5rem 1.5rem;">
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(6,182,212,0.15);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;">🔄</div>
+        <div>
+          <div style="font-weight:700;font-size:0.95rem;color:var(--text-main);margin-bottom:0.25rem;">Làm mới dữ liệu?</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);line-height:1.4;">Bạn có muốn làm mới dữ liệu không? Hệ thống sẽ tải lại toàn bộ thông số và đơn hàng từ máy chủ.</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="AdminApp.closeRefreshConfirmModal()">Hủy</button>
+      <button class="btn-submit" id="btnConfirmRefresh" onclick="AdminApp.confirmRefreshData()">Xác nhận</button>
+    </div>
+  </div>
+
+  <!-- ── Modal 2: Add/Edit Product ─────────────────────────────────────────── -->
   <div class="modal-overlay" id="productModalOverlay" onclick="AdminApp.closeProductModal()"></div>
-  <div class="modal-box" id="productModal">
+  <div class="modal-box modal-lg" id="productModal">
     <div class="modal-header">
       <div class="modal-title" id="productModalTitle">Thêm sản phẩm mới</div>
       <button class="modal-close" onclick="AdminApp.closeProductModal()">✕</button>
@@ -306,14 +328,14 @@
         </div>
         <div class="form-row-3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;">
           <div class="form-row">
-            <label class="form-label">Tồn kho</label>
+            <label class="form-label">Tồn kho *</label>
             <input type="number" class="admin-input" id="pStock" placeholder="0" min="0" />
           </div>
           <div class="form-row">
-            <label class="form-label">Trạng thái</label>
+            <label class="form-label">Trạng thái *</label>
             <select class="admin-input admin-select" id="pIsActive" style="width:100%;">
               <option value="true">Đang kinh doanh</option>
-              <option value="false">Tạm ngưng</option>
+              <option value="false">Ngừng kinh doanh</option>
             </select>
           </div>
           <div class="form-row">
@@ -380,7 +402,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="AdminApp.closeProductModal()">Hủy</button>
-      <button id="btnSaveProduct" class="btn-submit" onclick="AdminApp.saveProduct()">💾 Lưu sản phẩm</button>
+      <button id="btnSaveProduct" class="btn-submit" onclick="AdminApp.saveProduct()">+ Thêm sản phẩm</button>
     </div>
   </div>
 
@@ -397,6 +419,8 @@
     <div class="modal-body" id="orderDetailBody" style="max-height:70vh;overflow-y:auto;">
       <!-- Nội dung được render bởi JS -->
     </div>
+  </div>
+
   <!-- ── Modal: Create Order ─────────────────────────────────────────────── -->
   <div class="modal-overlay" id="orderCreateOverlay" onclick="AdminApp.closeOrderCreateModal()"></div>
   <div class="modal-box" id="orderCreateModal" style="max-width:680px;">
@@ -487,6 +511,86 @@
     <div class="modal-footer">
       <button class="btn-cancel" onclick="AdminApp.closeOrderCreateModal()">Hủy</button>
       <button id="btnSaveOrder" class="btn-submit" onclick="AdminApp.saveOrder()">💾 Tạo đơn hàng</button>
+    </div>
+  </div>
+
+  <!-- ── Modal 3: All Orders Modal (Xem tất cả đơn hàng) ─────────────────── -->
+  <div class="modal-overlay" id="allOrdersOverlay" onclick="AdminApp.closeAllOrdersModal()"></div>
+  <div class="modal-box modal-xl" id="allOrdersModal">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <div class="modal-title">📋 Tất cả đơn hàng cửa hàng</div>
+        <span class="badge badge-primary" id="allOrdersCountBadge">0 đơn</span>
+      </div>
+      <button class="modal-close" onclick="AdminApp.closeAllOrdersModal()">✕</button>
+    </div>
+    <div style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; background: var(--bg-card);">
+      <div style="display:flex; gap:0.75rem; align-items:center; flex:1; min-width:280px;">
+        <div class="search-bar" style="flex:1;">
+          <span>🔍</span>
+          <input type="text" id="allOrdersSearch" placeholder="Tìm mã đơn, tên khách hàng, số điện thoại..." oninput="AdminApp.filterAllOrdersModal()" />
+        </div>
+        <select class="admin-select" id="allOrdersStatusFilter" onchange="AdminApp.filterAllOrdersModal()">
+          <option value="">Tất cả trạng thái</option>
+          <option value="pending">⏳ Chờ xử lý</option>
+          <option value="confirmed">✔️ Đã xác nhận</option>
+          <option value="processing">⚙️ Đang xử lý</option>
+          <option value="shipping">🚚 Đang giao</option>
+          <option value="delivered">✅ Đã giao</option>
+          <option value="cancelled">❌ Đã hủy</option>
+        </select>
+      </div>
+      <button class="btn-topbar btn-topbar-primary" onclick="AdminApp.closeAllOrdersModal(); AdminApp.openAddOrder();">+ Thêm đơn mới</button>
+    </div>
+    <div class="modal-body no-pad" style="flex:1; overflow-y:auto;">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>MÃ ĐƠN</th>
+            <th>KHÁCH HÀNG</th>
+            <th>TỔNG TIỀN</th>
+            <th>TRẠNG THÁI</th>
+            <th>THỜI GIAN</th>
+            <th>THAO TÁC</th>
+          </tr>
+        </thead>
+        <tbody id="allOrdersTableBody">
+          <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">Đang tải danh sách đơn hàng...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination-container">
+      <div id="allOrdersPaginationInfo">Hiển thị 0 - 0 trong tổng số 0 đơn hàng</div>
+      <div class="pagination-controls">
+        <button class="btn-page" id="allOrdersPrevBtn" onclick="AdminApp.prevAllOrdersPage()">← Trang trước</button>
+        <span id="allOrdersPageLabel" style="font-weight:700;color:var(--text-main);padding:0 0.5rem;">Trang 1 / 1</span>
+        <button class="btn-page" id="allOrdersNextBtn" onclick="AdminApp.nextAllOrdersPage()">Trang sau →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal 4: Store Preview Modal (Xem cửa hàng) ─────────────────────── -->
+  <div class="modal-overlay" id="storePreviewOverlay" onclick="AdminApp.closeStorePreviewModal()"></div>
+  <div class="modal-box modal-xl" id="storePreviewModal">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <div class="modal-title">🏪 Xem Trước Cửa Hàng (Storefront Preview)</div>
+        <div class="device-switcher">
+          <button class="device-btn active" id="btnDeviceDesktop" onclick="AdminApp.setStorePreviewMode('desktop')">💻 Desktop</button>
+          <button class="device-btn" id="btnDeviceMobile" onclick="AdminApp.setStorePreviewMode('mobile')">📱 Mobile</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <a href="/" target="_blank" class="btn-topbar btn-topbar-secondary" style="font-size:0.8rem;padding:0.35rem 0.75rem;">↗ Mở tab riêng</a>
+        <button class="modal-close" onclick="AdminApp.closeStorePreviewModal()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body no-pad" style="flex:1; display:flex; background:var(--bg-dark); padding:0;">
+      <div class="store-preview-wrapper">
+        <div class="store-iframe-container" id="storeIframeContainer">
+          <iframe id="storePreviewFrame" src="about:blank" style="width:100%;height:100%;border:none;"></iframe>
+        </div>
+      </div>
     </div>
   </div>
 
