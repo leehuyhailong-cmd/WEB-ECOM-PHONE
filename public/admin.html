@@ -568,32 +568,6 @@
       </div>
     </div>
   </div>
-
-  <!-- ── Modal 4: Store Preview Modal (Xem cửa hàng) ─────────────────────── -->
-  <div class="modal-overlay" id="storePreviewOverlay" onclick="AdminApp.closeStorePreviewModal()"></div>
-  <div class="modal-box modal-xl" id="storePreviewModal">
-    <div class="modal-header">
-      <div style="display:flex;align-items:center;gap:1rem;">
-        <div class="modal-title">🏪 Xem Trước Cửa Hàng (Storefront Preview)</div>
-        <div class="device-switcher">
-          <button class="device-btn active" id="btnDeviceDesktop" onclick="AdminApp.setStorePreviewMode('desktop')">💻 Desktop</button>
-          <button class="device-btn" id="btnDeviceMobile" onclick="AdminApp.setStorePreviewMode('mobile')">📱 Mobile</button>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:0.75rem;">
-        <a href="/" target="_blank" class="btn-topbar btn-topbar-secondary" style="font-size:0.8rem;padding:0.35rem 0.75rem;">↗ Mở tab riêng</a>
-        <button class="modal-close" onclick="AdminApp.closeStorePreviewModal()">✕</button>
-      </div>
-    </div>
-    <div class="modal-body no-pad" style="flex:1; display:flex; background:var(--bg-dark); padding:0;">
-      <div class="store-preview-wrapper">
-        <div class="store-iframe-container" id="storeIframeContainer">
-          <iframe id="storePreviewFrame" src="about:blank" style="width:100%;height:100%;border:none;"></iframe>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script type="module" src="js/admin-app.js?v=4.0"></script>
+  <script type="module" src="js/admin-app.js?v=5.0"></script>
 </body>
 </html>
