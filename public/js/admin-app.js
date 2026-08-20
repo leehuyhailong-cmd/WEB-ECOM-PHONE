@@ -599,19 +599,31 @@ const AdminApp = {
     this.isProductFormDirty = false;
   },
 
-  _onImageFileChange(input) {
+  async _onImageFileChange(input) {
     const preview = document.getElementById('pImagePreview');
     const previewRow = document.getElementById('imagePreviewRow');
     if (!preview || !previewRow) return;
     if (input.files && input.files[0]) {
+      const file = input.files[0];
       const reader = new FileReader();
       reader.onload = (e) => {
         preview.src = e.target.result;
         previewRow.style.display = 'block';
-        const urlInput = document.getElementById('pImageUrl');
-        if (urlInput) urlInput.value = '';
       };
-      reader.readAsDataURL(input.files[0]);
+      reader.readAsDataURL(file);
+
+      try {
+        this.showToast('☁️ Đang tải ảnh lên Cloudinary...', 'info');
+        const uploaded = await API.uploadImage(file);
+        if (uploaded && uploaded.url) {
+          const urlInput = document.getElementById('pImageUrl');
+          if (urlInput) urlInput.value = uploaded.url;
+          preview.src = uploaded.url;
+          this.showToast('✅ Đã tải ảnh lên Cloudinary thành công!', 'success');
+        }
+      } catch (err) {
+        console.warn('Cloudinary upload warning:', err.message);
+      }
     } else {
       const urlInput = document.getElementById('pImageUrl');
       if (urlInput && urlInput.value.trim()) {

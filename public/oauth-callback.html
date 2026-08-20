@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đang xử lý đăng nhập Google — Phonestore</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #0f172a;
+      color: #f8fafc;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    .loading-card {
+      background: #1e293b;
+      padding: 2.5rem;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      max-width: 380px;
+      width: 90%;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .spinner {
+      width: 44px;
+      height: 44px;
+      border: 4px solid rgba(37,99,235,0.2);
+      border-top-color: #2563eb;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1.25rem;
+    }
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+    h2 { font-size: 1.2rem; margin-bottom: 0.5rem; font-weight: 700; }
+    p { font-size: 0.9rem; color: #94a3b8; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="loading-card">
+    <div class="spinner"></div>
+    <h2>Xác thực Google thành công!</h2>
+    <p id="statusMsg">Đang thiết lập phiên đăng nhập...</p>
+  </div>
+
+  <script type="module">
+    import { API } from './js/api.js';
+
+    async function handleCallback() {
+      const hash = window.location.hash;
+      const params = new URLSearchParams(hash.replace('#', '?'));
+      const token = params.get('token');
+
+      if (!token) {
+        document.getElementById('statusMsg').textContent = '⚠️ Không tìm thấy token xác thực. Đang chuyển về trang đăng nhập...';
+        setTimeout(() => { window.location.href = '/login.html'; }, 1500);
+        return;
+      }
+
+      localStorage.setItem('phonestore_token', token);
+      
+      try {
+        const user = await API.getMe();
+        if (user) {
+          localStorage.setItem('phonestore_user', JSON.stringify(user));
+        }
+      } catch (e) {
+        console.warn('Get user profile error:', e);
+      }
+
+      document.getElementById('statusMsg').textContent = '🎉 Đăng nhập thành công! Đang chuyển về cửa hàng...';
+      setTimeout(() => { window.location.href = '/'; }, 800);
+    }
+
+    handleCallback();
+  </script>
+</body>
+</html>

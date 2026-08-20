@@ -839,5 +839,22 @@ export const API = {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Lỗi cập nhật trạng thái người dùng');
     return data.data;
+  },
+
+  // ── Upload Image to Cloudinary ──────────────────────────────────────────────
+  async uploadImage(file) {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('phonestore_token')}`
+      },
+      body: formData
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Lỗi tải ảnh lên Cloudinary');
+    return data.data;
   }
 };

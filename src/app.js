@@ -140,6 +140,7 @@ const reviewRouter          = require('./modules/reviews/review.router');
 const chatbotRouter         = require('./modules/chatbot/chatbot.router');
 const recommendationRouter  = require('./modules/recommendations/recommendation.router');
 const adminRouter           = require('./modules/admin/admin.router');
+const uploadRouter          = require('./modules/upload/upload.router');
 
 app.use('/api/auth', authRouter);
 app.use('/api/categories', categoryRouter);
@@ -153,6 +154,7 @@ app.use('/api/reviews',         reviewRouter);
 app.use('/api/chatbot',         chatbotRouter);
 app.use('/api/recommendations', recommendationRouter);
 app.use('/api/admin',           adminRouter);
+app.use('/api/upload',          uploadRouter);
 
 // ── 12. Error handlers (always last) ─────────────────────────────────────────
 app.use(notFoundHandler);
