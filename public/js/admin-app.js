@@ -1307,14 +1307,8 @@ const AdminApp = {
   },
 
   // ── Storefront Preview Modal (Xem cửa hàng) ──────────────────────────────
-  openStorePreviewModal(e) {
-    if (e && e.preventDefault) e.preventDefault();
-    const iframe = document.getElementById('storePreviewFrame');
-    if (iframe) iframe.src = '/';
-    this.setStorePreviewMode('desktop');
-    document.getElementById('storePreviewModal')?.classList.add('active');
-    document.getElementById('storePreviewOverlay')?.classList.add('active');
-    return false;
+  openStorePreviewModal() {
+    window.location.href = '/';
   },
 
   closeStorePreviewModal() {
