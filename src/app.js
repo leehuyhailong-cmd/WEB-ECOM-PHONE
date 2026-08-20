@@ -23,6 +23,12 @@ configureCloudinary();
 const app = express();
 
 // ── 1. Security (always first) ────────────────────────────────────────────────
+const isDev = process.env.NODE_ENV !== 'production';
+const scriptSrcDirectives = ["'self'", "'unsafe-inline'"];
+if (isDev) {
+  scriptSrcDirectives.push("'unsafe-eval'");
+}
+
 app.use(helmet({
   contentSecurityPolicy: {
     useDefaults: false,
@@ -35,8 +41,8 @@ app.use(helmet({
       frameSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "blob:", "https:", "http:"],
       objectSrc: ["'none'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      scriptSrcElem: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      scriptSrc: scriptSrcDirectives,
+      scriptSrcElem: scriptSrcDirectives,
       "script-src-attr": ["'unsafe-inline'"],
       styleSrc: ["'self'", "https://fonts.googleapis.com", "https:", "'unsafe-inline'"],
       connectSrc: ["'self'"],
