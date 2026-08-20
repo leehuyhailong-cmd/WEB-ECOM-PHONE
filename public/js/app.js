@@ -259,6 +259,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = '/admin.html';
   });
 
+  window.ProductDetailComponent = ProductDetailComponent;
+  document.getElementById('closeProductDetailBtn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    ProductDetailComponent.close();
+  });
+
   // Close modals when clicking overlay
   document.getElementById('modalOverlay')?.addEventListener('click', () => {
     ProductDetailComponent.close();

@@ -491,7 +491,7 @@ export const API = {
       const appLines = appProds.map(p => `- ${p.name}: ${new Intl.NumberFormat('vi-VN').format(p.price)}₫ | ${p.specs?.processor || ''} | ${p.specs?.battery || ''}`).join('\n');
 
       return {
-        reply: `📊 **SO SÁNH THƯƠNG HIỆU**:\n\n📱 **SAMSUNG**:\n${samLines}\n\n📱 **APPLE (IPHONE)**:\n${appLines}\n\nBạn quan tâm đến hiệu năng hay camera của dòng máy nào hơn?`,
+        reply: `📊 **SO SÁNH THƯƠNG HIỆU**:\n\n📱 **SAMSUNG**:\n${samLines}\n\n📱 **APPLE**:\n${appLines}\n\nBạn quan tâm đến hiệu năng hay camera của dòng máy nào hơn?`,
         sessionId: sessionId || 'sess_demo',
         recommendations: allRecs
       };

@@ -155,10 +155,10 @@
             <div class="filter-group">
               <span class="filter-label">Thương hiệu</span>
               <label class="checkbox-item">
-                <input type="checkbox" class="brand-checkbox" value="Apple" /> Apple (iPhone)
+                <input type="checkbox" class="brand-checkbox" value="Apple" /> Apple
               </label>
               <label class="checkbox-item">
-                <input type="checkbox" class="brand-checkbox" value="Samsung" /> Samsung Galaxy
+                <input type="checkbox" class="brand-checkbox" value="Samsung" /> Samsung
               </label>
               <label class="checkbox-item">
                 <input type="checkbox" class="brand-checkbox" value="Xiaomi" /> Xiaomi
@@ -290,7 +290,7 @@
   <div id="productDetailModal" class="modal">
     <div class="modal-header">
       <h3 style="font-family: var(--font-heading);">Chi tiết sản phẩm</h3>
-      <button id="closeProductDetailBtn" onclick="document.getElementById('productDetailModal').classList.remove('active'); document.getElementById('modalOverlay').classList.remove('active');" class="btn-icon">&times;</button>
+      <button id="closeProductDetailBtn" onclick="window.ProductDetailComponent ? window.ProductDetailComponent.close() : (document.getElementById('productDetailModal').classList.remove('active'), document.getElementById('modalOverlay').classList.remove('active'))" class="btn-icon" style="font-size:1.4rem;cursor:pointer;line-height:1;padding:4px 8px;">✕</button>
     </div>
     <div id="modalBody" class="modal-body">
       <!-- Injected dynamically by product-detail.js -->
