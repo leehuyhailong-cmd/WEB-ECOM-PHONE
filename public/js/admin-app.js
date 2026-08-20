@@ -1306,32 +1306,9 @@ const AdminApp = {
     }
   },
 
-  // ── Storefront Preview Modal (Xem cửa hàng) ──────────────────────────────
+  // ── Storefront Navigation (Xem cửa hàng) ──────────────────────────────
   openStorePreviewModal() {
     window.location.href = '/';
-  },
-
-  closeStorePreviewModal() {
-    document.getElementById('storePreviewModal')?.classList.remove('active');
-    document.getElementById('storePreviewOverlay')?.classList.remove('active');
-    const iframe = document.getElementById('storePreviewFrame');
-    if (iframe) iframe.src = 'about:blank';
-  },
-
-  setStorePreviewMode(mode) {
-    const container = document.getElementById('storeIframeContainer');
-    const btnDesktop = document.getElementById('btnDeviceDesktop');
-    const btnMobile  = document.getElementById('btnDeviceMobile');
-
-    if (mode === 'mobile') {
-      container?.classList.add('mobile-mode');
-      btnDesktop?.classList.remove('active');
-      btnMobile?.classList.add('active');
-    } else {
-      container?.classList.remove('mobile-mode');
-      btnDesktop?.classList.add('active');
-      btnMobile?.classList.remove('active');
-    }
   },
 
   // ── Helpers ───────────────────────────────────────────────────────────────
