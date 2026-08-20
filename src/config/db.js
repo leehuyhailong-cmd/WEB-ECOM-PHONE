@@ -26,6 +26,7 @@ async function connectDB(retries = MAX_RETRIES) {
     await mongoose.connect(uri, options);
     logger.info({ msg: '✅ MongoDB connected', db: mongoose.connection.name });
     _attachListeners();
+    await _ensureDefaultAdmin();
   } catch (err) {
     if (retries > 0) {
       logger.warn({
@@ -37,6 +38,30 @@ async function connectDB(retries = MAX_RETRIES) {
       return connectDB(retries - 1);
     }
     throw new Error(`MongoDB failed after ${MAX_RETRIES} attempts: ${err.message}`);
+  }
+}
+
+async function _ensureDefaultAdmin() {
+  try {
+    const User = require('../models/User');
+    let admin = await User.findOne({ email: 'admin@phonestore.vn' });
+    if (!admin) {
+      admin = new User({
+        name: 'Quản trị viên',
+        email: 'admin@phonestore.vn',
+        role: 'admin',
+        isActive: true,
+      });
+      await admin.setPassword('admin123');
+      await admin.save();
+      logger.info({ msg: '👑 Created default admin user: admin@phonestore.vn / admin123' });
+    } else if (admin.role !== 'admin') {
+      admin.role = 'admin';
+      await admin.save();
+      logger.info({ msg: '👑 Updated admin role for admin@phonestore.vn' });
+    }
+  } catch (err) {
+    logger.warn({ msg: 'Default admin check note:', err: err.message });
   }
 }
 

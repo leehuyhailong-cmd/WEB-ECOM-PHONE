@@ -25,23 +25,9 @@ const AdminApp = {
 
   // ── Auth Guard & Initialization ───────────────────────────────────────────
   async init() {
-    let token = localStorage.getItem('phonestore_token');
-    let user = JSON.parse(localStorage.getItem('phonestore_user') || 'null');
+    await this.ensureAdminAuth();
 
-    if (!token || !user || user.role !== 'admin') {
-      try {
-        const loginRes = await API.login('admin@phonestore.vn', 'admin123');
-        if (loginRes && loginRes.accessToken) {
-          localStorage.setItem('phonestore_token', loginRes.accessToken);
-          localStorage.setItem('phonestore_user', JSON.stringify(loginRes.user));
-          user = loginRes.user;
-          token = loginRes.accessToken;
-        }
-      } catch (authErr) {
-        console.warn('Admin auto-auth note:', authErr.message);
-      }
-    }
-
+    const user = JSON.parse(localStorage.getItem('phonestore_user') || 'null');
     const nameEl = document.getElementById('adminUserName');
     if (nameEl && user) nameEl.textContent = user.name || user.email;
 
@@ -53,6 +39,37 @@ const AdminApp = {
     await this.loadUsers();
 
     this.startAutoPolling();
+  },
+
+  async ensureAdminAuth() {
+    let token = localStorage.getItem('phonestore_token');
+    let user = JSON.parse(localStorage.getItem('phonestore_user') || 'null');
+
+    let isValid = false;
+    if (token && user && user.role === 'admin') {
+      try {
+        const me = await API.getMe();
+        if (me && me.role === 'admin') {
+          isValid = true;
+        }
+      } catch (err) {
+        isValid = false;
+      }
+    }
+
+    if (!isValid) {
+      localStorage.removeItem('phonestore_token');
+      localStorage.removeItem('phonestore_user');
+      try {
+        const loginRes = await API.login('admin@phonestore.vn', 'admin123');
+        if (loginRes && loginRes.accessToken) {
+          localStorage.setItem('phonestore_token', loginRes.accessToken);
+          localStorage.setItem('phonestore_user', JSON.stringify(loginRes.user));
+        }
+      } catch (authErr) {
+        console.warn('Admin auto-login note:', authErr.message);
+      }
+    }
   },
 
   setupGlobalListeners() {
