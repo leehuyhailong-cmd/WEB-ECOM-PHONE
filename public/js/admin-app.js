@@ -547,12 +547,16 @@ const AdminApp = {
     document.getElementById('pDesc').value = p.description || '';
     
     const imgUrlInput = document.getElementById('pImageUrl');
-    if (imgUrlInput) imgUrlInput.value = p.images?.[0]?.url || '';
+    const existingImg = p.images?.[0]?.url || (typeof p.images === 'string' ? p.images : '');
+    if (imgUrlInput) imgUrlInput.value = existingImg;
+
+    const fileInput = document.getElementById('pImageFile');
+    if (fileInput) fileInput.value = '';
 
     const preview = document.getElementById('pImagePreview');
     const previewRow = document.getElementById('imagePreviewRow');
-    if (preview && p.images?.[0]?.url) {
-      preview.src = p.images[0].url;
+    if (preview && existingImg) {
+      preview.src = existingImg;
       if (previewRow) previewRow.style.display = 'block';
     } else if (previewRow) {
       previewRow.style.display = 'none';
@@ -609,7 +613,13 @@ const AdminApp = {
       };
       reader.readAsDataURL(input.files[0]);
     } else {
-      previewRow.style.display = 'none';
+      const urlInput = document.getElementById('pImageUrl');
+      if (urlInput && urlInput.value.trim()) {
+        preview.src = urlInput.value.trim();
+        previewRow.style.display = 'block';
+      } else {
+        previewRow.style.display = 'none';
+      }
     }
   },
 
@@ -622,11 +632,14 @@ const AdminApp = {
       preview.src = url;
       previewRow.style.display = 'block';
       preview.onerror = () => { previewRow.style.display = 'none'; };
-      preview.onload  = () => { preview.onerror = null; };
+      preview.onload  = () => { preview.onerror = null; previewRow.style.display = 'block'; };
       const fileInput = document.getElementById('pImageFile');
       if (fileInput) fileInput.value = '';
     } else {
-      previewRow.style.display = 'none';
+      const fileInput = document.getElementById('pImageFile');
+      if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+        previewRow.style.display = 'none';
+      }
     }
   },
 
@@ -1294,12 +1307,14 @@ const AdminApp = {
   },
 
   // ── Storefront Preview Modal (Xem cửa hàng) ──────────────────────────────
-  openStorePreviewModal() {
+  openStorePreviewModal(e) {
+    if (e && e.preventDefault) e.preventDefault();
     const iframe = document.getElementById('storePreviewFrame');
     if (iframe) iframe.src = '/';
     this.setStorePreviewMode('desktop');
     document.getElementById('storePreviewModal')?.classList.add('active');
     document.getElementById('storePreviewOverlay')?.classList.add('active');
+    return false;
   },
 
   closeStorePreviewModal() {

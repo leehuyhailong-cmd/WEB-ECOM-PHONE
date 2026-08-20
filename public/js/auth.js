@@ -67,8 +67,9 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     if (res && res.user) {
       const token = res.accessToken || res.token;
       if (token) localStorage.setItem('phonestore_token', token);
+      localStorage.setItem('phonestore_user', JSON.stringify(res.user));
 
-      showAlert(`Đăng nhập thành công! Chào ${res.user.name} 🎉`, 'success');
+      showAlert(`Đăng nhập thành công! Chào ${res.user.name || res.user.email} 🎉`, 'success');
 
       setTimeout(() => {
         // Redirect: admin → admin.html, customer → index.html
@@ -83,7 +84,7 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
       showAlert('Email hoặc mật khẩu không đúng. Vui lòng thử lại.');
     }
   } catch (err) {
-    showAlert(err.message || 'Có lỗi xảy ra. Vui lòng thử lại sau.');
+    showAlert(err.message || 'Có lỗi xảy ra khi đăng nhập. Vui lòng thử lại.');
   } finally {
     setLoading('loginBtn', false);
   }
