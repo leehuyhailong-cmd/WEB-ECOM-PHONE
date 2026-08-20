@@ -36,6 +36,7 @@ app.use(helmet({
       imgSrc: ["'self'", "data:", "blob:", "https:", "http:"],
       objectSrc: ["'none'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      scriptSrcElem: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
       "script-src-attr": ["'unsafe-inline'"],
       styleSrc: ["'self'", "https://fonts.googleapis.com", "https:", "'unsafe-inline'"],
       connectSrc: ["'self'"],
