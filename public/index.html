@@ -286,7 +286,7 @@
   <div id="productDetailModal" class="modal">
     <div class="modal-header">
       <h3 style="font-family: var(--font-heading);">Chi tiết sản phẩm</h3>
-      <button onclick="document.getElementById('productDetailModal').classList.remove('active'); document.getElementById('modalOverlay').classList.remove('active');" class="btn-icon">✕</button>
+      <button id="closeProductDetailBtn" onclick="document.getElementById('productDetailModal').classList.remove('active'); document.getElementById('modalOverlay').classList.remove('active');" class="btn-icon">&times;</button>
     </div>
     <div id="modalBody" class="modal-body">
       <!-- Injected dynamically by product-detail.js -->

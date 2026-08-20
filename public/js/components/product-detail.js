@@ -13,9 +13,11 @@ export const ProductDetailComponent = {
 
     if (!modalEl || !overlayEl || !bodyEl) return;
 
-    bodyEl.innerHTML = `<div style="text-align: center; padding: 3rem;">Đang tải thông tin sản phẩm...</div>`;
+    bodyEl.innerHTML = `<div style="text-align: center; padding: 3rem; color: var(--text-muted);">Đang tải thông tin sản phẩm...</div>`;
     modalEl.classList.add('active');
     overlayEl.classList.add('active');
+
+    this.setupCloseListeners();
 
     let product = await API.getProductBySlugOrId(slugOrId);
     if (product && product.product) {
@@ -30,14 +32,48 @@ export const ProductDetailComponent = {
     this.render(product, bodyEl);
   },
 
+  setupCloseListeners() {
+    if (!this._escBound) {
+      this._escBound = (e) => {
+        if (e.key === 'Escape') this.close();
+      };
+      window.addEventListener('keydown', this._escBound);
+    }
+    const modalEl = document.getElementById('productDetailModal');
+    const closeBtn = modalEl?.querySelector('.btn-icon') || document.getElementById('closeProductDetailBtn');
+    if (closeBtn && !closeBtn._clickBound) {
+      closeBtn._clickBound = true;
+      closeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.close();
+      });
+    }
+  },
+
   close() {
     document.getElementById('productDetailModal')?.classList.remove('active');
     document.getElementById('modalOverlay')?.classList.remove('active');
   },
 
+  getValidImageUrl(p) {
+    const fallbackSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiB2aWV3Qm94PSIwIDAgMzAwIDMwMCI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMzMzQxNTUiIC8+PHRleHQgeD0iMTUwIiB5PSIxNTAiIGZpbGw9IiM5NGEzYjgiIGZvbnQtZmFtaWx5PSJBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tm8gSW1hZ2U8L3RleHQ+PC9zdmc+";
+    if (!p) return fallbackSvg;
+    if (typeof p.images === 'string' && p.images.trim()) return p.images.trim();
+    if (Array.isArray(p.images) && p.images.length > 0) {
+      const primaryObj = p.images.find(i => i && typeof i === 'object' && i.isPrimary && i.url);
+      if (primaryObj && primaryObj.url) return primaryObj.url;
+      const first = p.images[0];
+      if (typeof first === 'string' && first.trim()) return first.trim();
+      if (first && typeof first === 'object' && first.url) return first.url;
+    }
+    if (typeof p.image === 'string' && p.image.trim()) return p.image.trim();
+    if (typeof p.imageUrl === 'string' && p.imageUrl.trim()) return p.imageUrl.trim();
+    return fallbackSvg;
+  },
+
   render(p, container) {
     const fallbackSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiB2aWV3Qm94PSIwIDAgMzAwIDMwMCI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMzMzQxNTUiIC8+PHRleHQgeD0iMTUwIiB5PSIxNTAiIGZpbGw9IiM5NGEzYjgiIGZvbnQtZmFtaWx5PSJBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tm8gSW1hZ2U8L3RleHQ+PC9zdmc+";
-    const primaryImg = p.images?.find(i => i.isPrimary)?.url || p.images?.[0]?.url || fallbackSvg;
+    const primaryImg = this.getValidImageUrl(p);
     const formatVND = (num) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num || 0);
 
     const brandName = p.brand || 'Phonestore';
@@ -152,7 +188,7 @@ export const ProductDetailComponent = {
       const formatVND = (num) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
 
       container.innerHTML = related.slice(0, 4).map(item => {
-        const img = item.images?.find(i => i.isPrimary)?.url || item.images?.[0]?.url || fallbackSvg;
+        const img = this.getValidImageUrl(item);
         return `
           <div class="glass-panel related-card" data-slug="${item.slug}" style="padding: 0.75rem; text-align: center; cursor: pointer; border-radius: var(--radius-sm); transition: transform 0.2s ease;">
             <img src="${img}" style="height: 90px; width: 100%; object-fit: contain; margin-bottom: 0.5rem;" alt="${item.name}" onerror="this.onerror=null; this.src='${fallbackSvg}'" />

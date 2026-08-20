@@ -151,8 +151,24 @@ export const CatalogComponent = {
     });
   },
 
+  getValidImageUrl(p) {
+    const fallbackSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiB2aWV3Qm94PSIwIDAgMzAwIDMwMCI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMzMzQxNTUiIC8+PHRleHQgeD0iMTUwIiB5PSIxNTAiIGZpbGw9IiM5NGEzYjgiIGZvbnQtZmFtaWx5PSJBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tm8gSW1hZ2U8L3RleHQ+PC9zdmc+";
+    if (!p) return fallbackSvg;
+    if (typeof p.images === 'string' && p.images.trim()) return p.images.trim();
+    if (Array.isArray(p.images) && p.images.length > 0) {
+      const primaryObj = p.images.find(i => i && typeof i === 'object' && i.isPrimary && i.url);
+      if (primaryObj && primaryObj.url) return primaryObj.url;
+      const first = p.images[0];
+      if (typeof first === 'string' && first.trim()) return first.trim();
+      if (first && typeof first === 'object' && first.url) return first.url;
+    }
+    if (typeof p.image === 'string' && p.image.trim()) return p.image.trim();
+    if (typeof p.imageUrl === 'string' && p.imageUrl.trim()) return p.imageUrl.trim();
+    return fallbackSvg;
+  },
+
   renderProductCard(product) {
-    const primaryImg = product.images?.find(i => i.isPrimary)?.url || product.images?.[0]?.url || 'https://via.placeholder.com/300x300';
+    const primaryImg = this.getValidImageUrl(product);
     const discount = product.comparePrice > product.price 
       ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)
       : 0;
