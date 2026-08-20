@@ -128,19 +128,42 @@ export const CatalogComponent = {
 
     gridEl.innerHTML = this.state.products.map(p => this.renderProductCard(p)).join('');
 
-    // Attach card click handlers
-    gridEl.querySelectorAll('.btn-add-cart').forEach(btn => {
+    this.bindCardEvents(gridEl);
+    this.fetchAndRenderRecommended();
+  },
+
+  async fetchAndRenderRecommended() {
+    const grid = document.getElementById('recommendedGrid');
+    if (!grid) return;
+
+    try {
+      const currentUser = JSON.parse(localStorage.getItem('phonestore_user') || 'null');
+      const userId = currentUser ? (currentUser._id || currentUser.id) : null;
+      const prods = await API.getRecommendedProducts(userId);
+      if (prods && prods.length > 0) {
+        grid.innerHTML = prods.map(p => this.renderProductCard(p)).join('');
+        this.bindCardEvents(grid, prods);
+      }
+    } catch (err) {
+      console.warn('Recommended section error:', err);
+    }
+  },
+
+  bindCardEvents(containerEl, customList = null) {
+    const products = customList || this.state.products;
+
+    containerEl.querySelectorAll('.btn-add-cart').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const productId = e.currentTarget.dataset.id;
-        const product = this.state.products.find(p => p._id === productId);
+        const product = products.find(p => (p._id || p.id) === productId);
         if (product) {
           this.appStore.addToCart(product);
         }
       });
     });
 
-    gridEl.querySelectorAll('.product-card').forEach(card => {
+    containerEl.querySelectorAll('.product-card').forEach(card => {
       card.addEventListener('click', (e) => {
         if (e.target.closest('.btn-add-cart')) return;
         const slug = card.dataset.slug;

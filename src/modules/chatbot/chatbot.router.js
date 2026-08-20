@@ -34,7 +34,13 @@ const router = Router();
 router.use(chatbotLimiter);     // 20 req/min per IP
 router.use(optionalAuthenticate); // Attach req.user if token present
 
-// ── POST /message — Standard JSON response ───────────────────────────────────
+// ── POST / & /message — Standard JSON response ───────────────────────────────────
+router.post(
+  '/',
+  validate(sendMessageSchema),
+  asyncHandler(chatbotController.sendMessage),
+);
+
 router.post(
   '/message',
   validate(sendMessageSchema),

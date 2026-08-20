@@ -856,5 +856,26 @@ export const API = {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Lỗi tải ảnh lên Cloudinary');
     return data.data;
+  },
+
+  // ── Get Recommended Products ────────────────────────────────────────────────
+  async getRecommendedProducts(userId = null, productId = null) {
+    try {
+      let url = `${API_BASE}/products/recommended`;
+      if (userId) url += `/${userId}`;
+      if (productId) url += `?productId=${productId}`;
+
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.data) {
+          return Array.isArray(data.data) ? data.data : (data.data.products || []);
+        }
+      }
+    } catch (e) {
+      console.warn('API.getRecommendedProducts fallback:', e.message);
+    }
+    const fallback = await this.getProducts({ limit: 4 });
+    return fallback.products || [];
   }
 };

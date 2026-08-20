@@ -152,6 +152,7 @@ app.use('/', paymentRouter);
 // app.use('/api/users',           userRouter);
 app.use('/api/reviews',         reviewRouter);
 app.use('/api/chatbot',         chatbotRouter);
+app.use('/api/chat',            chatbotRouter);
 app.use('/api/recommendations', recommendationRouter);
 app.use('/api/admin',           adminRouter);
 app.use('/api/upload',          uploadRouter);

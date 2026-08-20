@@ -44,6 +44,18 @@ router.get(
 );
 
 router.get(
+  '/recommended',
+  publicLimiter,
+  asyncHandler(productController.recommended),
+);
+
+router.get(
+  '/recommended/:userId',
+  publicLimiter,
+  asyncHandler(productController.recommended),
+);
+
+router.get(
   '/',
   publicLimiter,
   validate(listProductsSchema),

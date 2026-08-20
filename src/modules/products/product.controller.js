@@ -72,4 +72,12 @@ async function remove(req, res) {
   return ApiResponse.noContent(res);
 }
 
-module.exports = { list, brands, getBySlug, getById, listAdmin, create, update, remove };
+// ── GET /api/products/recommended & /recommended/:userId ───────────────────
+async function recommended(req, res) {
+  const userId = req.params.userId || req.user?._id || null;
+  const productId = req.query.productId || null;
+  const data = await productService.getRecommendedProducts(userId, productId);
+  return ApiResponse.success(res, data, 'Lấy danh sách sản phẩm gợi ý thành công');
+}
+
+module.exports = { list, brands, getBySlug, getById, listAdmin, create, update, remove, recommended };

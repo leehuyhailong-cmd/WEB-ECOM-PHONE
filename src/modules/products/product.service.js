@@ -215,6 +215,76 @@ async function _uploadImages(files, folder) {
   }));
 }
 
+/**
+ * Get personalized / item-based product recommendations.
+ * Filters same brand and/or +/- 20% price segment, excluding duplicates.
+ */
+async function getRecommendedProducts(userId = null, productId = null) {
+  let targetBrand = null;
+  let targetPrice = null;
+  const excludeIds = new Set();
+
+  if (productId) {
+    const prod = await productRepository.findById(productId);
+    if (prod) {
+      targetBrand = prod.brand;
+      targetPrice = prod.price;
+      excludeIds.add(prod._id.toString());
+    }
+  }
+
+  if (userId && (!targetBrand || !targetPrice)) {
+    try {
+      const orderRepository = require('../../repositories/order.repository');
+      const { orders } = await orderRepository.findByUser(userId, { page: 1, limit: 1 });
+      if (orders && orders.length > 0 && orders[0].items && orders[0].items.length > 0) {
+        const item = orders[0].items[0];
+        const lastProd = await productRepository.findById(item.product || item.productId);
+        if (lastProd) {
+          targetBrand = targetBrand || lastProd.brand;
+          targetPrice = targetPrice || lastProd.price;
+          excludeIds.add(lastProd._id.toString());
+        }
+      }
+    } catch (e) {
+      logger.warn({ err: e.message }, 'Recommendation user order fetch error');
+    }
+  }
+
+  let brandProducts = [];
+  if (targetBrand) {
+    const res = await productRepository.findAll({ brand: targetBrand, limit: 8, inStock: true });
+    brandProducts = (res.products || []).filter(p => !excludeIds.has(p._id.toString()));
+  }
+
+  let priceProducts = [];
+  if (targetPrice) {
+    const minP = Math.round(targetPrice * 0.8);
+    const maxP = Math.round(targetPrice * 1.2);
+    const res = await productRepository.findAll({ minPrice: minP, maxPrice: maxP, limit: 8, inStock: true });
+    priceProducts = (res.products || []).filter(p => !excludeIds.has(p._id.toString()));
+  }
+
+  const map = new Map();
+  [...brandProducts, ...priceProducts].forEach(p => {
+    map.set(p._id.toString(), p);
+  });
+
+  let recommended = Array.from(map.values());
+
+  if (recommended.length < 4) {
+    const fallbackRes = await productRepository.findAll({ sort: 'popular', limit: 8, inStock: true });
+    (fallbackRes.products || []).forEach(p => {
+      if (!excludeIds.has(p._id.toString())) {
+        map.set(p._id.toString(), p);
+      }
+    });
+    recommended = Array.from(map.values());
+  }
+
+  return recommended.slice(0, 8);
+}
+
 module.exports = {
   listProducts,
   getProductBySlug,
@@ -224,4 +294,5 @@ module.exports = {
   deleteProduct,
   listProductsAdmin,
   getBrands,
+  getRecommendedProducts,
 };
